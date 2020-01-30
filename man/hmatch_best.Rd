@@ -13,7 +13,6 @@ hmatch_best(
   pattern_ref = pattern_raw,
   pattern_man = pattern_raw,
   by = NULL,
-  id_col,
   code_col,
   fuzzy = FALSE,
   max_dist = 1L
@@ -38,8 +37,6 @@ correspond}
 \item{by}{named character vector whose elements are the names of the
 geo-columns in \code{raw} and whose names are the names of the corresponding
 geo-columns in \code{ref} (and \code{man}, if given)}
-
-\item{id_col}{name of the ID column within \code{raw}}
 
 \item{code_col}{name of the code column within \code{ref} (and \code{man}, if given)}
 
@@ -66,6 +63,6 @@ highest-resolution) for each row.
 data(drc_raw)
 data(drc_ref)
 
-hmatch_best(drc_raw, drc_ref, id_col = "id", code_col = "pcode")
+hmatch_best(drc_raw, drc_ref, code_col = "pcode")
 
 }

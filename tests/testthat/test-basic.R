@@ -21,12 +21,12 @@ test_that("Basic functionality", {
   expect_lte(nrow(m_fuzzy_i), nrow(drc_raw))
 
   ## best join (no manual)
-  m_best <- hmatch_best(drc_raw, drc_ref, code_col = "pcode", id_col = "id", fuzzy = TRUE)
+  m_best <- hmatch_best(drc_raw, drc_ref, code_col = "pcode", fuzzy = TRUE)
   expect_is(m_best, "data.frame")
   expect_equal(nrow(m_best), nrow(drc_raw))
 
   ## best join (with manual)
-  m_best_man <- hmatch_best(drc_raw, drc_ref, drc_man, code_col = "pcode", id_col = "id", fuzzy = TRUE)
+  m_best_man <- hmatch_best(drc_raw, drc_ref, drc_man, code_col = "pcode", fuzzy = TRUE)
   expect_is(m_best_man, "data.frame")
   expect_equal(nrow(m_best_man), nrow(drc_raw))
 

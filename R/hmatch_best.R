@@ -18,7 +18,6 @@
 #' @param by named character vector whose elements are the names of the
 #'   geo-columns in `raw` and whose names are the names of the corresponding
 #'   geo-columns in `ref` (and `man`, if given)
-#' @param id_col name of the ID column within `raw`
 #' @param code_col name of the code column within `ref` (and `man`, if given)
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
@@ -36,7 +35,7 @@
 #' data(drc_raw)
 #' data(drc_ref)
 #'
-#' hmatch_best(drc_raw, drc_ref, id_col = "id", code_col = "pcode")
+#' hmatch_best(drc_raw, drc_ref, code_col = "pcode")
 #'
 #' @importFrom stats setNames
 #' @importFrom tidyselect all_of
@@ -49,7 +48,6 @@ hmatch_best <- function(raw,
                          pattern_ref = pattern_raw,
                          pattern_man = pattern_raw,
                          by = NULL,
-                         id_col,
                          code_col,
                          fuzzy = FALSE,
                          max_dist = 1L) {
@@ -57,15 +55,16 @@ hmatch_best <- function(raw,
 
   # raw <- drc_raw
   # ref <- drc_ref
-  # man = NULL
+  # man = drc_man
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # pattern_man = pattern_raw
   # by = NULL
-  # id_col <- "id"
   # code_col <- "pcode"
   # fuzzy = FALSE
   # max_dist = 1L
+
+  raw$ROW_ID_TEMP <- 1:nrow(raw)
 
   ## manual match
   if (!is.null(man)) {
@@ -80,9 +79,9 @@ hmatch_best <- function(raw,
                               code_col = code_col,
                               type = "inner")
 
-    m_manual <- m_manual[,c(id_col, code_col)]
+    m_manual <- m_manual[,c("ROW_ID_TEMP", code_col)]
     m_manual$match_type <- "manual"
-    raw_no_manual <- raw[!raw[[id_col]] %in% m_manual[[id_col]],]
+    raw_no_manual <- raw[!raw$ROW_ID_TEMP %in% m_manual$ROW_ID_TEMP,]
 
   } else {
     m_manual <- NULL
@@ -106,21 +105,21 @@ hmatch_best <- function(raw,
 
   ## exact match
   m_exact <- hmatch_exact(raw_no_manual, ref, by = by, type = "inner")
-  m_exact <- m_exact[,c(id_col, code_col)]
+  m_exact <- m_exact[,c("ROW_ID_TEMP", code_col)]
   m_exact$match_type <- "exact"
-  raw_no_exact <- raw_no_manual[!raw_no_manual[[id_col]] %in% m_exact[[id_col]],]
+  raw_no_exact <- raw_no_manual[!raw_no_manual$ROW_ID_TEMP %in% m_exact$ROW_ID_TEMP,]
 
   ## partial join
   m_partial <- hmatch_partial(raw_no_exact, ref, by = by, type = "inner")
-  m_partial <- m_partial[,c(id_col, code_col)]
+  m_partial <- m_partial[,c("ROW_ID_TEMP", code_col)]
   m_partial$match_type <- "partial"
-  raw_no_partial <- raw_no_exact[!raw_no_exact[[id_col]] %in% m_partial[[id_col]],]
+  raw_no_partial <- raw_no_exact[!raw_no_exact$ROW_ID_TEMP %in% m_partial$ROW_ID_TEMP,]
 
   ## partial-fuzzy join
   m_fuzzy <- hmatch_partial(raw_no_partial, ref, by = by, type = "inner", fuzzy = TRUE)
-  m_fuzzy <- m_fuzzy[,c(id_col, code_col)]
+  m_fuzzy <- m_fuzzy[,c("ROW_ID_TEMP", code_col)]
   m_fuzzy$match_type <- "fuzzy"
-  raw_no_fuzzy <- raw_no_partial[!raw_no_partial[[id_col]] %in% m_fuzzy[[id_col]],]
+  raw_no_fuzzy <- raw_no_partial[!raw_no_partial$ROW_ID_TEMP %in% m_fuzzy$ROW_ID_TEMP,]
 
   raw_all_codes <- raw_no_fuzzy
 
@@ -143,23 +142,23 @@ hmatch_best <- function(raw,
                                      type = "left",
                                      fuzzy = fuzzy,
                                      max_dist = max_dist) %>%
-      dplyr::select(all_of(id_col), all_of(code_lev)) %>%
-      dplyr::right_join(raw_all_codes, by = id_col)
+      dplyr::select("ROW_ID_TEMP", all_of(code_lev)) %>%
+      dplyr::right_join(raw_all_codes, by = "ROW_ID_TEMP")
   }
 
   raw_best <- sort_cols(raw_all_codes, raw)
   raw_best$conflict <- test_geocode_conflict(raw_best, code_col)
 
-  dup_ids <- raw_best[[id_col]][duplicated(raw_best[[id_col]])]
+  dup_ids <- raw_best$ROW_ID_TEMP[duplicated(raw_best$ROW_ID_TEMP)]
 
   ## get best pcode
-  raw_best_single <- raw_best[!raw_best[[id_col]] %in% dup_ids,]
+  raw_best_single <- raw_best[!raw_best$ROW_ID_TEMP %in% dup_ids,]
   raw_best_single$pcode <- best_geocode(raw_best_single, code_col)
   raw_best_single$match_type <- "best_single"
-  raw_best_single <- raw_best_single[!is.na(raw_best_single[[code_col]]),c(id_col, code_col, "match_type")]
+  raw_best_single <- raw_best_single[!is.na(raw_best_single[[code_col]]),c("ROW_ID_TEMP", code_col, "match_type")]
 
-  raw_best_multiple <- raw_best[raw_best[[id_col]] %in% dup_ids,] %>%
-    group_by(!!ensym(id_col)) %>%
+  raw_best_multiple <- raw_best[raw_best$ROW_ID_TEMP %in% dup_ids,] %>%
+    group_by(!!sym("ROW_ID_TEMP")) %>%
     do(best_geocode_helper(.data, pattern = code_col)) %>%
     ungroup()
 
@@ -173,10 +172,12 @@ hmatch_best <- function(raw,
                                raw_best_single,
                                raw_best_multiple)
 
-  ref_bind <- ref_bind[order(ref_bind[[id_col]]),] %>%
+  ref_bind <- ref_bind[order(ref_bind$ROW_ID_TEMP),] %>%
     dplyr::left_join(ref, by = code_col) %>%
-    dplyr::select(all_of(id_col), all_of(by_ref), "pcode", "match_type")
+    dplyr::select("ROW_ID_TEMP", all_of(by_ref), "pcode", "match_type")
 
-  dplyr::left_join(raw, ref_bind, by = id_col)
+  out <- dplyr::left_join(raw, ref_bind, by = "ROW_ID_TEMP")
+
+  return(out[,!names(out) %in% "ROW_ID_TEMP", drop = FALSE])
 }
 

@@ -73,5 +73,5 @@ hmatch_partial(drc_raw, drc_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
 Find the best-possible match (i.e. highest resolution), using a variety of matching strategies implemented in turn.
 
 ```{r}
-hmatch_best(drc_raw, drc_ref, id_col = "id", code_col = "pcode")
+hmatch_best(drc_raw, drc_ref, code_col = "pcode")
 ```
