@@ -80,7 +80,8 @@ hmatch_best <- function(raw,
                               code_col = code_col,
                               type = "inner")
 
-    m_manual <- m_manual[,c(id_col, code_col, "match_type")]
+    m_manual <- m_manual[,c(id_col, code_col)]
+    m_manual$match_type <- "manual"
     raw_no_manual <- raw[!raw[[id_col]] %in% m_manual[[id_col]],]
 
   } else {
@@ -105,17 +106,20 @@ hmatch_best <- function(raw,
 
   ## exact match
   m_exact <- hmatch_exact(raw_no_manual, ref, by = by, type = "inner")
-  m_exact <- m_exact[,c(id_col, code_col, "match_type")]
+  m_exact <- m_exact[,c(id_col, code_col)]
+  m_exact$match_type <- "exact"
   raw_no_exact <- raw_no_manual[!raw_no_manual[[id_col]] %in% m_exact[[id_col]],]
 
   ## partial join
   m_partial <- hmatch_partial(raw_no_exact, ref, by = by, type = "inner")
-  m_partial <- m_partial[,c(id_col, code_col, "match_type")]
+  m_partial <- m_partial[,c(id_col, code_col)]
+  m_partial$match_type <- "partial"
   raw_no_partial <- raw_no_exact[!raw_no_exact[[id_col]] %in% m_partial[[id_col]],]
 
   ## partial-fuzzy join
   m_fuzzy <- hmatch_partial(raw_no_partial, ref, by = by, type = "inner", fuzzy = TRUE)
-  m_fuzzy <- m_fuzzy[,c(id_col, code_col, "match_type")]
+  m_fuzzy <- m_fuzzy[,c(id_col, code_col)]
+  m_fuzzy$match_type <- "fuzzy"
   raw_no_fuzzy <- raw_no_partial[!raw_no_partial[[id_col]] %in% m_fuzzy[[id_col]],]
 
   raw_all_codes <- raw_no_fuzzy

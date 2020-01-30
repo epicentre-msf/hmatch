@@ -71,30 +71,30 @@ hmatch_manual <- function(raw,
   ref <- list_prep_ref$ref
   man <- list_prep_man$ref
 
-  man$match_type <- "manual"
-
   by_raw <- list_prep_ref$by_raw
   by_man <- list_prep_ref$by_ref
   by_join <- list_prep_ref$by_join
 
   raw_join <- add_join_columns(raw, by_raw, join_cols = by_join)
 
+  man$TEMP_IS_MATCH <- "MATCH"
+
   man_join <- add_join_columns(man, by_man, join_cols = by_join)
-  man_ <- unique(man_join[,c(by_join, code_col, "match_type")])
+  man_ <- unique(man_join[,c(by_join, code_col, "TEMP_IS_MATCH")])
 
   if (any(duplicated(man_[, by_join, drop = FALSE]))) {
     stop("Duplicated rows in `man` after standardization")
   }
 
   out <- left_join(raw_join, man_, by = by_join)
-  out <- out[, c(names(raw), code_col, "match_type"), drop = FALSE]
+  out <- out[, c(names(raw), code_col, "TEMP_IS_MATCH"), drop = FALSE]
   out <- left_join(out, ref, by = code_col)
-  out <- out[, c(names(raw), names(ref), "match_type"), drop = FALSE]
+  out <- out[, c(names(raw), names(ref), "TEMP_IS_MATCH"), drop = FALSE]
 
   if (type == "inner") {
-    out <- out[!is.na(out$match_type),]
+    out <- out[!is.na(out$TEMP_IS_MATCH),]
   }
 
-  return(out)
+  out[,!names(out) %in% "TEMP_IS_MATCH", drop = FALSE]
 }
 

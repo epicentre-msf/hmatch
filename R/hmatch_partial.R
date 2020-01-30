@@ -118,15 +118,15 @@ hmatch_partial <- function(raw,
 
   matches_out <- initial_matches_join[,c(raw_cols_orig, names(ref))]
   matches_out <- corresponding_levels(matches_out, by_raw, by_ref)
-  matches_out[["match_type"]] <- ifelse(fuzzy, "partial_fuzzy", "partial")
+  matches_out$TEMP_IS_MATCH <- "MATCH"
 
   out <- dplyr::left_join(raw, matches_out, by = raw_cols_orig)
 
   if (type == "inner") {
-    out <- out[!is.na(out$match_type),]
+    out <- out[!is.na(out$TEMP_IS_MATCH),]
     dup_ids <- out$TEMP_ROW_ID[duplicated(out$TEMP_ROW_ID)]
     out <- out[!out$TEMP_ROW_ID %in% dup_ids,]
   }
 
-  out[,names(out) != "TEMP_ROW_ID", drop = FALSE]
+  out[,!names(out) %in% c("TEMP_ROW_ID", "TEMP_IS_MATCH"), drop = FALSE]
 }

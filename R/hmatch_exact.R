@@ -52,13 +52,13 @@ hmatch_exact <- function(raw,
   raw_join <- add_join_columns(raw, by_raw, join_cols = by_join)
   ref_join <- add_join_columns(ref, by_ref, join_cols = by_join)
 
-  ref_join[["match_type"]] <- "exact"
+  ref_join$TEMP_IS_MATCH <- "MATCH"
 
   out <- dplyr::left_join(raw_join, ref_join, by = by_join)
   out <- out[,!names(out) %in% by_join, drop = FALSE]
 
-  if (type == "inner") { out <- out[!is.na(out$match_type),] }
+  if (type == "inner") { out <- out[!is.na(out$TEMP_IS_MATCH),] }
 
-  return(out)
+  out[,!names(out) %in% "TEMP_IS_MATCH", drop = FALSE]
 }
 
