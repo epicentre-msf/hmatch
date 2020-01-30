@@ -1,0 +1,100 @@
+#' Manual hierarchical matching
+#'
+#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
+#' province, county, township) against a reference dataset, using a dictionary
+#' of manually-specified matches.
+#'
+#' @param raw `data.frame` containing hierarchical columns with raw, potentially
+#'   messy data
+#' @param ref `data.frame` containing hierarchical columns with reference data
+#' @param man `data.frame` of manually-specified matches, relating a given set
+#'   of hierarchical values to the code within `ref` to which those values
+#'   correspond
+#' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
+#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
+#' @param pattern_man regex pattern to match the hierarchical columns in `man`
+#' @param by named character vector whose elements are the names of the
+#'   hierarchical columns in `raw` and `man` and whose names are the names of
+#'   the corresponding columns in `ref`
+#' @param code_col name of the code column within `ref` and `man`
+#' @param type type of join ("inner" or "left") (defaults to "left")
+#'
+#' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
+#'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
+#'   returns only the rows of `raw` with a single match in `ref`. If `type ==
+#'   "left"`, returns all rows of `raw`. If the hierarchical columns within
+#'   `ref` have identical names to `raw`, the output reference columns will be
+#'   renamed with prefix "bind_".
+#'
+#' @examples
+#' data(drc_raw)
+#' data(drc_ref)
+#' data(drc_man)
+#'
+#' hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "pcode")
+#'
+#' @importFrom stats setNames
+#' @importFrom dplyr left_join
+#' @export hmatch_manual
+hmatch_manual <- function(raw,
+                          ref,
+                          man,
+                          pattern_raw = NULL,
+                          pattern_ref = pattern_raw,
+                          pattern_man = pattern_raw,
+                          by = NULL,
+                          code_col = "pcode",
+                          type = "left") {
+
+  # raw <- drc_raw
+  # ref <- drc_ref
+  # man <- drc_man
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # pattern_man = pattern_raw
+  # by = NULL
+  # code_col = "pcode"
+  # type = "left"
+
+  list_prep_ref <- prep_ref(raw = raw,
+                            ref = ref,
+                            pattern_raw = pattern_raw,
+                            pattern_ref = pattern_ref,
+                            by = by)
+
+  list_prep_man <- prep_ref(raw = raw,
+                            ref = man,
+                            pattern_raw = pattern_raw,
+                            pattern_ref = pattern_man,
+                            by = by)
+
+  ref <- list_prep_ref$ref
+  man <- list_prep_man$ref
+
+  man$match_type <- "manual"
+
+  by_raw <- list_prep_ref$by_raw
+  by_man <- list_prep_ref$by_ref
+  by_join <- list_prep_ref$by_join
+
+  raw_join <- add_join_columns(raw, by_raw, join_cols = by_join)
+
+  man_join <- add_join_columns(man, by_man, join_cols = by_join)
+  man_ <- unique(man_join[,c(by_join, code_col, "match_type")])
+
+  if (any(duplicated(man_[, by_join, drop = FALSE]))) {
+    stop("Duplicated rows in `man` after standardization")
+  }
+
+  out <- left_join(raw_join, man_, by = by_join)
+  out <- out[, c(names(raw), code_col, "match_type"), drop = FALSE]
+  out <- left_join(out, ref, by = code_col)
+  out <- out[, c(names(raw), names(ref), "match_type"), drop = FALSE]
+
+  if (type == "inner") {
+    out <- out[!is.na(out$match_type),]
+  }
+
+  return(out)
+}
+

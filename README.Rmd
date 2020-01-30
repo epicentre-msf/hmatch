@@ -1,0 +1,77 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/"
+)
+options(digits = 4, width = 160)
+```
+
+# hmatch: Tools for cleaning and matching hierarchically-structured data
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+<!-- badges: end -->
+
+An R package for cleaning and matching messy hierarchical data (e.g. hierarchically-nested adminstrative districts).
+
+
+
+
+
+## Installation
+
+Install from GitHub with:
+
+```{r, eval=FALSE}
+# install.packages("remotes")
+remotes::install_github("epicentre-msf/hmatch")
+```
+
+### Usage
+
+```{r}
+library(hmatch)
+
+# example datasets
+data(drc_raw)
+data(drc_ref)
+```
+
+##### Exact matching
+
+Every hierarchical level must match in sequence.
+
+```{r}
+hmatch_exact(drc_raw, drc_ref, type = "inner")
+```
+
+##### Partial matching
+
+Allows for missing values at one or more level below the match level.
+
+```{r}
+hmatch_partial(drc_raw, drc_ref, type = "inner")
+```
+
+##### Partial + fuzzy matching
+
+Partial matching + fuzzy matching based on the [stringdist](https://github.com/markvanderloo/stringdist) package.
+
+```{r}
+hmatch_partial(drc_raw, drc_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
+```
+
+
+##### Best-possible matching
+
+Find the best-possible match (i.e. highest resolution), using a variety of matching strategies implemented in turn.
+
+```{r}
+hmatch_best(drc_raw, drc_ref, id_col = "id", code_col = "pcode")
+```

@@ -1,0 +1,24 @@
+Package: hmatch
+Type: Package
+Title: Tools for Cleaning and Matching Hierarchically-Structured Data
+Version: 0.1.0
+Authors@R: c(
+    person("Patrick", "Barks", email = "patrick.barks@epicentre.msf.org", role = c("aut", "cre"))
+    )
+Description: Tools for matching raw, potentially messy hierarchical data (e.g.
+    province, county, township) against a reference dataset.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.0.2
+Depends: 
+    R (>= 2.10)
+Imports:
+    dplyr,
+    rlang,
+    tidyselect,
+    stringi,
+    stringdist
+Suggests: 
+    testthat (>= 2.1.0)
