@@ -17,6 +17,9 @@
 #'   hierarchical columns in `raw` and whose names are the names of the
 #'   corresponding columns in `ref`
 #' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param std_fn Function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
@@ -26,7 +29,7 @@
 #'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
 #'   single match in `ref`. If `type == "left"`, returns all rows of `raw`. If
 #'   the hierarchical columns within `ref` have identical names to `raw`, the
-#'   output reference columns will be renamed with prefix "bind_".
+#'   returned reference columns will be renamed with prefix "bind_".
 #'
 #' @examples
 #' data(drc_raw)
@@ -43,8 +46,21 @@ hmatch_partial <- function(raw,
                            pattern_ref = pattern_raw,
                            by = NULL,
                            type = "left",
+                           std_fn = string_std,
                            fuzzy = FALSE,
                            max_dist = 1L) {
+
+  # raw <- drc_raw
+  # ref <- drc_ref
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # type = "left"
+  # std_fn = NULL
+  # fuzzy = FALSE
+  # max_dist = 1L
+
+  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   list_prep_ref <- prep_ref(raw = raw,
                             ref = ref,
@@ -65,8 +81,8 @@ hmatch_partial <- function(raw,
   raw_cols_orig <- names(raw)
   raw$TEMP_ROW_ID <- 1:nrow(raw)
 
-  raw_join <- add_join_columns(raw, by_raw, join_cols = by_raw_join)
-  ref_join <- add_join_columns(ref, by_ref, join_cols = by_ref_join)
+  raw_join <- add_join_columns(raw, by_raw, join_cols = by_raw_join, std_fn = std_fn)
+  ref_join <- add_join_columns(ref, by_ref, join_cols = by_ref_join, std_fn = std_fn)
 
   raw_ <- raw_join[,by_raw_join, drop = FALSE]
   ref_ <- ref_join[,by_ref_join, drop = FALSE]
@@ -118,7 +134,7 @@ hmatch_partial <- function(raw,
 
   matches_out <- initial_matches_join[,c(raw_cols_orig, names(ref))]
   matches_out <- corresponding_levels(matches_out, by_raw, by_ref)
-  matches_out$TEMP_IS_MATCH <- "MATCH"
+  matches_out$TEMP_IS_MATCH <- if (nrow(matches_out) > 0) "MATCH" else character(0)
 
   out <- dplyr::left_join(raw, matches_out, by = raw_cols_orig)
 

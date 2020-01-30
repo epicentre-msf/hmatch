@@ -15,12 +15,15 @@
 #'   hierarchical columns in `raw` and whose names are the names of the
 #'   corresponding columns in `ref`
 #' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param std_fn Function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
 #'   single match in `ref`. If `type == "left"`, returns all rows of `raw`. If
 #'   the hierarchical columns within `ref` have identical names to `raw`, the
-#'   output reference columns will be renamed with prefix "bind_".
+#'   returned reference columns will be renamed with prefix "bind_".
 #'
 #' @examples
 #' data(drc_raw)
@@ -36,7 +39,18 @@ hmatch_exact <- function(raw,
                          pattern_raw = NULL,
                          pattern_ref = pattern_raw,
                          by = NULL,
-                         type = "left") {
+                         type = "left",
+                         std_fn = string_std) {
+
+  # raw <- drc_raw
+  # ref <- drc_ref
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # type = "left"
+  # std_fn = string_std
+
+  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   list_prep_ref <- prep_ref(raw = raw,
                             ref = ref,
@@ -49,8 +63,8 @@ hmatch_exact <- function(raw,
   by_ref <- list_prep_ref$by_ref
   by_join <- list_prep_ref$by_join
 
-  raw_join <- add_join_columns(raw, by_raw, join_cols = by_join)
-  ref_join <- add_join_columns(ref, by_ref, join_cols = by_join)
+  raw_join <- add_join_columns(raw, by_raw, join_cols = by_join, std_fn = std_fn)
+  ref_join <- add_join_columns(ref, by_ref, join_cols = by_join, std_fn = std_fn)
 
   ref_join$TEMP_IS_MATCH <- "MATCH"
 
@@ -61,4 +75,3 @@ hmatch_exact <- function(raw,
 
   out[,!names(out) %in% "TEMP_IS_MATCH", drop = FALSE]
 }
-

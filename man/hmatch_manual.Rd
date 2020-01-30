@@ -13,7 +13,8 @@ hmatch_manual(
   pattern_man = pattern_raw,
   by = NULL,
   code_col = "pcode",
-  type = "left"
+  type = "left",
+  std_fn = string_std
 )
 }
 \arguments{
@@ -39,12 +40,16 @@ the corresponding columns in \code{ref}}
 \item{code_col}{name of the code column within \code{ref} and \code{man}}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
+
+\item{std_fn}{Function to standardize strings during matching. Defaults to
+\code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
+also \link{string_standardization}.}
 }
 \value{
 A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
 and \code{ref}, based on the matches specified in \code{man}. If \code{type == "inner"},
 returns only the rows of \code{raw} with a single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}. If the hierarchical columns within
-\code{ref} have identical names to \code{raw}, the output reference columns will be
+\code{ref} have identical names to \code{raw}, the returned reference columns will be
 renamed with prefix "bind_".
 }
 \description{

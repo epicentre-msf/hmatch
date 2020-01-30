@@ -1,17 +1,12 @@
 
 
 #' @noRd
-#' @importFrom stringi stri_trans_general
-format_geocols <- function(x) {
-  xx <- tolower(gsub("[[:space:]]+|[[:punct:]]+", "_", x))
-  return(stringi::stri_trans_general(xx, id = "Latin-ASCII"))
-}
-
-
-#' @noRd
 #' @importFrom dplyr mutate_all bind_cols
-add_join_columns <- function(dat, by, join_cols, fn = format_geocols) {
-  bind_ <- dplyr::mutate_all(dat[, by, drop = FALSE], fn)
+add_join_columns <- function(dat, by, join_cols, std_fn = NULL) {
+  bind_ <- dat[, by, drop = FALSE]
+  if (!is.null(std_fn)) {
+    bind_ <- dplyr::mutate_all(bind_, std_fn)
+  }
   names(bind_) <- join_cols
   dplyr::bind_cols(dat, bind_)
 }
@@ -166,5 +161,4 @@ max_before_false <- function(x) {
     return(length(x))
   }
 }
-
 

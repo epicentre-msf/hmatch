@@ -18,12 +18,15 @@
 #'   the corresponding columns in `ref`
 #' @param code_col name of the code column within `ref` and `man`
 #' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param std_fn Function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
 #'   returns only the rows of `raw` with a single match in `ref`. If `type ==
 #'   "left"`, returns all rows of `raw`. If the hierarchical columns within
-#'   `ref` have identical names to `raw`, the output reference columns will be
+#'   `ref` have identical names to `raw`, the returned reference columns will be
 #'   renamed with prefix "bind_".
 #'
 #' @examples
@@ -44,7 +47,8 @@ hmatch_manual <- function(raw,
                           pattern_man = pattern_raw,
                           by = NULL,
                           code_col = "pcode",
-                          type = "left") {
+                          type = "left",
+                          std_fn = string_std) {
 
   # raw <- drc_raw
   # ref <- drc_ref
@@ -55,6 +59,8 @@ hmatch_manual <- function(raw,
   # by = NULL
   # code_col = "pcode"
   # type = "left"
+
+  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   list_prep_ref <- prep_ref(raw = raw,
                             ref = ref,
@@ -75,11 +81,11 @@ hmatch_manual <- function(raw,
   by_man <- list_prep_ref$by_ref
   by_join <- list_prep_ref$by_join
 
-  raw_join <- add_join_columns(raw, by_raw, join_cols = by_join)
+  raw_join <- add_join_columns(raw, by_raw, join_cols = by_join, std_fn = std_fn)
 
   man$TEMP_IS_MATCH <- "MATCH"
 
-  man_join <- add_join_columns(man, by_man, join_cols = by_join)
+  man_join <- add_join_columns(man, by_man, join_cols = by_join, std_fn = std_fn)
   man_ <- unique(man_join[,c(by_join, code_col, "TEMP_IS_MATCH")])
 
   if (any(duplicated(man_[, by_join, drop = FALSE]))) {

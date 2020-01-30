@@ -11,6 +11,7 @@ hmatch_partial(
   pattern_ref = pattern_raw,
   by = NULL,
   type = "left",
+  std_fn = string_std,
   fuzzy = FALSE,
   max_dist = 1L
 )
@@ -31,6 +32,10 @@ corresponding columns in \code{ref}}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 
+\item{std_fn}{Function to standardize strings during matching. Defaults to
+\code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
+also \link{string_standardization}.}
+
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
 
@@ -42,7 +47,7 @@ A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
 and \code{ref}. If \code{type == "inner"}, returns only the rows of \code{raw} with a
 single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}. If
 the hierarchical columns within \code{ref} have identical names to \code{raw}, the
-output reference columns will be renamed with prefix "bind_".
+returned reference columns will be renamed with prefix "bind_".
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.
