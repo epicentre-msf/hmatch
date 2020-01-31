@@ -13,11 +13,11 @@
 #'   of hierarchical values to the code within `ref` to which those values
 #'   correspond
 #' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
+#'   (and `man` if given)
 #' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#' @param pattern_man regex pattern to match the hierarchical columns in `man`
 #' @param by named character vector whose elements are the names of the
-#'   geo-columns in `raw` and whose names are the names of the corresponding
-#'   geo-columns in `ref` (and `man`, if given)
+#'   hierarchical columns in `raw` (and `man`, if given), and whose names are
+#'   the names of the corresponding columns in `ref`
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man` (only required if argument `man` is given)
 #' @param std_fn Function to standardize strings during matching. Defaults to
@@ -46,31 +46,26 @@
 #' @import rlang dplyr
 #' @export hmatch_best
 hmatch_best <- function(raw,
-                         ref,
-                         man = NULL,
-                         pattern_raw = NULL,
-                         pattern_ref = pattern_raw,
-                         pattern_man = pattern_raw,
-                         by = NULL,
-                         code_col = NULL,
-                         std_fn = string_std,
-                         fuzzy = FALSE,
-                         max_dist = 1L) {
+                        ref,
+                        man = NULL,
+                        pattern_raw = NULL,
+                        pattern_ref = NULL,
+                        by = NULL,
+                        code_col = NULL,
+                        std_fn = string_std,
+                        fuzzy = FALSE,
+                        max_dist = 1L) {
 
-  # raw <- drc_raw
-  # ref <- drc_ref
-  # man <- NULL
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
-  # pattern_man = pattern_raw
-  # by = NULL
-  # code_col <- NULL
-  # fuzzy = FALSE
-  # max_dist = 1L
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   raw$ROW_ID_TEMP <- 1:nrow(raw)
+
+  list_prep_ref <- prep_ref(raw = raw,
+                            ref = ref,
+                            pattern_raw = pattern_raw,
+                            pattern_ref = pattern_ref,
+                            by = by)
 
   ## manual match
   if (!is.null(man)) {
@@ -80,13 +75,14 @@ hmatch_best <- function(raw,
                               man,
                               pattern_raw = pattern_raw,
                               pattern_ref = pattern_ref,
-                              pattern_man = pattern_man,
                               by = by,
                               code_col = code_col,
                               type = "inner",
                               std_fn = std_fn)
 
-    m_manual <- m_manual[,c("ROW_ID_TEMP", code_col)]
+    m_manual$TEMP_CODE_COL <- hcodes_str(m_manual, by = list_prep_ref$by_ref)
+
+    m_manual <- m_manual[,c("ROW_ID_TEMP", "TEMP_CODE_COL")]
     m_manual$match_type <- "manual"
     raw_no_manual <- raw[!raw$ROW_ID_TEMP %in% m_manual$ROW_ID_TEMP,]
 
@@ -95,24 +91,16 @@ hmatch_best <- function(raw,
     raw_no_manual <- raw
   }
 
-  ## prep ref
-  list_prep_ref <- prep_ref(raw = raw,
-                            ref = ref,
-                            pattern_raw = pattern_raw,
-                            pattern_ref = pattern_ref,
-                            by = by)
-
   ref <- list_prep_ref$ref
   by_raw <- list_prep_ref$by_raw
   by_ref <- list_prep_ref$by_ref
 
   by <- setNames(by_ref, by_raw)
-  max_level <- length(by)
+  max_level <- length(by_raw)
 
-  if (is.null(code_col)) {
-    code_col <- "TEMP_CODE_COL"
-    ref$TEMP_CODE_COL <- hcodes_str(ref, by = by_ref)
-  }
+  code_col <- "TEMP_CODE_COL"
+
+  ref$TEMP_CODE_COL <- hcodes_str(ref, by = by)
 
   ## exact match
   m_exact <- hmatch_exact(raw_no_manual, ref, by = by, type = "inner", std_fn = std_fn)

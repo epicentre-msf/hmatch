@@ -10,8 +10,7 @@ hmatch_best(
   ref,
   man = NULL,
   pattern_raw = NULL,
-  pattern_ref = pattern_raw,
-  pattern_man = pattern_raw,
+  pattern_ref = NULL,
   by = NULL,
   code_col = NULL,
   std_fn = string_std,
@@ -29,15 +28,14 @@ messy data}
 of hierarchical values to the code within \code{ref} to which those values
 correspond}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}}
+\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
+(and \code{man} if given)}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}}
 
-\item{pattern_man}{regex pattern to match the hierarchical columns in \code{man}}
-
 \item{by}{named character vector whose elements are the names of the
-geo-columns in \code{raw} and whose names are the names of the corresponding
-geo-columns in \code{ref} (and \code{man}, if given)}
+hierarchical columns in \code{raw} (and \code{man}, if given), and whose names are
+the names of the corresponding columns in \code{ref}}
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man} (only required if argument \code{man} is given)}

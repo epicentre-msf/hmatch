@@ -16,7 +16,7 @@ test_that("String standardization", {
   m_partial_no_std <- hmatch_partial(drc_raw_upr, drc_ref, type = "inner", std_fn = NULL)
   expect_equal(nrow(m_partial_no_std), 0L)
 
-  m_best_no_std <- hmatch_best(drc_raw_upr, drc_ref, code_col = "pcode", std_fn = NULL)
+  m_best_no_std <- hmatch_best(drc_raw_upr, drc_ref, std_fn = NULL)
   expect_true(all(is.na(m_best_no_std$match_type)))
 })
 

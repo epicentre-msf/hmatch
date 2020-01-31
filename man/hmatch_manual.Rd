@@ -10,9 +10,8 @@ hmatch_manual(
   man,
   pattern_raw = NULL,
   pattern_ref = pattern_raw,
-  pattern_man = pattern_raw,
   by = NULL,
-  code_col = "pcode",
+  code_col,
   type = "left",
   std_fn = string_std
 )
@@ -27,17 +26,17 @@ messy data}
 of hierarchical values to the code within \code{ref} to which those values
 correspond}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}}
+\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
+and \code{man}}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}}
 
-\item{pattern_man}{regex pattern to match the hierarchical columns in \code{man}}
-
 \item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{raw} and \code{man} and whose names are the names of
+hierarchical columns in \code{raw} and \code{man}, and whose names are the names of
 the corresponding columns in \code{ref}}
 
-\item{code_col}{name of the code column within \code{ref} and \code{man}}
+\item{code_col}{name of the code column containing codes for matching \code{ref}
+and \code{man}}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 
@@ -60,8 +59,19 @@ of manually-specified matches.
 \examples{
 data(drc_raw)
 data(drc_ref)
-data(drc_man)
 
-hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "pcode")
+# create hcodes in ref
+drc_ref$hcode <- hcodes_int(drc_ref, pattern = "^adm")
+
+# create df mapping sets of raw hierarchical values to codes within ref
+drc_man <- data.frame(adm1 = NA_character_,
+                      adm2 = NA_character_,
+                      adm3 = NA_character_,
+                      adm4 = "matanda_ngule",
+                      hcode = "1122",
+                      stringsAsFactors = FALSE)
+
+# find manual matches
+hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "hcode")
 
 }

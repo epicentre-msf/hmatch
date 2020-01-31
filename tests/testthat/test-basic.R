@@ -9,11 +9,14 @@ test_that("Basic functionality", {
   expect_equal(nrow(m_exact_l), nrow(drc_raw))
 
   ## manual join
-  m_manual_i <- hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "pcode", type = "inner")
+  drc_ref_code <- drc_ref
+  drc_ref_code$pcode <- hcodes_str(drc_ref_code, "adm")
+
+  m_manual_i <- hmatch_manual(drc_raw, drc_ref_code, drc_man, code_col = "pcode", type = "inner")
   expect_is(m_manual_i, "data.frame")
   expect_lte(nrow(m_manual_i), nrow(drc_raw))
 
-  m_manual_l <- hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "pcode", type = "left")
+  m_manual_l <- hmatch_manual(drc_raw, drc_ref_code, drc_man, code_col = "pcode", type = "left")
   expect_equal(nrow(m_manual_l), nrow(drc_raw))
 
   ## partial join
@@ -38,7 +41,7 @@ test_that("Basic functionality", {
   expect_equal(nrow(m_best), nrow(drc_raw))
 
   ## best join (with manual)
-  m_best_man <- hmatch_best(drc_raw, drc_ref, drc_man, code_col = "pcode", fuzzy = TRUE)
+  m_best_man <- hmatch_best(drc_raw, drc_ref_code, drc_man, code_col = "pcode", fuzzy = TRUE)
   expect_is(m_best_man, "data.frame")
   expect_equal(nrow(m_best_man), nrow(drc_raw))
 
