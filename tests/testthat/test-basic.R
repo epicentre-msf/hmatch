@@ -33,7 +33,7 @@ test_that("Basic functionality", {
   expect_gte(nrow(m_fuzzy_l), nrow(drc_raw))
 
   ## best join (no manual)
-  m_best <- hmatch_best(drc_raw, drc_ref, code_col = "pcode", fuzzy = TRUE)
+  m_best <- hmatch_best(drc_raw, drc_ref, fuzzy = TRUE)
   expect_is(m_best, "data.frame")
   expect_equal(nrow(m_best), nrow(drc_raw))
 

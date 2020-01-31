@@ -18,7 +18,8 @@
 #' @param by named character vector whose elements are the names of the
 #'   geo-columns in `raw` and whose names are the names of the corresponding
 #'   geo-columns in `ref` (and `man`, if given)
-#' @param code_col name of the code column within `ref` (and `man`, if given)
+#' @param code_col name of the code column containing codes for matching `ref`
+#'   and `man` (only required if argument `man` is given)
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -51,7 +52,7 @@ hmatch_best <- function(raw,
                          pattern_ref = pattern_raw,
                          pattern_man = pattern_raw,
                          by = NULL,
-                         code_col,
+                         code_col = NULL,
                          std_fn = string_std,
                          fuzzy = FALSE,
                          max_dist = 1L) {
@@ -63,7 +64,7 @@ hmatch_best <- function(raw,
   # pattern_ref = pattern_raw
   # pattern_man = pattern_raw
   # by = NULL
-  # code_col <- "pcode"
+  # code_col <- NULL
   # fuzzy = FALSE
   # max_dist = 1L
 
@@ -107,6 +108,11 @@ hmatch_best <- function(raw,
 
   by <- setNames(by_ref, by_raw)
   max_level <- length(by)
+
+  if (is.null(code_col)) {
+    code_col <- "TEMP_CODE_COL"
+    ref$TEMP_CODE_COL <- hcodes_str(ref, by = by_ref)
+  }
 
   ## exact match
   m_exact <- hmatch_exact(raw_no_manual, ref, by = by, type = "inner", std_fn = std_fn)
@@ -159,8 +165,8 @@ hmatch_best <- function(raw,
 
   ## get best pcode
   raw_best_single <- raw_best[!raw_best$ROW_ID_TEMP %in% dup_ids,]
-  raw_best_single$pcode <- best_geocode(raw_best_single, code_col)
-  raw_best_single$match_type <- if(nrow(raw_best_single) > 0) "best_single" else character(0)
+  raw_best_single[[code_col]] <- best_geocode(raw_best_single, code_col)
+  raw_best_single$match_type <- if (nrow(raw_best_single) > 0) "best_single" else character(0)
   raw_best_single <- raw_best_single[!is.na(raw_best_single[[code_col]]),c("ROW_ID_TEMP", code_col, "match_type")]
 
   raw_best_multiple <- raw_best[raw_best$ROW_ID_TEMP %in% dup_ids,]
@@ -168,11 +174,11 @@ hmatch_best <- function(raw,
   if (nrow(raw_best_multiple) > 0) {
     raw_best_multiple <- raw_best_multiple %>%
       group_by(!!sym("ROW_ID_TEMP")) %>%
-      do(best_geocode_helper(.data, pattern = code_col)) %>%
+      do(best_geocode_helper(.data, pattern = code_col, code_col = code_col)) %>%
       ungroup()
   }
 
-  raw_best_multiple$match_type <- if(nrow(raw_best_multiple) > 0) "best_multi" else character(0)
+  raw_best_multiple$match_type <- if (nrow(raw_best_multiple) > 0) "best_multi" else character(0)
   raw_best_multiple <- raw_best_multiple[!is.na(raw_best_multiple[[code_col]]),]
 
   ref_bind <- dplyr::bind_rows(m_manual,
@@ -184,10 +190,10 @@ hmatch_best <- function(raw,
 
   ref_bind <- ref_bind[order(ref_bind$ROW_ID_TEMP),] %>%
     dplyr::left_join(ref, by = code_col) %>%
-    dplyr::select("ROW_ID_TEMP", all_of(by_ref), "pcode", "match_type")
+    dplyr::select("ROW_ID_TEMP", all_of(names(ref)), "match_type")
 
   out <- dplyr::left_join(raw, ref_bind, by = "ROW_ID_TEMP")
 
-  return(out[,!names(out) %in% "ROW_ID_TEMP", drop = FALSE])
+  return(out[,!names(out) %in% c("ROW_ID_TEMP", "TEMP_CODE_COL"), drop = FALSE])
 }
 

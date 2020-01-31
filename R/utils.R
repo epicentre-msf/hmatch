@@ -1,5 +1,6 @@
 
 
+
 #' @noRd
 #' @importFrom dplyr mutate_all bind_cols
 add_join_columns <- function(dat, by, join_cols, std_fn = NULL) {
@@ -108,16 +109,17 @@ prep_ref <- function(raw, ref, pattern_raw, pattern_ref, by, join_suffix = "___J
 
 
 #' @noRd
-best_geocode_group <- function(dat, pattern, id_col, split = "__") {
+best_geocode_group <- function(dat, pattern, id_col, code_col, split = "__") {
   cols <- grep(pattern, names(dat), value = TRUE)
   dat_ <- dat[,sort(cols), drop = FALSE]
   dat_split <- split(dat_, dat[[id_col]])
-  vapply(dat_split, best_geocode_helper, character(1), USE.NAMES = FALSE)
+  vapply(dat_split, best_geocode_helper, character(1), code_col = code_col,
+         USE.NAMES = FALSE)
 }
 
 
 #' @noRd
-best_geocode_helper <- function(dat, pattern, split = "__") {
+best_geocode_helper <- function(dat, pattern, code_col, split = "__") {
 
   cols <- grep(pattern, names(dat), value = TRUE)
   dat_ <- dat[, sort(cols), drop = FALSE]
@@ -140,8 +142,9 @@ best_geocode_helper <- function(dat, pattern, split = "__") {
   } else {
     code <- NA_character_
   }
-  return(data.frame(pcode = code, stringsAsFactors = FALSE))
+  return(setNames(data.frame(code, stringsAsFactors = FALSE), code_col))
 }
+
 
 
 #' @noRd

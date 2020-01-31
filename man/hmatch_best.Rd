@@ -13,7 +13,7 @@ hmatch_best(
   pattern_ref = pattern_raw,
   pattern_man = pattern_raw,
   by = NULL,
-  code_col,
+  code_col = NULL,
   std_fn = string_std,
   fuzzy = FALSE,
   max_dist = 1L
@@ -39,7 +39,8 @@ correspond}
 geo-columns in \code{raw} and whose names are the names of the corresponding
 geo-columns in \code{ref} (and \code{man}, if given)}
 
-\item{code_col}{name of the code column within \code{ref} (and \code{man}, if given)}
+\item{code_col}{name of the code column containing codes for matching \code{ref}
+and \code{man} (only required if argument \code{man} is given)}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
