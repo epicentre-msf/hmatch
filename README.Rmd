@@ -6,8 +6,8 @@ output: github_document
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
-  comment = "#>",
+  collapse = TRUE,
+  comment = "##",
   fig.path = "man/figures/"
 )
 options(digits = 4, width = 160)
