@@ -12,10 +12,12 @@
 #'   messy data
 #' @param ref `data.frame` containing hierarchical columns with reference data
 #' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
+#'   (see also \link{specifying_columns})
 #' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
+#'   (see also \link{specifying_columns})
 #' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `raw` and whose names are the names of the
-#'   corresponding columns in `ref`
+#'   hierarchical columns in `ref` and whose names are the names of the
+#'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
@@ -50,16 +52,6 @@ hmatch_partial <- function(raw,
                            fuzzy = FALSE,
                            max_dist = 1L) {
 
-  # raw <- drc_raw
-  # ref <- drc_ref
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
-  # by = NULL
-  # type = "left"
-  # std_fn = NULL
-  # fuzzy = FALSE
-  # max_dist = 1L
-
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   list_prep_ref <- prep_ref(raw = raw,
@@ -79,7 +71,7 @@ hmatch_partial <- function(raw,
   max_level <- length(by_raw)
 
   raw_cols_orig <- names(raw)
-  raw$TEMP_ROW_ID <- 1:nrow(raw)
+  raw$TEMP_ROW_ID_PART <- 1:nrow(raw)
 
   raw_join <- add_join_columns(raw, by_raw, join_cols = by_raw_join, std_fn = std_fn)
   ref_join <- add_join_columns(ref, by_ref, join_cols = by_ref_join, std_fn = std_fn)
@@ -140,9 +132,9 @@ hmatch_partial <- function(raw,
 
   if (type == "inner") {
     out <- out[!is.na(out$TEMP_IS_MATCH),]
-    dup_ids <- out$TEMP_ROW_ID[duplicated(out$TEMP_ROW_ID)]
-    out <- out[!out$TEMP_ROW_ID %in% dup_ids,]
+    dup_ids <- out$TEMP_ROW_ID_PART[duplicated(out$TEMP_ROW_ID_PART)]
+    out <- out[!out$TEMP_ROW_ID_PART %in% dup_ids,]
   }
 
-  out[,!names(out) %in% c("TEMP_ROW_ID", "TEMP_IS_MATCH"), drop = FALSE]
+  out[,!names(out) %in% c("TEMP_ROW_ID_PART", "TEMP_IS_MATCH"), drop = FALSE]
 }

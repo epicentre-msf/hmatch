@@ -2,6 +2,7 @@
 
 export(hcodes_int)
 export(hcodes_str)
+export(hmatch)
 export(hmatch_best)
 export(hmatch_exact)
 export(hmatch_manual)

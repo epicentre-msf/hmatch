@@ -25,8 +25,8 @@ messy data}
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}}
 
 \item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{raw} and whose names are the names of the
-corresponding columns in \code{ref}}
+hierarchical columns in \code{ref} and whose names are the names of the
+corresponding columns in \code{raw}}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 

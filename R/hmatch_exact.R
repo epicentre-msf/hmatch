@@ -12,8 +12,8 @@
 #' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
 #' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
 #' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `raw` and whose names are the names of the
-#'   corresponding columns in `ref`
+#'   hierarchical columns in `ref` and whose names are the names of the
+#'   corresponding columns in `raw`
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See

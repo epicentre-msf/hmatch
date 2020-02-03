@@ -11,11 +11,12 @@
 #'   of hierarchical values to the code within `ref` to which those values
 #'   correspond
 #' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
-#'   and `man`
+#'   and `man` (see also \link{specifying_columns})
 #' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
+#'   (see also \link{specifying_columns})
 #' @param by named character vector whose elements are the names of the
 #'   hierarchical columns in `raw` and `man`, and whose names are the names of
-#'   the corresponding columns in `ref`
+#'   the corresponding columns in `ref` (see also \link{specifying_columns})
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man`
 #' @param type type of join ("inner" or "left") (defaults to "left")

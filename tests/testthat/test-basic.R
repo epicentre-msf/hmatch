@@ -35,15 +35,23 @@ test_that("Basic functionality", {
   m_fuzzy_l <- hmatch_partial(drc_raw, drc_ref, type = "left", fuzzy = TRUE, max_dist = 2)
   expect_gte(nrow(m_fuzzy_l), nrow(drc_raw))
 
-  ## best join (no manual)
-  m_best <- hmatch_best(drc_raw, drc_ref, fuzzy = TRUE)
-  expect_is(m_best, "data.frame")
-  expect_equal(nrow(m_best), nrow(drc_raw))
+  ## rolling join
+  m_best_i <- hmatch_best(drc_raw, drc_ref, type = "inner")
+  expect_is(m_best_i, "data.frame")
+  expect_lte(nrow(m_best_i), nrow(drc_raw))
 
-  ## best join (with manual)
-  m_best_man <- hmatch_best(drc_raw, drc_ref_code, drc_man, code_col = "pcode", fuzzy = TRUE)
-  expect_is(m_best_man, "data.frame")
-  expect_equal(nrow(m_best_man), nrow(drc_raw))
+  m_best_l <- hmatch_best(drc_raw, drc_ref, type = "left")
+  expect_gte(nrow(m_best_l), nrow(drc_raw))
+
+  ## composite hmatch (no manual)
+  m_comp <- hmatch(drc_raw, drc_ref, fuzzy = TRUE)
+  expect_is(m_comp, "data.frame")
+  expect_equal(nrow(m_comp), nrow(drc_raw))
+
+  ## composite hmatch (with manual)
+  m_comp_man <- hmatch(drc_raw, drc_ref_code, drc_man, code_col = "pcode", fuzzy = TRUE)
+  expect_is(m_comp_man, "data.frame")
+  expect_equal(nrow(m_comp_man), nrow(drc_raw))
 
 })
 

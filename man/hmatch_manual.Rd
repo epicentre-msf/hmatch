@@ -27,13 +27,14 @@ of hierarchical values to the code within \code{ref} to which those values
 correspond}
 
 \item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
-and \code{man}}
+and \code{man} (see also \link{specifying_columns})}
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}}
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
+(see also \link{specifying_columns})}
 
 \item{by}{named character vector whose elements are the names of the
 hierarchical columns in \code{raw} and \code{man}, and whose names are the names of
-the corresponding columns in \code{ref}}
+the corresponding columns in \code{ref} (see also \link{specifying_columns})}
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man}}

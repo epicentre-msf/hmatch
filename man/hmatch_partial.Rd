@@ -22,13 +22,15 @@ messy data}
 
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}}
+\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
+(see also \link{specifying_columns})}
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}}
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
+(see also \link{specifying_columns})}
 
 \item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{raw} and whose names are the names of the
-corresponding columns in \code{ref}}
+hierarchical columns in \code{ref} and whose names are the names of the
+corresponding columns in \code{raw} (see also \link{specifying_columns})}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 

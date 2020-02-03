@@ -9,8 +9,8 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
-An R package for cleaning and matching messy hierarchical data
-(e.g. hierarchically-nested adminstrative districts).
+An R package for cleaning and matching messy hierarchical data (
+e.g. hierarchically-nested adminstrative districts).
 
 ## Installation
 
@@ -104,8 +104,8 @@ hmatch_partial(drc_raw, drc_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
 
 ##### Manual matching
 
-Manually-specified corrections, linking sets of hierarchical levels in
-the raw data to a corresponding code column in the reference data.
+Manually-specified matches, linking sets of hierarchical levels in the
+raw data to a corresponding code column in the reference data.
 
 ``` r
 drc_man <- data.frame(adm1 = NA_character_,
@@ -122,12 +122,41 @@ hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "hcode", type = "inner")
 
 ##### Best-possible matching
 
-Find the best-possible match (i.e. highest resolution), using a variety
-of matching strategies implemented in
-turn.
+Identify potential matches at each successive level, starting with only
+the first level, then the first and second level, etc. The best-possible
+match then reflects the highest-level that is consistent among all
+possible matches to the given row of raw data.
 
 ``` r
-hmatch_best(raw = drc_raw, ref = drc_ref, man = drc_man, code_col = "hcode")
+hmatch_best(raw = drc_raw, ref = drc_ref)
+##    id      adm1    adm2     adm3          adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode  match_type
+## 1   1 Nord-Kivu Butembo  Matanda         Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122 best_single
+## 2   2 Nord-Kivu   Katwa     <NA>          <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200 best_single
+## 3   3      <NA> Butembo     <NA>        Katsya     4 Nord-Kivu   Butembo    Katsya    Katsya  1112 best_single
+## 4   4 Nord-Kivu    <NA>     <NA>        Wayene     4 Nord-Kivu     Katwa  Makerere    Wayene  1212 best_single
+## 5   5      <NA>    <NA>     <NA>     Kasongomi     4 Nord-Kivu   Butembo   Matanda Kasongomi  1121 best_single
+## 6   6 Nord-Kivu  Katwua Makerere          <NA>     1 Nord-Kivu      <NA>      <NA>      <NA>  1000 best_single
+## 7   7 nord kivu butemba  matando          <NA>     1 Nord-Kivu      <NA>      <NA>      <NA>  1000 best_single
+## 8   8 Nord-Kivu    <NA>     <NA>       Vutetse     2 Nord-Kivu   Butembo      <NA>      <NA>  1100  best_multi
+## 9   9 Nord-Kivu Butembo   Bagira        Mugaba     2 Nord-Kivu   Butembo      <NA>      <NA>  1100 best_single
+## 10 10      <NA>    <NA>  Vulindi       Lwamiso    NA      <NA>      <NA>      <NA>      <NA>  <NA>        <NA>
+## 11 11      <NA>    <NA>     <NA> matanda_ngule    NA      <NA>      <NA>      <NA>      <NA>  <NA>        <NA>
+```
+
+##### The all-stragies approach
+
+Implement all matching strategies in turn, from most to least strict:
+
+1.  (optional) manually-specified matching with `hmatch_manual()`
+2.  exact matching with `hmatch_exact()`
+3.  partial matching with `hmatch_partial()`
+4.  fuzzy partial matching with `hmatch_partial(..., fuzzy = TRUE)`
+5.  best-possible matching with `hmatch_best()`
+
+<!-- end list -->
+
+``` r
+hmatch(raw = drc_raw, ref = drc_ref, man = drc_man, code_col = "hcode")
 ##    id      adm1    adm2     adm3          adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode  match_type
 ## 1   1 Nord-Kivu Butembo  Matanda         Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122       exact
 ## 2   2 Nord-Kivu   Katwa     <NA>          <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200       exact
