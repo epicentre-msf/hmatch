@@ -71,7 +71,7 @@ hmatch_partial <- function(raw,
   max_level <- length(by_raw)
 
   raw_cols_orig <- names(raw)
-  raw$TEMP_ROW_ID_PART <- 1:nrow(raw)
+  raw$TEMP_ROW_ID_PART <- seq_len(nrow(raw))
 
   raw_join <- add_join_columns(raw, by_raw, join_cols = by_raw_join, std_fn = std_fn)
   ref_join <- add_join_columns(ref, by_ref, join_cols = by_ref_join, std_fn = std_fn)

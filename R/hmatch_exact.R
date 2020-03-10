@@ -42,14 +42,6 @@ hmatch_exact <- function(raw,
                          type = "left",
                          std_fn = string_std) {
 
-  # raw <- drc_raw
-  # ref <- drc_ref
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
-  # by = NULL
-  # type = "left"
-  # std_fn = string_std
-
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   list_prep_ref <- prep_ref(raw = raw,

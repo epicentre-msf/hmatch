@@ -62,8 +62,12 @@ hmatch_manual <- function(raw,
                           type = "left",
                           std_fn = string_std) {
 
-
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+
+  if (code_col %in% names(raw)) {
+    warning("Column `code_col` already exists in `raw`, and will be overwritten")
+    raw <- raw[!names(raw) %in% code_col]
+  }
 
   list_prep_ref <- prep_ref(raw = raw,
                             ref = ref,

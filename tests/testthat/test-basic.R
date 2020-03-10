@@ -53,5 +53,10 @@ test_that("Basic functionality", {
   expect_is(m_comp_man, "data.frame")
   expect_equal(nrow(m_comp_man), nrow(drc_raw))
 
+  ## composite hmatch (all match exactly)
+  drc_raw_test <- drc_ref_code[,grepl("adm", names(drc_ref_code))]
+  m_comp_exact <- hmatch(drc_raw_test, drc_ref_code, drc_man, pattern_raw = "^adm", code_col = "pcode", fuzzy = TRUE)
+  expect_equal(nrow(m_comp_exact), nrow(drc_ref))
+  expect_true(all(m_comp_exact$match_type == "exact"))
 })
 

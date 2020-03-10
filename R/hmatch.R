@@ -61,7 +61,7 @@ hmatch <- function(raw,
                    ref,
                    man = NULL,
                    pattern_raw = NULL,
-                   pattern_ref = NULL,
+                   pattern_ref = pattern_raw,
                    by = NULL,
                    code_col = NULL,
                    std_fn = string_std,
@@ -70,13 +70,17 @@ hmatch <- function(raw,
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
-  raw$TEMP_ROW_ID_BEST <- 1:nrow(raw)
+  raw$TEMP_ROW_ID_BEST <- seq_len(nrow(raw))
 
   list_prep_ref <- prep_ref(raw = raw,
                             ref = ref,
                             pattern_raw = pattern_raw,
                             pattern_ref = pattern_ref,
                             by = by)
+
+
+  m_manual <- m_exact <- m_partial <- m_fuzzy <- m_roll <- NULL
+  raw_remaining <- raw
 
   ## manual match
   if (!is.null(man)) {
@@ -94,12 +98,8 @@ hmatch <- function(raw,
     m_manual$TEMP_CODE_COL_BEST <- hcodes_str(m_manual, by = list_prep_ref$by_ref)
 
     m_manual <- m_manual[,c("TEMP_ROW_ID_BEST", "TEMP_CODE_COL_BEST")]
-    m_manual$match_type <- "manual"
-    raw_no_manual <- raw[!raw$TEMP_ROW_ID_BEST %in% m_manual$TEMP_ROW_ID_BEST,]
-
-  } else {
-    m_manual <- NULL
-    raw_no_manual <- raw
+    m_manual$match_type <- if (nrow(m_manual) > 0) "manual" else character(0)
+    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_manual$TEMP_ROW_ID_BEST,]
   }
 
   ref <- list_prep_ref$ref
@@ -114,30 +114,35 @@ hmatch <- function(raw,
   ref$TEMP_CODE_COL_BEST <- hcodes_str(ref, by = by)
 
   ## exact match
-  m_exact <- hmatch_exact(raw_no_manual, ref, by = by, type = "inner", std_fn = std_fn)
-  m_exact <- m_exact[,c("TEMP_ROW_ID_BEST", code_col)]
-  m_exact$match_type <- if(nrow(m_exact) > 0) "exact" else character(0)
-  raw_no_exact <- raw_no_manual[!raw_no_manual$TEMP_ROW_ID_BEST %in% m_exact$TEMP_ROW_ID_BEST,]
+  if (nrow(raw_remaining) > 0) {
+    m_exact <- hmatch_exact(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn)
+    m_exact <- m_exact[,c("TEMP_ROW_ID_BEST", code_col)]
+    m_exact$match_type <- if (nrow(m_exact) > 0) "exact" else character(0)
+    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_exact$TEMP_ROW_ID_BEST,]
+  }
 
   ## partial join
-  m_partial <- hmatch_partial(raw_no_exact, ref, by = by, type = "inner", std_fn = std_fn)
-  m_partial <- m_partial[,c("TEMP_ROW_ID_BEST", code_col)]
-  m_partial$match_type <- if (nrow(m_partial) > 0) "partial" else character(0)
-  raw_no_partial <- raw_no_exact[!raw_no_exact$TEMP_ROW_ID_BEST %in% m_partial$TEMP_ROW_ID_BEST,]
+  if (nrow(raw_remaining) > 0) {
+    m_partial <- hmatch_partial(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn)
+    m_partial <- m_partial[,c("TEMP_ROW_ID_BEST", code_col)]
+    m_partial$match_type <- if (nrow(m_partial) > 0) "partial" else character(0)
+    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_partial$TEMP_ROW_ID_BEST,]
+  }
 
   ## partial-fuzzy join
-  m_fuzzy <- hmatch_partial(raw_no_partial, ref, by = by, type = "inner", std_fn = std_fn, fuzzy = TRUE)
-  m_fuzzy <- m_fuzzy[,c("TEMP_ROW_ID_BEST", code_col)]
-  m_fuzzy$match_type <- if (nrow(m_fuzzy) > 0) "fuzzy" else character(0)
-  raw_no_fuzzy <- raw_no_partial[!raw_no_partial$TEMP_ROW_ID_BEST %in% m_fuzzy$TEMP_ROW_ID_BEST,]
-
-  raw_all_codes <- raw_no_fuzzy
+  if (nrow(raw_remaining) > 0) {
+    m_fuzzy <- hmatch_partial(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn, fuzzy = TRUE)
+    m_fuzzy <- m_fuzzy[,c("TEMP_ROW_ID_BEST", code_col)]
+    m_fuzzy$match_type <- if (nrow(m_fuzzy) > 0) "fuzzy" else character(0)
+    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_fuzzy$TEMP_ROW_ID_BEST,]
+  }
 
   ## rolling join
-  m_roll <- hmatch_best(raw_no_fuzzy, ref, by = by, type = "inner",
-                        std_fn = std_fn, fuzzy = fuzzy, max_dist = max_dist)
-  m_roll <- m_roll[,c("TEMP_ROW_ID_BEST", code_col, "match_type")]
-
+  if (nrow(raw_remaining) > 0) {
+    m_roll <- hmatch_best(raw_remaining, ref, by = by, type = "inner",
+                          std_fn = std_fn, fuzzy = fuzzy, max_dist = max_dist)
+    m_roll <- m_roll[,c("TEMP_ROW_ID_BEST", code_col, "match_type")]
+  }
 
   ## combine results
   ref_bind <- dplyr::bind_rows(m_manual,

@@ -59,7 +59,7 @@ hmatch_best <- function(raw,
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
-  raw$TEMP_ROW_ID_ROLL <- 1:nrow(raw)
+  raw$TEMP_ROW_ID_ROLL <- seq_len(nrow(raw))
 
   list_prep_ref <- prep_ref(raw = raw,
                             ref = ref,

@@ -9,7 +9,7 @@ hmatch(
   ref,
   man = NULL,
   pattern_raw = NULL,
-  pattern_ref = NULL,
+  pattern_ref = pattern_raw,
   by = NULL,
   code_col = NULL,
   std_fn = string_std,
