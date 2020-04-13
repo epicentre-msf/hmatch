@@ -1,18 +1,14 @@
 
 library(readxl)
 
-drc_raw <- readxl::read_xlsx("data-raw/geo_raw_example.xlsx")
-drc_ref <- readxl::read_xlsx("data-raw/geo_ref_example.xlsx")
-drc_man <- readxl::read_xlsx("data-raw/geo_man_example.xlsx", col_types = "text")
+ne_raw <- readxl::read_xlsx("data-raw/geo_raw_example.xlsx")
+ne_ref <- readxl::read_xlsx("data-raw/geo_ref_example.xlsx")
 
-drc_raw <- as.data.frame(drc_raw)
-drc_ref <- as.data.frame(drc_ref)[,1:5]
-# drc_ref$hcode <- hcodes_int(drc_ref, "adm", prefix = "P")
-drc_man <- as.data.frame(drc_man)
+ne_raw <- as.data.frame(ne_raw)
+ne_ref <- as.data.frame(ne_ref)
 
-usethis::use_data(drc_raw,
-                  drc_ref,
-                  drc_man,
+usethis::use_data(ne_raw,
+                  ne_ref,
                   overwrite = TRUE)
 
 

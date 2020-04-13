@@ -9,8 +9,8 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
-An R package for cleaning and matching messy hierarchical data (
-e.g. hierarchically-nested adminstrative districts).
+An R package for cleaning and matching messy hierarchical data
+(e.g. hierarchically-nested adminstrative districts).
 
 ## Installation
 
@@ -26,9 +26,9 @@ remotes::install_github("epicentre-msf/hmatch")
 ``` r
 library(hmatch)
 
-# example datasets
-data(drc_raw)
-data(drc_ref)
+# example datasets (select counties in northereastern North America)
+data(ne_raw)
+data(ne_ref)
 ```
 
 #### Generate unique codes for each level in a reference dataset
@@ -37,24 +37,24 @@ Functions `hcodes_int()` and `hcodes_str()` can be used to create
 integer- or string-based codes, respectively.
 
 ``` r
-drc_ref$hcode <- hcodes_int(drc_ref, pattern = "^adm")
-drc_ref
-##    level      adm1    adm2     adm3      adm4 hcode
-## 1      1 Nord-Kivu    <NA>     <NA>      <NA>  1000
-## 2      2 Nord-Kivu Butembo     <NA>      <NA>  1100
-## 3      2 Nord-Kivu   Katwa     <NA>      <NA>  1200
-## 4      3 Nord-Kivu Butembo   Katsya      <NA>  1110
-## 5      3 Nord-Kivu Butembo  Matanda      <NA>  1120
-## 6      3 Nord-Kivu   Katwa Makerere      <NA>  1210
-## 7      4 Nord-Kivu Butembo   Katsya    Kahute  1111
-## 8      4 Nord-Kivu Butembo   Katsya    Katsya  1112
-## 9      4 Nord-Kivu Butembo   Katsya    Musavu  1113
-## 10     4 Nord-Kivu Butembo   Katsya   Vutetse  1114
-## 11     4 Nord-Kivu Butembo  Matanda Kasongomi  1121
-## 12     4 Nord-Kivu Butembo  Matanda     Ngule  1122
-## 13     4 Nord-Kivu Butembo  Matanda   Vutetse  1123
-## 14     4 Nord-Kivu   Katwa Makerere  Makerere  1211
-## 15     4 Nord-Kivu   Katwa Makerere    Wayene  1212
+ne_ref$hcode <- hcodes_int(ne_ref, pattern = "^adm")
+ne_ref
+##    level          adm0         adm1         adm2 hcode
+## 1      0        Canada         <NA>         <NA>   100
+## 2      0 United States         <NA>         <NA>   200
+## 3      1        Canada      Ontario         <NA>   110
+## 4      1 United States     New York         <NA>   220
+## 5      1 United States   New Jersey         <NA>   210
+## 6      1 United States Pennsylvania         <NA>   230
+## 7      2        Canada      Ontario      Toronto   111
+## 8      2        Canada      Ontario         York   112
+## 9      2 United States     New York        Kings   222
+## 10     2 United States     New York      Suffolk   223
+## 11     2 United States     New York    Jefferson   221
+## 12     2 United States   New Jersey       Bergen   211
+## 13     2 United States Pennsylvania Philadelphia   232
+## 14     2 United States Pennsylvania    Jefferson   231
+## 15     2 United States Pennsylvania         York   233
 ```
 
 #### Match messy hierarchically-structured data to a reference dataset
@@ -64,10 +64,10 @@ drc_ref
 Each hierarchical level must match in sequence.
 
 ``` r
-hmatch_exact(drc_raw, drc_ref, type = "inner")
-##   id      adm1    adm2    adm3  adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode
-## 1  1 Nord-Kivu Butembo Matanda Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122
-## 2  2 Nord-Kivu   Katwa    <NA>  <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200
+hmatch_exact(ne_raw, ne_ref, type = "inner")
+##   id          adm0     adm1    adm2 level     bind_adm0 bind_adm1 bind_adm2 hcode
+## 1  1 united states new york suffolk     2 United States  New York   Suffolk   223
+## 2  2        Canada  Ontario    <NA>     1        Canada   Ontario      <NA>   110
 ```
 
 ##### Partial matching
@@ -75,13 +75,12 @@ hmatch_exact(drc_raw, drc_ref, type = "inner")
 Allows for missing values at one or more level below the match level.
 
 ``` r
-hmatch_partial(drc_raw, drc_ref, type = "inner")
-##   id      adm1    adm2    adm3      adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode
-## 1  1 Nord-Kivu Butembo Matanda     Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122
-## 2  2 Nord-Kivu   Katwa    <NA>      <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200
-## 3  3      <NA> Butembo    <NA>    Katsya     4 Nord-Kivu   Butembo    Katsya    Katsya  1112
-## 4  4 Nord-Kivu    <NA>    <NA>    Wayene     4 Nord-Kivu     Katwa  Makerere    Wayene  1212
-## 5  5      <NA>    <NA>    <NA> Kasongomi     4 Nord-Kivu   Butembo   Matanda Kasongomi  1121
+hmatch_partial(ne_raw, ne_ref, type = "inner")
+##   id          adm0     adm1         adm2 level     bind_adm0    bind_adm1    bind_adm2 hcode
+## 1  1 united states new york      suffolk     2 United States     New York      Suffolk   223
+## 2  2        Canada  Ontario         <NA>     1        Canada      Ontario         <NA>   110
+## 3  3          <NA>     <NA> philadelphia     2 United States Pennsylvania Philadelphia   232
+## 4  4 United States     <NA>         York     2 United States Pennsylvania         York   233
 ```
 
 ##### Partial + fuzzy matching
@@ -91,15 +90,15 @@ Partial matching + fuzzy matching based on the
 package.
 
 ``` r
-hmatch_partial(drc_raw, drc_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
-##   id      adm1    adm2     adm3      adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode
-## 1  1 Nord-Kivu Butembo  Matanda     Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122
-## 2  2 Nord-Kivu   Katwa     <NA>      <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200
-## 3  3      <NA> Butembo     <NA>    Katsya     4 Nord-Kivu   Butembo    Katsya    Katsya  1112
-## 4  4 Nord-Kivu    <NA>     <NA>    Wayene     4 Nord-Kivu     Katwa  Makerere    Wayene  1212
-## 5  5      <NA>    <NA>     <NA> Kasongomi     4 Nord-Kivu   Butembo   Matanda Kasongomi  1121
-## 6  6 Nord-Kivu  Katwua Makerere      <NA>     3 Nord-Kivu     Katwa  Makerere      <NA>  1210
-## 7  7 nord kivu butemba  matando      <NA>     3 Nord-Kivu   Butembo   Matanda      <NA>  1120
+hmatch_partial(ne_raw, ne_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
+##   id          adm0        adm1         adm2 level     bind_adm0    bind_adm1    bind_adm2 hcode
+## 1  1 united states    new york      suffolk     2 United States     New York      Suffolk   223
+## 2  2        Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110
+## 3  3          <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232
+## 4  4 United States        <NA>         York     2 United States Pennsylvania         York   233
+## 5  5          <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221
+## 6  6          <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232
+## 7  7 united_states        <NA>         king     2 United States     New York        Kings   222
 ```
 
 ##### Manual matching
@@ -108,16 +107,15 @@ Manually-specified matches, linking sets of hierarchical levels in the
 raw data to a corresponding code column in the reference data.
 
 ``` r
-drc_man <- data.frame(adm1 = NA_character_,
-                      adm2 = NA_character_,
-                      adm3 = NA_character_,
-                      adm4 = "matanda_ngule",
-                      hcode = "1122",
-                      stringsAsFactors = FALSE)
+ne_man <- data.frame(adm0 = NA_character_,
+                     adm1 = NA_character_,
+                     adm2 = "NJ_Bergen",
+                     hcode = "211",
+                     stringsAsFactors = FALSE)
 
-hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "hcode", type = "inner")
-##    id adm1 adm2 adm3          adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode
-## 11 11 <NA> <NA> <NA> matanda_ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122
+hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode", type = "inner")
+##   id adm0 adm1      adm2 level     bind_adm0  bind_adm1 bind_adm2 hcode
+## 8  8 <NA> <NA> NJ_Bergen     2 United States New Jersey    Bergen   211
 ```
 
 ##### Best-possible matching
@@ -128,22 +126,21 @@ match then reflects the highest-level that is consistent among all
 possible matches to the given row of raw data.
 
 ``` r
-hmatch_best(raw = drc_raw, ref = drc_ref)
-##    id      adm1    adm2     adm3          adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode  match_type
-## 1   1 Nord-Kivu Butembo  Matanda         Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122 best_single
-## 2   2 Nord-Kivu   Katwa     <NA>          <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200 best_single
-## 3   3      <NA> Butembo     <NA>        Katsya     4 Nord-Kivu   Butembo    Katsya    Katsya  1112 best_single
-## 4   4 Nord-Kivu    <NA>     <NA>        Wayene     4 Nord-Kivu     Katwa  Makerere    Wayene  1212 best_single
-## 5   5      <NA>    <NA>     <NA>     Kasongomi     4 Nord-Kivu   Butembo   Matanda Kasongomi  1121 best_single
-## 6   6 Nord-Kivu  Katwua Makerere          <NA>     1 Nord-Kivu      <NA>      <NA>      <NA>  1000 best_single
-## 7   7 nord kivu butemba  matando          <NA>     1 Nord-Kivu      <NA>      <NA>      <NA>  1000 best_single
-## 8   8 Nord-Kivu    <NA>     <NA>       Vutetse     2 Nord-Kivu   Butembo      <NA>      <NA>  1100  best_multi
-## 9   9 Nord-Kivu Butembo   Bagira        Mugaba     2 Nord-Kivu   Butembo      <NA>      <NA>  1100 best_single
-## 10 10      <NA>    <NA>  Vulindi       Lwamiso    NA      <NA>      <NA>      <NA>      <NA>  <NA>        <NA>
-## 11 11      <NA>    <NA>     <NA> matanda_ngule    NA      <NA>      <NA>      <NA>      <NA>  <NA>        <NA>
+hmatch_best(raw = ne_raw, ref = ne_ref, fuzzy = TRUE)
+##    id          adm0        adm1         adm2 level     bind_adm0    bind_adm1    bind_adm2 hcode  match_type
+## 1   1 united states    new york      suffolk     2 United States     New York      Suffolk   223 best_single
+## 2   2        Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110 best_single
+## 3   3          <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232 best_single
+## 4   4 United States        <NA>         York     2 United States Pennsylvania         York   233 best_single
+## 5   5          <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221 best_single
+## 6   6          <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232 best_single
+## 7   7 united_states        <NA>         king     2 United States     New York        Kings   222 best_single
+## 8   8          <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>        <NA>
+## 9   9          <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200  best_multi
+## 10 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>        <NA>
 ```
 
-##### The all-stragies approach
+##### The all-strategies approach
 
 Implement all matching strategies in turn, from most to least strict:
 
@@ -151,22 +148,22 @@ Implement all matching strategies in turn, from most to least strict:
 2.  exact matching with `hmatch_exact()`
 3.  partial matching with `hmatch_partial()`
 4.  fuzzy partial matching with `hmatch_partial(..., fuzzy = TRUE)`
-5.  best-possible matching with `hmatch_best()`
+5.  best-possible matching with
+`hmatch_best()`
 
 <!-- end list -->
 
 ``` r
-hmatch(raw = drc_raw, ref = drc_ref, man = drc_man, code_col = "hcode")
-##    id      adm1    adm2     adm3          adm4 level bind_adm1 bind_adm2 bind_adm3 bind_adm4 hcode  match_type
-## 1   1 Nord-Kivu Butembo  Matanda         Ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122       exact
-## 2   2 Nord-Kivu   Katwa     <NA>          <NA>     2 Nord-Kivu     Katwa      <NA>      <NA>  1200       exact
-## 3   3      <NA> Butembo     <NA>        Katsya     4 Nord-Kivu   Butembo    Katsya    Katsya  1112     partial
-## 4   4 Nord-Kivu    <NA>     <NA>        Wayene     4 Nord-Kivu     Katwa  Makerere    Wayene  1212     partial
-## 5   5      <NA>    <NA>     <NA>     Kasongomi     4 Nord-Kivu   Butembo   Matanda Kasongomi  1121     partial
-## 6   6 Nord-Kivu  Katwua Makerere          <NA>     3 Nord-Kivu     Katwa  Makerere      <NA>  1210       fuzzy
-## 7   7 nord kivu butemba  matando          <NA>     3 Nord-Kivu   Butembo   Matanda      <NA>  1120       fuzzy
-## 8   8 Nord-Kivu    <NA>     <NA>       Vutetse     2 Nord-Kivu   Butembo      <NA>      <NA>  1100  best_multi
-## 9   9 Nord-Kivu Butembo   Bagira        Mugaba     2 Nord-Kivu   Butembo      <NA>      <NA>  1100 best_single
-## 10 10      <NA>    <NA>  Vulindi       Lwamiso    NA      <NA>      <NA>      <NA>      <NA>  <NA>        <NA>
-## 11 11      <NA>    <NA>     <NA> matanda_ngule     4 Nord-Kivu   Butembo   Matanda     Ngule  1122      manual
+hmatch(raw = ne_raw, ref = ne_ref, man = ne_man, fuzzy = TRUE, code_col = "hcode")
+##    id          adm0        adm1         adm2 level     bind_adm0    bind_adm1    bind_adm2 hcode match_type
+## 1   1 united states    new york      suffolk     2 United States     New York      Suffolk   223      exact
+## 2   2        Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110      exact
+## 3   3          <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232    partial
+## 4   4 United States        <NA>         York     2 United States Pennsylvania         York   233    partial
+## 5   5          <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221      fuzzy
+## 6   6          <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232      fuzzy
+## 7   7 united_states        <NA>         king     2 United States     New York        Kings   222      fuzzy
+## 8   8          <NA>        <NA>    NJ_Bergen     2 United States   New Jersey       Bergen   211     manual
+## 9   9          <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200 best_multi
+## 10 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>       <NA>
 ```

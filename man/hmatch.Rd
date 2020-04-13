@@ -77,9 +77,9 @@ Each approach is implement only on the rows of data for which a single match
 has not already been identified using the previous approaches.
 }
 \examples{
-data(drc_raw)
-data(drc_ref)
+data(ne_raw)
+data(ne_ref)
 
-hmatch(drc_raw, drc_ref)
+hmatch(ne_raw, ne_ref, fuzzy = TRUE)
 
 }

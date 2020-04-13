@@ -28,7 +28,7 @@ messy data}
 hierarchical columns in \code{ref} and whose names are the names of the
 corresponding columns in \code{raw}}
 
-\item{type}{type of join ("inner" or "left") (defaults to "left")}
+\item{type}{type of join ("left", "inner", "anti") (defaults to "left")}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
@@ -49,9 +49,9 @@ example, given raw data with known levels of county and township, but missing
 the lower-resolution level province, a match will not be made.
 }
 \examples{
-data(drc_raw)
-data(drc_ref)
+data(ne_raw)
+data(ne_ref)
 
-hmatch_exact(drc_raw, drc_ref, pattern_raw = "adm")
+hmatch_exact(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 
 }

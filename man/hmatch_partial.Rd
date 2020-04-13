@@ -61,9 +61,9 @@ township) even if one or more lower-resolution levels (e.g. province) is
 missing.
 }
 \examples{
-data(drc_raw)
-data(drc_ref)
+data(ne_raw)
+data(ne_ref)
 
-hmatch_partial(drc_raw, drc_ref, pattern_raw = "adm")
+hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 
 }

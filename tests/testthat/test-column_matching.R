@@ -1,21 +1,21 @@
 test_that("Column matching works", {
 
-  drc_ref_r <- setNames(drc_ref, c("level", "geo1", "geo2", "geo3", "geo4"))
+  ne_ref_r <- setNames(ne_ref, c("level", "geo0", "geo1", "geo2"))
 
-  by <- setNames(c("geo1", "geo2", "geo3", "geo4"),
-                 c("adm1", "adm2", "adm3", "adm4"))
+  by <- setNames(c("geo0", "geo1", "geo2"),
+                 c("adm0", "adm1", "adm2"))
 
   ## exact join
-  m_exact_0 <- hmatch_exact(drc_raw, drc_ref, type = "inner")
+  m_exact_0 <- hmatch_exact(ne_raw, ne_ref, type = "inner")
 
-  m_exact_r1 <- hmatch_exact(drc_raw,
-                             drc_ref_r,
+  m_exact_r1 <- hmatch_exact(ne_raw,
+                             ne_ref_r,
                              pattern_raw = "^adm",
                              pattern_ref = "^geo",
                              type = "inner")
 
-  m_exact_r2 <- hmatch_exact(drc_raw,
-                             drc_ref_r,
+  m_exact_r2 <- hmatch_exact(ne_raw,
+                             ne_ref_r,
                              by = by,
                              type = "inner")
 
@@ -24,27 +24,33 @@ test_that("Column matching works", {
 
 
   ## manual join
-  drc_ref_code <- drc_ref
-  drc_ref_code$pcode <- hcodes_str(drc_ref_code, "^adm")
-  drc_ref_r$pcode <- hcodes_str(drc_ref_r, pattern = "^geo")
+  ne_ref_code <- ne_ref
+  ne_ref_code$pcode <- hcodes_str(ne_ref_code, "^adm")
+  ne_ref_r$pcode <- hcodes_str(ne_ref_r, pattern = "^geo")
 
-  m_manual_0 <- hmatch_manual(drc_raw,
-                              drc_ref_code,
-                              drc_man,
+  ne_man <- data.frame(adm0 = NA_character_,
+                       adm1 = NA_character_,
+                       adm2 = "NJ_Bergen",
+                       pcode = "united_states__new_jersey__bergen",
+                       stringsAsFactors = FALSE)
+
+  m_manual_0 <- hmatch_manual(ne_raw,
+                              ne_ref_code,
+                              ne_man,
                               code_col = "pcode",
                               type = "inner")
 
-  m_manual_r1 <- hmatch_manual(drc_raw,
-                               drc_ref_r,
-                               drc_man,
+  m_manual_r1 <- hmatch_manual(ne_raw,
+                               ne_ref_r,
+                               ne_man,
                                pattern_raw = "^adm",
                                pattern_ref = "^geo",
                                code_col = "pcode",
                                type = "inner")
 
-  m_manual_r2 <- hmatch_manual(drc_raw,
-                               drc_ref_r,
-                               drc_man,
+  m_manual_r2 <- hmatch_manual(ne_raw,
+                               ne_ref_r,
+                               ne_man,
                                by = by,
                                code_col = "pcode",
                                type = "inner")

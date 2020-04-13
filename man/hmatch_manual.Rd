@@ -58,21 +58,20 @@ province, county, township) against a reference dataset, using a dictionary
 of manually-specified matches.
 }
 \examples{
-data(drc_raw)
-data(drc_ref)
+data(ne_raw)
+data(ne_ref)
 
 # create hcodes in ref
-drc_ref$hcode <- hcodes_int(drc_ref, pattern = "^adm")
+ne_ref$hcode <- hcodes_int(ne_ref, pattern = "^adm")
 
 # create df mapping sets of raw hierarchical values to codes within ref
-drc_man <- data.frame(adm1 = NA_character_,
-                      adm2 = NA_character_,
-                      adm3 = NA_character_,
-                      adm4 = "matanda_ngule",
-                      hcode = "1122",
-                      stringsAsFactors = FALSE)
+ne_man <- data.frame(adm0 = NA_character_,
+                     adm1 = NA_character_,
+                     adm2 = "NJ_Bergen",
+                     hcode = "211",
+                     stringsAsFactors = FALSE)
 
 # find manual matches
-hmatch_manual(drc_raw, drc_ref, drc_man, code_col = "hcode")
+hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 
 }

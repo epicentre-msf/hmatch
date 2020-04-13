@@ -38,10 +38,10 @@
 #'   renamed with prefix "bind_".
 #'
 #' @examples
-#' data(drc_raw)
-#' data(drc_ref)
+#' data(ne_raw)
+#' data(ne_ref)
 #'
-#' hmatch_best(drc_raw, drc_ref)
+#' hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
 #'
 #' @importFrom stats setNames
 #' @importFrom tidyselect all_of

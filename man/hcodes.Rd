@@ -44,12 +44,12 @@ given separator (with options for string standardization prior to
 collapsing).
 }
 \examples{
-data(drc_ref)
+data(ne_ref)
 
 # string-based codes
-hcodes_str(drc_ref, pattern = "^adm")
+hcodes_str(ne_ref, pattern = "^adm")
 
 # integer-based codes
-hcodes_int(drc_ref, pattern = "^adm", prefix = "")
+hcodes_int(ne_ref, pattern = "^adm", prefix = "")
 
 }

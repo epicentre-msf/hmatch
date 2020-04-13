@@ -63,9 +63,9 @@ second level, etc. The 'best-possible' match reflects the highest-level that
 is consistent among all possible matches to the given row of raw data.
 }
 \examples{
-data(drc_raw)
-data(drc_ref)
+data(ne_raw)
+data(ne_ref)
 
-hmatch_best(drc_raw, drc_ref)
+hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
 
 }

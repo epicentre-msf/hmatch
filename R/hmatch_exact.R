@@ -14,7 +14,7 @@
 #' @param by named character vector whose elements are the names of the
 #'   hierarchical columns in `ref` and whose names are the names of the
 #'   corresponding columns in `raw`
-#' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param type type of join ("left", "inner", "anti") (defaults to "left")
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -26,10 +26,10 @@
 #'   returned reference columns will be renamed with prefix "bind_".
 #'
 #' @examples
-#' data(drc_raw)
-#' data(drc_ref)
+#' data(ne_raw)
+#' data(ne_ref)
 #'
-#' hmatch_exact(drc_raw, drc_ref, pattern_raw = "adm")
+#' hmatch_exact(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 #'
 #' @importFrom stats setNames
 #' @importFrom dplyr left_join bind_cols
@@ -41,6 +41,14 @@ hmatch_exact <- function(raw,
                          by = NULL,
                          type = "left",
                          std_fn = string_std) {
+
+  # raw = ne_raw
+  # ref = ne_ref
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # type = "left"
+  # std_fn = string_std
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
@@ -63,7 +71,11 @@ hmatch_exact <- function(raw,
   out <- dplyr::left_join(raw_join, ref_join, by = by_join)
   out <- out[,!names(out) %in% by_join, drop = FALSE]
 
-  if (type == "inner") { out <- out[!is.na(out$TEMP_IS_MATCH),] }
+  out <- switch(type,
+                "inner" = out[!is.na(out$TEMP_IS_MATCH),],
+                "anti" = out[is.na(out$TEMP_IS_MATCH),],
+                out)
+
 
   out[,!names(out) %in% "TEMP_IS_MATCH", drop = FALSE]
 }

@@ -34,10 +34,10 @@
 #'   returned reference columns will be renamed with prefix "bind_".
 #'
 #' @examples
-#' data(drc_raw)
-#' data(drc_ref)
+#' data(ne_raw)
+#' data(ne_ref)
 #'
-#' hmatch_partial(drc_raw, drc_ref, pattern_raw = "adm")
+#' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 #'
 #' @importFrom stats setNames
 #' @import rlang dplyr
@@ -51,6 +51,14 @@ hmatch_partial <- function(raw,
                            std_fn = string_std,
                            fuzzy = FALSE,
                            max_dist = 1L) {
+
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # type = "left"
+  # std_fn = string_std
+  # fuzzy = FALSE
+  # max_dist = 1L
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
