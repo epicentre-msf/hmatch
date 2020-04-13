@@ -37,15 +37,15 @@ The `hmatch` package contains example datasets `ne_raw` (messy geographical data
 ```{r}
 library(hmatch)
 
-data(ne_ref)
 data(ne_raw)
+data(ne_ref)
+
+ne_raw # messy raw data
 
 ne_ref # reference data derived from a shapefile
-
-ne_raw # raw, messy data
 ```
 
-#### Generate unique codes for each level in a reference dataset
+### Generate unique codes for each level in a reference dataset
 
 Functions `hcodes_int()` and `hcodes_str()` can be used to create integer- or
 string-based codes, respectively.
@@ -55,9 +55,9 @@ ne_ref$hcode <- hcodes_int(ne_ref, pattern = "^adm")
 ne_ref
 ```
 
-#### Match messy hierarchically-structured data to a reference dataset
+### Match messy hierarchically-structured data to a reference dataset
 
-##### Complete matching
+#### Complete matching
 
 Each hierarchical level must match in sequence, with no missing values below the match level.
 
@@ -74,7 +74,7 @@ hmatch_complete(ne_raw, ne_ref, type = "inner")
 
 Notice that in the first row (Suffolk County, New York), a match is made despite the raw and reference data using different cases (lowercase vs. title case). This is possible because, internally, all input strings are standardized prior to matching (see `?string_standardization`).
 
-##### Partial matching
+#### Partial matching
 
 Allows for missing values at one or more level below the match level.
 
@@ -82,7 +82,7 @@ Allows for missing values at one or more level below the match level.
 hmatch_partial(ne_raw, ne_ref)
 ```
 
-##### Partial + fuzzy matching
+#### Partial + fuzzy matching
 
 Partial matching + fuzzy matching based on the
 [stringdist](https://github.com/markvanderloo/stringdist) package.
@@ -91,7 +91,7 @@ Partial matching + fuzzy matching based on the
 hmatch_partial(ne_raw, ne_ref, fuzzy = TRUE, max_dist = 2)
 ```
 
-##### Manual matching
+#### Manual matching
 
 Manually-specified matches, linking sets of hierarchical levels in the raw data
 to a corresponding code column in the reference data.
@@ -106,7 +106,7 @@ ne_man <- data.frame(adm0 = NA_character_,
 hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 ```
 
-##### Best-possible matching
+#### Best-possible matching
 
 Identify potential matches at each successive level, starting with only the
 first level, then the first and second level, etc. The best-possible match then
@@ -117,7 +117,7 @@ given row of raw data.
 hmatch_best(raw = ne_raw, ref = ne_ref, fuzzy = TRUE)
 ```
 
-##### The all-strategies approach
+#### The all-strategies approach
 
 Implement all matching strategies in turn, from most to least strict:
 

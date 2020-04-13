@@ -30,8 +30,21 @@ shapefile), based on a small subset of northeastern North America.
 ``` r
 library(hmatch)
 
-data(ne_ref)
 data(ne_raw)
+data(ne_ref)
+
+ne_raw # messy raw data
+#>             adm0        adm1         adm2
+#> 1  united states    new york      suffolk
+#> 2         Canada     Ontario         <NA>
+#> 3           <NA>        <NA> philadelphia
+#> 4  United States        <NA>         York
+#> 5           <NA>     NewYork    Jefferson
+#> 6           <NA> pensylvania philidelphia
+#> 7  united_states        <NA>         king
+#> 8           <NA>        <NA>    NJ_Bergen
+#> 9           <NA>        <NA>    jeffersen
+#> 10          <NA>        <NA>         york
 
 ne_ref # reference data derived from a shapefile
 #>    level          adm0         adm1         adm2
@@ -50,22 +63,9 @@ ne_ref # reference data derived from a shapefile
 #> 13     2 United States Pennsylvania Philadelphia
 #> 14     2 United States Pennsylvania    Jefferson
 #> 15     2 United States Pennsylvania         York
-
-ne_raw # raw, messy data
-#>             adm0        adm1         adm2
-#> 1  united states    new york      suffolk
-#> 2         Canada     Ontario         <NA>
-#> 3           <NA>        <NA> philadelphia
-#> 4  United States        <NA>         York
-#> 5           <NA>     NewYork    Jefferson
-#> 6           <NA> pensylvania philidelphia
-#> 7  united_states        <NA>         king
-#> 8           <NA>        <NA>    NJ_Bergen
-#> 9           <NA>        <NA>    jeffersen
-#> 10          <NA>        <NA>         york
 ```
 
-#### Generate unique codes for each level in a reference dataset
+### Generate unique codes for each level in a reference dataset
 
 Functions `hcodes_int()` and `hcodes_str()` can be used to create
 integer- or string-based codes, respectively.
@@ -91,9 +91,9 @@ ne_ref
 #> 15     2 United States Pennsylvania         York   233
 ```
 
-#### Match messy hierarchically-structured data to a reference dataset
+### Match messy hierarchically-structured data to a reference dataset
 
-##### Complete matching
+#### Complete matching
 
 Each hierarchical level must match in sequence, with no missing values
 below the match level.
@@ -130,7 +130,7 @@ vs. title case). This is possible because, internally, all input
 strings are standardized prior to matching (see
 `?string_standardization`).
 
-##### Partial matching
+#### Partial matching
 
 Allows for missing values at one or more level below the match level.
 
@@ -150,7 +150,7 @@ hmatch_partial(ne_raw, ne_ref)
 #> 11          <NA>        <NA>         york     2 United States Pennsylvania         York   233
 ```
 
-##### Partial + fuzzy matching
+#### Partial + fuzzy matching
 
 Partial matching + fuzzy matching based on the
 [stringdist](https://github.com/markvanderloo/stringdist) package.
@@ -172,7 +172,7 @@ hmatch_partial(ne_raw, ne_ref, fuzzy = TRUE, max_dist = 2)
 #> 12          <NA>        <NA>         york     2 United States Pennsylvania         York   233
 ```
 
-##### Manual matching
+#### Manual matching
 
 Manually-specified matches, linking sets of hierarchical levels in the
 raw data to a corresponding code column in the reference data.
@@ -198,7 +198,7 @@ hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 #> 10          <NA>        <NA>         york    NA          <NA>       <NA>      <NA>  <NA>
 ```
 
-##### Best-possible matching
+#### Best-possible matching
 
 Identify potential matches at each successive level, starting with only
 the first level, then the first and second level, etc. The best-possible
@@ -220,7 +220,7 @@ hmatch_best(raw = ne_raw, ref = ne_ref, fuzzy = TRUE)
 #> 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>        <NA>
 ```
 
-##### The all-strategies approach
+#### The all-strategies approach
 
 Implement all matching strategies in turn, from most to least strict:
 
