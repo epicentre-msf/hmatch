@@ -8,7 +8,7 @@
 #'
 #' The sequence of matching stragies is:
 #' 1. (optional) manually-specified matching with \code{\link{hmatch_manual}}
-#' 2. exact matching with \code{\link{hmatch_exact}}
+#' 2. complete matching with \code{\link{hmatch_complete}}
 #' 3. partial matching with \code{\link{hmatch_partial}}
 #' 4. fuzzy partial matching with \code{\link{hmatch_partial}}
 #' 5. best-possible matching with \code{\link{hmatch_best}}
@@ -79,7 +79,7 @@ hmatch <- function(raw,
                             by = by)
 
 
-  m_manual <- m_exact <- m_partial <- m_fuzzy <- m_roll <- NULL
+  m_manual <- m_complete <- m_partial <- m_fuzzy <- m_roll <- NULL
   raw_remaining <- raw
 
   ## manual match
@@ -113,12 +113,12 @@ hmatch <- function(raw,
 
   ref$TEMP_CODE_COL_BEST <- hcodes_str(ref, by = by)
 
-  ## exact match
+  ## complete match
   if (nrow(raw_remaining) > 0) {
-    m_exact <- hmatch_exact(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn)
-    m_exact <- m_exact[,c("TEMP_ROW_ID_BEST", code_col)]
-    m_exact$match_type <- if (nrow(m_exact) > 0) "exact" else character(0)
-    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_exact$TEMP_ROW_ID_BEST,]
+    m_complete <- hmatch_complete(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn)
+    m_complete <- m_complete[,c("TEMP_ROW_ID_BEST", code_col)]
+    m_complete$match_type <- if (nrow(m_complete) > 0) "complete" else character(0)
+    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_complete$TEMP_ROW_ID_BEST,]
   }
 
   ## partial join
@@ -146,7 +146,7 @@ hmatch <- function(raw,
 
   ## combine results
   ref_bind <- dplyr::bind_rows(m_manual,
-                               m_exact,
+                               m_complete,
                                m_partial,
                                m_fuzzy,
                                m_roll)

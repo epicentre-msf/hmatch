@@ -5,22 +5,22 @@ test_that("Column matching works", {
   by <- setNames(c("geo0", "geo1", "geo2"),
                  c("adm0", "adm1", "adm2"))
 
-  ## exact join
-  m_exact_0 <- hmatch_exact(ne_raw, ne_ref, type = "inner")
+  ## complete join
+  m_complete_0 <- hmatch_complete(ne_raw, ne_ref, type = "inner")
 
-  m_exact_r1 <- hmatch_exact(ne_raw,
-                             ne_ref_r,
-                             pattern_raw = "^adm",
-                             pattern_ref = "^geo",
-                             type = "inner")
+  m_complete_r1 <- hmatch_complete(ne_raw,
+                                   ne_ref_r,
+                                   pattern_raw = "^adm",
+                                   pattern_ref = "^geo",
+                                   type = "inner")
 
-  m_exact_r2 <- hmatch_exact(ne_raw,
-                             ne_ref_r,
-                             by = by,
-                             type = "inner")
+  m_complete_r2 <- hmatch_complete(ne_raw,
+                                   ne_ref_r,
+                                   by = by,
+                                   type = "inner")
 
-  expect_equal(nrow(m_exact_0), nrow(m_exact_r1))
-  expect_equal(nrow(m_exact_0), nrow(m_exact_r2))
+  expect_equal(nrow(m_complete_0), nrow(m_complete_r1))
+  expect_equal(nrow(m_complete_0), nrow(m_complete_r2))
 
 
   ## manual join

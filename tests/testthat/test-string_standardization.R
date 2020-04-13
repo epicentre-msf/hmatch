@@ -1,7 +1,7 @@
 test_that("String standardization", {
 
 
-  # convert raw to lowercase so no exact matches (if no standardization)
+  # convert raw to lowercase so no complete matches (if no standardization)
   ne_raw_upr <- ne_raw
   ne_raw_upr$adm0 <- toupper(ne_raw_upr$adm0)
   ne_raw_upr$adm1 <- toupper(ne_raw_upr$adm1)
@@ -9,8 +9,8 @@ test_that("String standardization", {
 
   # test that no-standardization works (std_fn = NULL)
   # expect no matches if raw date all-uppercase
-  m_exact_no_std <- hmatch_exact(ne_raw_upr, ne_ref, type = "inner", std_fn = NULL)
-  expect_equal(nrow(m_exact_no_std), 0L)
+  m_complete_no_std <- hmatch_complete(ne_raw_upr, ne_ref, type = "inner", std_fn = NULL)
+  expect_equal(nrow(m_complete_no_std), 0L)
 
   m_partial_no_std <- hmatch_partial(ne_raw_upr, ne_ref, type = "inner", std_fn = NULL)
   expect_equal(nrow(m_partial_no_std), 0L)

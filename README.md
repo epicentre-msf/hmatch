@@ -59,12 +59,12 @@ ne_ref
 
 #### Match messy hierarchically-structured data to a reference dataset
 
-##### Exact matching
+##### Complete matching
 
 Each hierarchical level must match in sequence.
 
 ``` r
-hmatch_exact(ne_raw, ne_ref, type = "inner")
+hmatch_complete(ne_raw, ne_ref, type = "inner")
 ##   id          adm0     adm1    adm2 level     bind_adm0 bind_adm1 bind_adm2 hcode
 ## 1  1 united states new york suffolk     2 United States  New York   Suffolk   223
 ## 2  2        Canada  Ontario    <NA>     1        Canada   Ontario      <NA>   110
@@ -145,7 +145,7 @@ hmatch_best(raw = ne_raw, ref = ne_ref, fuzzy = TRUE)
 Implement all matching strategies in turn, from most to least strict:
 
 1.  (optional) manually-specified matching with `hmatch_manual()`
-2.  exact matching with `hmatch_exact()`
+2.  complete matching with `hmatch_complete()`
 3.  partial matching with `hmatch_partial()`
 4.  fuzzy partial matching with `hmatch_partial(..., fuzzy = TRUE)`
 5.  best-possible matching with
@@ -156,8 +156,8 @@ Implement all matching strategies in turn, from most to least strict:
 ``` r
 hmatch(raw = ne_raw, ref = ne_ref, man = ne_man, fuzzy = TRUE, code_col = "hcode")
 ##    id          adm0        adm1         adm2 level     bind_adm0    bind_adm1    bind_adm2 hcode match_type
-## 1   1 united states    new york      suffolk     2 United States     New York      Suffolk   223      exact
-## 2   2        Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110      exact
+## 1   1 united states    new york      suffolk     2 United States     New York      Suffolk   223   complete
+## 2   2        Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110   complete
 ## 3   3          <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232    partial
 ## 4   4 United States        <NA>         York     2 United States Pennsylvania         York   233    partial
 ## 5   5          <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221      fuzzy

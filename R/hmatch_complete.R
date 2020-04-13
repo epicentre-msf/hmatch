@@ -1,8 +1,8 @@
-#' Exact hierarchical matching
+#' Complete hierarchical matching
 #'
 #' Match a data.frame with raw, potentially messy hierarchical data (e.g.
-#' province, county, township) against a reference dataset, using exact
-#' matching. "Exact" here means that every level must match in sequence. For
+#' province, county, township) against a reference dataset, using complete
+#' matching. "Complete" here means that every level must match in sequence. For
 #' example, given raw data with known levels of county and township, but missing
 #' the lower-resolution level province, a match will not be made.
 #'
@@ -29,18 +29,18 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_exact(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
+#' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 #'
 #' @importFrom stats setNames
 #' @importFrom dplyr left_join bind_cols
-#' @export hmatch_exact
-hmatch_exact <- function(raw,
-                         ref,
-                         pattern_raw = NULL,
-                         pattern_ref = pattern_raw,
-                         by = NULL,
-                         type = "left",
-                         std_fn = string_std) {
+#' @export hmatch_complete
+hmatch_complete <- function(raw,
+                            ref,
+                            pattern_raw = NULL,
+                            pattern_ref = pattern_raw,
+                            by = NULL,
+                            type = "left",
+                            std_fn = string_std) {
 
   # raw = ne_raw
   # ref = ne_ref

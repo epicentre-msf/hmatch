@@ -1,12 +1,12 @@
 test_that("Basic functionality", {
 
-  ## exact join
-  m_exact_i <- hmatch_exact(ne_raw, ne_ref, type = "inner")
-  expect_is(m_exact_i, "data.frame")
-  expect_lte(nrow(m_exact_i), nrow(ne_raw))
+  ## complete join
+  m_complete_i <- hmatch_complete(ne_raw, ne_ref, type = "inner")
+  expect_is(m_complete_i, "data.frame")
+  expect_lte(nrow(m_complete_i), nrow(ne_raw))
 
-  m_exact_l <- hmatch_exact(ne_raw, ne_ref, type = "left")
-  expect_equal(nrow(m_exact_l), nrow(ne_raw))
+  m_complete_l <- hmatch_complete(ne_raw, ne_ref, type = "left")
+  expect_equal(nrow(m_complete_l), nrow(ne_raw))
 
   ## manual join
   ne_ref_code <- ne_ref
@@ -63,6 +63,6 @@ test_that("Basic functionality", {
   ne_raw_test <- ne_ref_code[,grepl("adm", names(ne_ref_code))]
   m_comp_exact <- hmatch(ne_raw_test, ne_ref_code, ne_man, pattern_raw = "^adm", code_col = "pcode", fuzzy = TRUE)
   expect_equal(nrow(m_comp_exact), nrow(ne_ref))
-  expect_true(all(m_comp_exact$match_type == "exact"))
+  expect_true(all(m_comp_exact$match_type == "complete"))
 })
 

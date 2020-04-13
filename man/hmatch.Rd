@@ -67,7 +67,7 @@ match (i.e. highest-resolution) for each row.
 The sequence of matching stragies is:
 \enumerate{
 \item (optional) manually-specified matching with \code{\link{hmatch_manual}}
-\item exact matching with \code{\link{hmatch_exact}}
+\item complete matching with \code{\link{hmatch_complete}}
 \item partial matching with \code{\link{hmatch_partial}}
 \item fuzzy partial matching with \code{\link{hmatch_partial}}
 \item best-possible matching with \code{\link{hmatch_best}}
