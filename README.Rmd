@@ -7,7 +7,7 @@ output: github_document
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "##",
+  comment = "#>",
   fig.path = "man/figures/"
 )
 options(digits = 4, width = 160)
@@ -30,16 +30,20 @@ Install from GitHub with:
 remotes::install_github("epicentre-msf/hmatch")
 ```
 
-### Usage
+### Example datasets
+
+The `hmatch` package contains example datasets `ne_raw` (messy geographical data) and `ne_ref` (reference data derived from a shapefile), based on a small subset of northeastern North America.
 
 ```{r}
 library(hmatch)
 
-# example datasets (select counties in northereastern North America)
-data(ne_raw)
 data(ne_ref)
-```
+data(ne_raw)
 
+ne_ref # reference data derived from a shapefile
+
+ne_raw # raw, messy data
+```
 
 #### Generate unique codes for each level in a reference dataset
 
@@ -55,18 +59,27 @@ ne_ref
 
 ##### Complete matching
 
-Each hierarchical level must match in sequence.
+Each hierarchical level must match in sequence, with no missing values below the match level.
+
+```{r}
+hmatch_complete(ne_raw, ne_ref)
+```
+
+The default join type is "left" (as depicted above), but we can alternatively specify an "inner" join, which will only
+return the rows of `raw` for which a *single positive match* within `ref` is found.
 
 ```{r}
 hmatch_complete(ne_raw, ne_ref, type = "inner")
 ```
+
+Notice that in the first row (Suffolk County, New York), a match is made despite the raw and reference data using different cases (lowercase vs. title case). This is possible because, internally, all input strings are standardized prior to matching (see `?string_standardization`).
 
 ##### Partial matching
 
 Allows for missing values at one or more level below the match level.
 
 ```{r}
-hmatch_partial(ne_raw, ne_ref, type = "inner")
+hmatch_partial(ne_raw, ne_ref)
 ```
 
 ##### Partial + fuzzy matching
@@ -75,7 +88,7 @@ Partial matching + fuzzy matching based on the
 [stringdist](https://github.com/markvanderloo/stringdist) package.
 
 ```{r}
-hmatch_partial(ne_raw, ne_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
+hmatch_partial(ne_raw, ne_ref, fuzzy = TRUE, max_dist = 2)
 ```
 
 ##### Manual matching
@@ -90,7 +103,7 @@ ne_man <- data.frame(adm0 = NA_character_,
                      hcode = "211",
                      stringsAsFactors = FALSE)
 
-hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode", type = "inner")
+hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 ```
 
 ##### Best-possible matching

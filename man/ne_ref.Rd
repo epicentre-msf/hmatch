@@ -5,7 +5,7 @@
 \alias{ne_ref}
 \title{Reference dataset}
 \format{
-A data.frame with 15 rows and 6 variables:
+A data.frame with 15 rows and 4 variables:
 \describe{
 \item{level}{Administrative level}
 \item{adm0}{Name of administrative 0 level (country)}

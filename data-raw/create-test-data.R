@@ -4,7 +4,7 @@ library(readxl)
 ne_raw <- readxl::read_xlsx("data-raw/geo_raw_example.xlsx")
 ne_ref <- readxl::read_xlsx("data-raw/geo_ref_example.xlsx")
 
-ne_raw <- as.data.frame(ne_raw)
+ne_raw <- as.data.frame(ne_raw)[,-1]
 ne_ref <- as.data.frame(ne_ref)
 
 usethis::use_data(ne_raw,
