@@ -1,0 +1,28 @@
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: R
+cache: packages
+
+r:
+  - oldrel
+  - release
+
+# Operating systems to build on ------
+os:
+  - linux
+  - osx
+
+# Linux options ---------
+sudo: false
+dist: trusty
+cache: packages
+
+# Branches
+branches:
+  only:
+  - master
+  - devel
+
+after_success:
+  - Rscript -e 'covr::codecov()'
+
