@@ -98,7 +98,7 @@ prep_ref <- function(raw, ref, pattern_raw, pattern_ref, by, join_suffix = "___J
   # rename cols of ref if necessary
   if (all(by_raw == by_ref)) {
     by_ref_i <- vapply(by_ref, function(x) which(names(ref) == x), 0L)
-    by_ref <- paste0("bind_", by_ref)
+    by_ref <- paste0("ref_", by_ref)
     names(ref)[by_ref_i] <- by_ref
   }
 

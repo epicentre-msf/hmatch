@@ -45,7 +45,7 @@
 #'   returns only the rows of `raw` with a single match in `ref`. If `type ==
 #'   "left"`, returns all rows of `raw`. If the hierarchical columns within
 #'   `ref` have identical names to `raw`, the returned reference columns will be
-#'   renamed with prefix "bind_".
+#'   renamed with prefix "ref_".
 #'
 #' @examples
 #' data(ne_raw)

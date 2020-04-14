@@ -49,7 +49,7 @@ A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
 and \code{ref}. If \code{type == "inner"}, returns only the rows of \code{raw} with a
 single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}. If
 the hierarchical columns within \code{ref} have identical names to \code{raw}, the
-returned reference columns will be renamed with prefix "bind_".
+returned reference columns will be renamed with prefix "ref_".
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.
