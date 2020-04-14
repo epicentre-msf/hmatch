@@ -1,6 +1,6 @@
 test_that("Column matching works", {
 
-  ne_ref_r <- setNames(ne_ref, c("level", "geo0", "geo1", "geo2"))
+  ne_ref_r <- setNames(ne_ref, c("level", "geo0", "geo1", "geo2", "hcode"))
 
   by <- setNames(c("geo0", "geo1", "geo2"),
                  c("adm0", "adm1", "adm2"))

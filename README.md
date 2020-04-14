@@ -16,7 +16,7 @@ coverage](https://codecov.io/gh/epicentre-msf/hmatch/branch/master/graph/badge.s
 An R package for cleaning and matching messy hierarchical data
 (e.g. hierarchically-nested adminstrative districts).
 
-## Installation
+### Installation
 
 Install from GitHub with:
 
@@ -51,32 +51,6 @@ ne_raw # messy raw data
 #> 10          <NA>        <NA>         york
 
 ne_ref # reference data derived from a shapefile
-#>    level          adm0         adm1         adm2
-#> 1      0        Canada         <NA>         <NA>
-#> 2      0 United States         <NA>         <NA>
-#> 3      1        Canada      Ontario         <NA>
-#> 4      1 United States     New York         <NA>
-#> 5      1 United States   New Jersey         <NA>
-#> 6      1 United States Pennsylvania         <NA>
-#> 7      2        Canada      Ontario      Toronto
-#> 8      2        Canada      Ontario         York
-#> 9      2 United States     New York        Kings
-#> 10     2 United States     New York      Suffolk
-#> 11     2 United States     New York    Jefferson
-#> 12     2 United States   New Jersey       Bergen
-#> 13     2 United States Pennsylvania Philadelphia
-#> 14     2 United States Pennsylvania    Jefferson
-#> 15     2 United States Pennsylvania         York
-```
-
-### Generate unique codes for each level in a reference dataset
-
-Functions `hcodes_int()` and `hcodes_str()` can be used to create
-integer- or string-based codes, respectively.
-
-``` r
-ne_ref$hcode <- hcodes_int(ne_ref, pattern = "^adm")
-ne_ref
 #>    level          adm0         adm1         adm2 hcode
 #> 1      0        Canada         <NA>         <NA>   100
 #> 2      0 United States         <NA>         <NA>   200
@@ -250,4 +224,30 @@ hmatch(raw = ne_raw, ref = ne_ref, man = ne_man, fuzzy = TRUE, code_col = "hcode
 #> 8           <NA>        <NA>    NJ_Bergen     2 United States   New Jersey       Bergen   211     manual
 #> 9           <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200 best_multi
 #> 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>       <NA>
+```
+
+### Generate unique codes for each level in a reference dataset
+
+Functions `hcodes_int()` and `hcodes_str()` can be used to create
+integer- or string-based codes, respectively.
+
+``` r
+ne_ref$hcode_str <- hcodes_str(ne_ref, pattern = "^adm")
+ne_ref
+#>    level          adm0         adm1         adm2 hcode                                 hcode_str
+#> 1      0        Canada         <NA>         <NA>   100                                    canada
+#> 2      0 United States         <NA>         <NA>   200                             united_states
+#> 3      1        Canada      Ontario         <NA>   110                           canada__ontario
+#> 4      1 United States     New York         <NA>   220                   united_states__new_york
+#> 5      1 United States   New Jersey         <NA>   210                 united_states__new_jersey
+#> 6      1 United States Pennsylvania         <NA>   230               united_states__pennsylvania
+#> 7      2        Canada      Ontario      Toronto   111                  canada__ontario__toronto
+#> 8      2        Canada      Ontario         York   112                     canada__ontario__york
+#> 9      2 United States     New York        Kings   222            united_states__new_york__kings
+#> 10     2 United States     New York      Suffolk   223          united_states__new_york__suffolk
+#> 11     2 United States     New York    Jefferson   221        united_states__new_york__jefferson
+#> 12     2 United States   New Jersey       Bergen   211         united_states__new_jersey__bergen
+#> 13     2 United States Pennsylvania Philadelphia   232 united_states__pennsylvania__philadelphia
+#> 14     2 United States Pennsylvania    Jefferson   231    united_states__pennsylvania__jefferson
+#> 15     2 United States Pennsylvania         York   233         united_states__pennsylvania__york
 ```

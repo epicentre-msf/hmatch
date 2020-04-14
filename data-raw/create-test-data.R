@@ -7,6 +7,8 @@ ne_ref <- readxl::read_xlsx("data-raw/geo_ref_example.xlsx")
 ne_raw <- as.data.frame(ne_raw)[,-1]
 ne_ref <- as.data.frame(ne_ref)
 
+ne_ref$hcode <- hmatch::hcodes_int(ne_ref, "^adm")
+
 usethis::use_data(ne_raw,
                   ne_ref,
                   overwrite = TRUE)

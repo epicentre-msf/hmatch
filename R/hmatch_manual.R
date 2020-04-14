@@ -35,9 +35,6 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' # create hcodes in ref
-#' ne_ref$hcode <- hcodes_int(ne_ref, pattern = "^adm")
-#'
 #' # create df mapping sets of raw hierarchical values to codes within ref
 #' ne_man <- data.frame(adm0 = NA_character_,
 #'                      adm1 = NA_character_,

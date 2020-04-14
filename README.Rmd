@@ -23,7 +23,7 @@ options(digits = 4, width = 160)
 An R package for cleaning and matching messy hierarchical data (e.g. hierarchically-nested adminstrative districts).
 
 
-## Installation
+### Installation
 
 Install from GitHub with:
 
@@ -45,16 +45,6 @@ data(ne_ref)
 ne_raw # messy raw data
 
 ne_ref # reference data derived from a shapefile
-```
-
-### Generate unique codes for each level in a reference dataset
-
-Functions `hcodes_int()` and `hcodes_str()` can be used to create integer- or
-string-based codes, respectively.
-
-```{r}
-ne_ref$hcode <- hcodes_int(ne_ref, pattern = "^adm")
-ne_ref
 ```
 
 ### Match messy hierarchically-structured data to a reference dataset
@@ -131,5 +121,16 @@ Implement all matching strategies in turn, from most to least strict:
 
 ```{r}
 hmatch(raw = ne_raw, ref = ne_ref, man = ne_man, fuzzy = TRUE, code_col = "hcode")
+```
+
+
+### Generate unique codes for each level in a reference dataset
+
+Functions `hcodes_int()` and `hcodes_str()` can be used to create integer- or
+string-based codes, respectively.
+
+```{r}
+ne_ref$hcode_str <- hcodes_str(ne_ref, pattern = "^adm")
+ne_ref
 ```
 
