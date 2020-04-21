@@ -22,7 +22,7 @@
 #' @export string_std
 string_std <- function(x) {
   x <- tolower(x)
-  x <- gsub("[[:space:]]+|[[:punct:]]+", "_", x)
+  x <- gsub("[^[:alnum:]]+", "_", x)
   x <- stringi::stri_trans_general(x, id = "Latin-ASCII")
   x
 }
