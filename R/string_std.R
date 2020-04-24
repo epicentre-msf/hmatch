@@ -1,10 +1,10 @@
 #' String standardization prior to matching
 #'
-#' Standardizes strings prior to performing a match, using three
-#' transformations:
+#' Standardizes strings prior to performing a match, using four transformations:
 #' 1. standardize case (`base::tolower`)
-#' 2. replace sequences of space or punctuation characters with "_"
-#' 3. remove diacritics (`stringi::stri_trans_general`)
+#' 2. remove sequences of non-alphanumeric characters at start or end of string
+#' 3. replace remaining sequences of non-alphanumeric characters with "_"
+#' 4. remove diacritics (`stringi::stri_trans_general`)
 #'
 #' @param x a string
 #'
@@ -22,6 +22,7 @@
 #' @export string_std
 string_std <- function(x) {
   x <- tolower(x)
+  x <- gsub("^[^[:alnum:]]+|[^[:alnum:]]+$", "", x)
   x <- gsub("[^[:alnum:]]+", "_", x)
   x <- stringi::stri_trans_general(x, id = "Latin-ASCII")
   x

@@ -9,10 +9,11 @@ the strings within the match columns to account for differences in case,
 punctuation, etc.
 
 By default, this standardization is performed with function
-\code{\link{string_std}}, which implements three transformations:
+\code{\link{string_std}}, which implements four transformations:
 \enumerate{
 \item standardize case (\code{base::tolower})
-\item replace sequences of space or punctuation characters with "_"
+\item remove sequences of non-alphanumeric characters at start or end of string
+\item replace remaining sequences of non-alphanumeric characters with "_"
 \item remove diacritics (\code{stringi::stri_trans_general})
 }
 

@@ -13,11 +13,11 @@ string_std(x)
 The standardized version of \code{x}
 }
 \description{
-Standardizes strings prior to performing a match, using three
-transformations:
+Standardizes strings prior to performing a match, using four transformations:
 \enumerate{
 \item standardize case (\code{base::tolower})
-\item replace sequences of space or punctuation characters with "_"
+\item remove sequences of non-alphanumeric characters at start or end of string
+\item replace remaining sequences of non-alphanumeric characters with "_"
 \item remove diacritics (\code{stringi::stri_trans_general})
 }
 }
