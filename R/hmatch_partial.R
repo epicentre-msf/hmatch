@@ -52,12 +52,14 @@ hmatch_partial <- function(raw,
                            fuzzy = FALSE,
                            max_dist = 1L) {
 
+  # raw <- ne_raw[c(1, 1),]
+  # ref <- ne_ref
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
   # type = "left"
   # std_fn = string_std
-  # fuzzy = FALSE
+  # fuzzy = TRUE
   # max_dist = 1L
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
@@ -132,7 +134,7 @@ hmatch_partial <- function(raw,
     }
   }
 
-  matches_out <- initial_matches_join[,c(raw_cols_orig, names(ref))]
+  matches_out <- unique(initial_matches_join[,c(raw_cols_orig, names(ref))])
   matches_out <- corresponding_levels(matches_out, by_raw, by_ref)
   matches_out$TEMP_IS_MATCH <- if (nrow(matches_out) > 0) "MATCH" else character(0)
 
