@@ -12,6 +12,7 @@ hmatch(
   pattern_ref = pattern_raw,
   by = NULL,
   code_col = NULL,
+  ref_prefix = "ref_",
   std_fn = string_std,
   fuzzy = FALSE,
   max_dist = 1L
@@ -40,6 +41,9 @@ corresponding columns in \code{raw} (and \code{man}, if given) (see also
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man} (only required if argument \code{man} is given)}
+
+\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
@@ -80,6 +84,6 @@ has not already been identified using the previous approaches.
 data(ne_raw)
 data(ne_ref)
 
-hmatch(ne_raw, ne_ref, fuzzy = TRUE)
+hmatch(ne_raw, ne_ref, fuzzy = FALSE)
 
 }

@@ -1,15 +1,43 @@
 
+#' @noRd
+add_column <- function(dat, colname, values) {
+  dat[[colname]] <- if (nrow(dat) > 0) {
+    values
+  } else {
+    vector(mode = class(values), length = 0)
+  }
+  dat
+}
 
 
 #' @noRd
-#' @importFrom dplyr mutate_all bind_cols
+rbind_dfs <- function(x, y) {
+  cols_add_to_x <- setdiff(names(y), names(x))
+  cols_add_to_y <- setdiff(names(x), names(y))
+  for (j in cols_add_to_x) { x <- add_column(x, j, NA) }
+  for (j in cols_add_to_y) { y <- add_column(y, j, NA) }
+  rbind.data.frame(x, y)
+}
+
+
+#' @noRd
+rename_col <- function(dat, col_old, col_new) {
+  names(dat)[names(dat) == col_old] <- col_new
+  dat
+}
+
+
+#' @noRd
 add_join_columns <- function(dat, by, join_cols, std_fn = NULL) {
+
   bind_ <- dat[, by, drop = FALSE]
   if (!is.null(std_fn)) {
-    bind_ <- dplyr::mutate_all(bind_, std_fn)
+    for (i in seq_len(ncol(bind_))) {
+      bind_[[i]] <- std_fn(bind_[[i]])
+    }
   }
   names(bind_) <- join_cols
-  dplyr::bind_cols(dat, bind_)
+  cbind.data.frame(dat, bind_)
 }
 
 
@@ -82,7 +110,14 @@ sort_cols <- function(dat, ref) {
 
 
 #' @noRd
-prep_ref <- function(raw, ref, pattern_raw, pattern_ref, by, join_suffix = "___JOIN_") {
+prep_match_columns <- function(raw,
+                               ref,
+                               pattern_raw,
+                               pattern_ref,
+                               by,
+                               ref_prefix = "ref_",
+                               join_suffix = "___JOIN_",
+                               code_col = NULL) {
 
   if (!is.null(pattern_raw)) {
     by_raw <- grep(pattern_raw, names(raw), value = TRUE)
@@ -98,11 +133,15 @@ prep_ref <- function(raw, ref, pattern_raw, pattern_ref, by, join_suffix = "___J
   # rename cols of ref if necessary
   if (all(by_raw == by_ref)) {
     by_ref_i <- vapply(by_ref, function(x) which(names(ref) == x), 0L)
-    by_ref <- paste0("ref_", by_ref)
+    by_ref <- paste0(ref_prefix, by_ref)
     names(ref)[by_ref_i] <- by_ref
   }
 
   by_join <- paste0(by_raw, join_suffix)
+
+  if (!is.null(code_col)) {
+    ref[[code_col]] <- hcodes_str(ref, by = by_ref)
+  }
 
   return(list(ref = ref, by_raw = by_raw, by_ref = by_ref, by_join = by_join))
 }
@@ -113,16 +152,21 @@ best_geocode_group <- function(dat, pattern, id_col, code_col, split = "__") {
   cols <- grep(pattern, names(dat), value = TRUE)
   dat_ <- dat[,sort(cols), drop = FALSE]
   dat_split <- split(dat_, dat[[id_col]])
-  vapply(dat_split, best_geocode_helper, character(1), code_col = code_col,
+  vapply(dat_split,
+         best_geocode_helper,
+         character(1),
+         code_col = code_col,
          USE.NAMES = FALSE)
 }
 
 
 #' @noRd
-best_geocode_helper <- function(dat, pattern, code_col, split = "__") {
+best_geocode_helper <- function(dat, pattern, code_col, id_col, split = "__") {
 
+  # TODO: make this code less awful
   cols <- grep(pattern, names(dat), value = TRUE)
   dat_ <- dat[, sort(cols), drop = FALSE]
+  id <- unique(dat[[id_col]])
 
   n_levels <- ncol(dat_)
 
@@ -142,7 +186,7 @@ best_geocode_helper <- function(dat, pattern, code_col, split = "__") {
   } else {
     code <- NA_character_
   }
-  return(setNames(data.frame(code, stringsAsFactors = FALSE), code_col))
+  return(setNames(data.frame(id, code, stringsAsFactors = FALSE), c(id_col, code_col)))
 }
 
 

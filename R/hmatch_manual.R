@@ -19,6 +19,8 @@
 #'   the corresponding columns in `ref` (see also \link{specifying_columns})
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man`
+#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
+#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
@@ -45,8 +47,6 @@
 #' # find manual matches
 #' hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 #'
-#' @importFrom stats setNames
-#' @importFrom dplyr left_join
 #' @export hmatch_manual
 hmatch_manual <- function(raw,
                           ref,
@@ -56,53 +56,71 @@ hmatch_manual <- function(raw,
                           by = NULL,
                           code_col,
                           type = "left",
+                          ref_prefix = "ref_",
                           std_fn = string_std) {
+
+  # # for testing purposes only
+  # raw <- ne_raw
+  # ref <- ne_ref
+  # man <- data.frame(adm0 = NA_character_,
+  #                   adm1 = NA_character_,
+  #                   adm2 = "NJ_Bergen",
+  #                   hcode = "211",
+  #                   stringsAsFactors = FALSE)
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # code_col <- "hcode"
+  # type = "left"
+  # ref_prefix = "ref_"
+  # std_fn = string_std
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
   if (code_col %in% names(raw)) {
-    warning("Column `code_col` already exists in `raw`, and will be overwritten")
+    warning("`code_col` already exists in `raw`, and will be overwritten")
     raw <- raw[!names(raw) %in% code_col]
   }
 
-  list_prep_ref <- prep_ref(raw = raw,
-                            ref = ref,
-                            pattern_raw = pattern_raw,
-                            pattern_ref = pattern_ref,
-                            by = by)
+  ## identify hierarchical columns to match, and rename ref cols if necessary
+  prep <- prep_match_columns(raw = raw,
+                             ref = ref,
+                             pattern_raw = pattern_raw,
+                             pattern_ref = pattern_ref,
+                             by = by,
+                             ref_prefix = ref_prefix)
 
-  list_prep_man <- prep_ref(raw = raw,
-                            ref = man,
-                            pattern_raw = pattern_raw,
-                            pattern_ref = pattern_ref,
-                            by = by)
+  ## join ref to man by code_col
+  man_ref <- merge(man, prep$ref, all.x = TRUE)
 
-  ref <- list_prep_ref$ref
+  ## add standardized columns for joining
+  raw_join <- add_join_columns(dat = raw,
+                               by = prep$by_raw,
+                               join_cols = prep$by_join,
+                               std_fn = std_fn)
 
-  by_raw <- list_prep_ref$by_raw
-  by_man <- list_prep_ref$by_raw
-  by_join <- list_prep_ref$by_join
+  man_join <- add_join_columns(dat = man_ref,
+                               by = prep$by_raw,
+                               join_cols = prep$by_join,
+                               std_fn = std_fn)
 
-  raw_join <- add_join_columns(raw, by_raw, join_cols = by_join, std_fn = std_fn)
-
-  man$TEMP_IS_MATCH <- "MATCH"
-
-  man_join <- add_join_columns(man, by_man, join_cols = by_join, std_fn = std_fn)
-  man_ <- unique(man_join[,c(by_join, code_col, "TEMP_IS_MATCH")])
-
-  if (any(duplicated(man_[, by_join, drop = FALSE]))) {
+  ## check for duplicated rows in man after standardization
+  if (any(duplicated(man_join[, prep$by_join, drop = FALSE]))) {
     stop("Duplicated rows in `man` after standardization")
   }
 
-  out <- left_join(raw_join, man_, by = by_join)
-  out <- out[, c(names(raw), code_col, "TEMP_IS_MATCH"), drop = FALSE]
-  out <- left_join(out, ref, by = code_col)
-  out <- out[, c(names(raw), names(ref), "TEMP_IS_MATCH"), drop = FALSE]
+  ## remove extraneous columns from raw, and filter to unique rows
+  man_join_final <- unique(man_join[!names(man_join) %in% prep$by_raw])
 
+  ## merge raw and man
+  out <- merge(raw_join, man_join_final, by = prep$by_join, all.x = TRUE)
+
+  ## execute merge type
   if (type == "inner") {
-    out <- out[!is.na(out$TEMP_IS_MATCH),]
+    out <- out[!is.na(out[[code_col]]),]
   }
 
-  out[,!names(out) %in% "TEMP_IS_MATCH", drop = FALSE]
+  ## remove temporary columns and return
+  out[,c(names(raw), names(prep$ref)), drop = FALSE]
 }
 

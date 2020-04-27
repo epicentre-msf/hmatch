@@ -32,6 +32,8 @@
 #'   \link{specifying_columns})
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man` (only required if argument `man` is given)
+#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
+#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -51,11 +53,9 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch(ne_raw, ne_ref, fuzzy = TRUE)
+#' hmatch(ne_raw, ne_ref, fuzzy = FALSE)
 #'
 #' @importFrom stats setNames
-#' @importFrom tidyselect all_of
-#' @import rlang dplyr
 #' @export hmatch
 hmatch <- function(raw,
                    ref,
@@ -64,22 +64,49 @@ hmatch <- function(raw,
                    pattern_ref = pattern_raw,
                    by = NULL,
                    code_col = NULL,
+                   ref_prefix = "ref_",
                    std_fn = string_std,
                    fuzzy = FALSE,
                    max_dist = 1L) {
 
+  # # for testing
+  # raw <- ne_raw
+  # ref <- ne_ref
+  # man <- data.frame(adm0 = NA_character_,
+  #                   adm1 = NA_character_,
+  #                   adm2 = "NJ_Bergen",
+  #                   hcode = "211",
+  #                   stringsAsFactors = FALSE)
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # code_col <- "hcode"
+  # ref_prefix = "ref_"
+  # std_fn = string_std
+  # fuzzy = FALSE
+  # max_dist = 1L
+
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
-  raw$TEMP_ROW_ID_BEST <- seq_len(nrow(raw))
+  ## names of temporary columns
+  temp_id_col <- "TEMP_ROW_ID_BEST"
+  temp_code_col <- "TEMP_CODE_COL_BEST"
 
-  list_prep_ref <- prep_ref(raw = raw,
-                            ref = ref,
-                            pattern_raw = pattern_raw,
-                            pattern_ref = pattern_ref,
-                            by = by)
+  ## add temporary row index to raw
+  raw[[temp_id_col]] <- seq_len(nrow(raw))
 
+  ## identify hierarchical columns to match, and rename ref cols if necessary
+  prep <- prep_match_columns(raw = raw,
+                             ref = ref,
+                             pattern_raw = pattern_raw,
+                             pattern_ref = pattern_ref,
+                             by = by,
+                             code_col = temp_code_col)
 
+  ## initiate empty match dfs
   m_manual <- m_complete <- m_partial <- m_fuzzy <- m_roll <- NULL
+
+  ## initial df to store remaining unmatched rows of raw
   raw_remaining <- raw
 
   ## manual match
@@ -95,68 +122,85 @@ hmatch <- function(raw,
                               type = "inner",
                               std_fn = std_fn)
 
-    m_manual$TEMP_CODE_COL_BEST <- hcodes_str(m_manual, by = list_prep_ref$by_ref)
+    m_manual[[temp_code_col]] <- hcodes_str(m_manual, by = prep$by_ref)
 
-    m_manual <- m_manual[,c("TEMP_ROW_ID_BEST", "TEMP_CODE_COL_BEST")]
-    m_manual$match_type <- if (nrow(m_manual) > 0) "manual" else character(0)
-    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_manual$TEMP_ROW_ID_BEST,]
+    m_manual <- m_manual[,c(temp_id_col, temp_code_col)]
+    m_manual <- add_column(m_manual, "match_type", "manual")
+    raw_remaining <- raw_remaining[!raw_remaining[[temp_id_col]] %in% m_manual[[temp_id_col]],]
   }
 
-  ref <- list_prep_ref$ref
-  by_raw <- list_prep_ref$by_raw
-  by_ref <- list_prep_ref$by_ref
-
-  by <- setNames(by_ref, by_raw)
-  max_level <- length(by_raw)
-
-  code_col <- "TEMP_CODE_COL_BEST"
-
-  ref$TEMP_CODE_COL_BEST <- hcodes_str(ref, by = by)
+  ## prepare match, code, and ID columns
+  ref_ <- prep$ref[,c(prep$by_ref, temp_code_col)]
+  by <- setNames(prep$by_ref, prep$by_raw)
 
   ## complete match
   if (nrow(raw_remaining) > 0) {
-    m_complete <- hmatch_complete(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn)
-    m_complete <- m_complete[,c("TEMP_ROW_ID_BEST", code_col)]
-    m_complete$match_type <- if (nrow(m_complete) > 0) "complete" else character(0)
-    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_complete$TEMP_ROW_ID_BEST,]
+    m_complete <- hmatch_complete(raw_remaining,
+                                  ref_,
+                                  by = by,
+                                  type = "inner",
+                                  std_fn = std_fn)
+
+    m_complete <- m_complete[,c(temp_id_col, temp_code_col)]
+    m_complete <- add_column(m_complete, "match_type", "complete")
+    raw_remaining <- raw_remaining[!raw_remaining[[temp_id_col]] %in% m_complete[[temp_id_col]],]
   }
 
   ## partial join
   if (nrow(raw_remaining) > 0) {
-    m_partial <- hmatch_partial(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn)
-    m_partial <- m_partial[,c("TEMP_ROW_ID_BEST", code_col)]
-    m_partial$match_type <- if (nrow(m_partial) > 0) "partial" else character(0)
-    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_partial$TEMP_ROW_ID_BEST,]
+    m_partial <- hmatch_partial(raw_remaining,
+                                ref_,
+                                by = by,
+                                type = "inner",
+                                std_fn = std_fn)
+
+    m_partial <- m_partial[,c(temp_id_col, temp_code_col)]
+    m_partial <- add_column(m_partial, "match_type", "partial")
+    raw_remaining <- raw_remaining[!raw_remaining[[temp_id_col]] %in% m_partial[[temp_id_col]],]
   }
 
   ## partial-fuzzy join
   if (nrow(raw_remaining) > 0) {
-    m_fuzzy <- hmatch_partial(raw_remaining, ref, by = by, type = "inner", std_fn = std_fn, fuzzy = TRUE)
-    m_fuzzy <- m_fuzzy[,c("TEMP_ROW_ID_BEST", code_col)]
-    m_fuzzy$match_type <- if (nrow(m_fuzzy) > 0) "fuzzy" else character(0)
-    raw_remaining <- raw_remaining[!raw_remaining$TEMP_ROW_ID_BEST %in% m_fuzzy$TEMP_ROW_ID_BEST,]
+    m_fuzzy <- hmatch_partial(raw_remaining,
+                              ref_,
+                              by = by,
+                              type = "inner",
+                              std_fn = std_fn,
+                              fuzzy = TRUE)
+
+    m_fuzzy <- m_fuzzy[,c(temp_id_col, temp_code_col)]
+    m_fuzzy <- add_column(m_fuzzy, "match_type", "fuzzy")
+    raw_remaining <- raw_remaining[!raw_remaining[[temp_id_col]] %in% m_fuzzy[[temp_id_col]],]
   }
 
-  ## rolling join
+  ## best-possible join
   if (nrow(raw_remaining) > 0) {
-    m_roll <- hmatch_best(raw_remaining, ref, by = by, type = "inner",
-                          std_fn = std_fn, fuzzy = fuzzy, max_dist = max_dist)
-    m_roll <- m_roll[,c("TEMP_ROW_ID_BEST", code_col, "match_type")]
+    m_roll <- hmatch_best(raw_remaining,
+                          ref_,
+                          by = by,
+                          type = "inner",
+                          std_fn = std_fn,
+                          fuzzy = fuzzy,
+                          max_dist = max_dist)
+
+    m_roll <- m_roll[,c(temp_id_col, temp_code_col, "match_type")]
   }
 
-  ## combine results
-  ref_bind <- dplyr::bind_rows(m_manual,
-                               m_complete,
-                               m_partial,
-                               m_fuzzy,
-                               m_roll)
+  ## combine results from all match types
+  m_full <- rbind.data.frame(m_manual,
+                             m_complete,
+                             m_partial,
+                             m_fuzzy,
+                             m_roll)
 
-  ref_bind <- ref_bind[order(ref_bind$TEMP_ROW_ID_BEST),] %>%
-    dplyr::left_join(ref, by = code_col) %>%
-    dplyr::select("TEMP_ROW_ID_BEST", all_of(names(ref)), "match_type")
+  ## merge to ref
+  m_bind_ref <- merge(m_full, prep$ref, by = temp_code_col)
+  m_bind_ref <- m_bind_ref[,c(temp_id_col, names(prep$ref), "match_type")]
 
-  out <- dplyr::left_join(raw, ref_bind, by = "TEMP_ROW_ID_BEST")
+  ## merge to raw
+  out <- merge(raw, m_bind_ref, by = temp_id_col, all.x = TRUE)
 
-  return(out[,!names(out) %in% c("TEMP_ROW_ID_BEST", "TEMP_CODE_COL_BEST"), drop = FALSE])
+  ## remove temporary columns and return
+  return(out[,!names(out) %in% c(temp_id_col, temp_code_col), drop = FALSE])
 }
 

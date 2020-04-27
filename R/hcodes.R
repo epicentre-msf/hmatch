@@ -41,7 +41,6 @@ NULL
 
 
 #' @rdname hcodes
-#' @importFrom dplyr mutate_all
 #' @export hcodes_str
 hcodes_str <- function(ref,
                        pattern = NULL,
@@ -61,7 +60,9 @@ hcodes_str <- function(ref,
   ref_ <- ref[, by, drop = FALSE]
 
   if (!is.null(std_fn)) {
-    ref_ <- dplyr::mutate_all(ref_, std_fn)
+    for (i in seq_len(ncol(ref_))) {
+      ref_[[i]] <- std_fn(ref_[[i]])
+    }
   }
 
   return(apply(ref_, 1, function(x) paste(x[!is.na(x)], collapse = sep)))

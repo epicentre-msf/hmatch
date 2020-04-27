@@ -11,6 +11,7 @@ hmatch_complete(
   pattern_ref = pattern_raw,
   by = NULL,
   type = "left",
+  ref_prefix = "ref_",
   std_fn = string_std
 )
 }
@@ -30,6 +31,9 @@ corresponding columns in \code{raw}}
 
 \item{type}{type of join ("left", "inner", "anti") (defaults to "left")}
 
+\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
@@ -37,9 +41,7 @@ also \link{string_standardization}.}
 \value{
 A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
 and \code{ref}. If \code{type == "inner"}, returns only the rows of \code{raw} with a
-single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}. If
-the hierarchical columns within \code{ref} have identical names to \code{raw}, the
-returned reference columns will be renamed with prefix "ref_".
+single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}.
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.

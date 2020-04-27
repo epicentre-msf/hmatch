@@ -19,6 +19,8 @@
 #'   hierarchical columns in `ref` and whose names are the names of the
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
+#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -29,9 +31,7 @@
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
-#'   single match in `ref`. If `type == "left"`, returns all rows of `raw`. If
-#'   the hierarchical columns within `ref` have identical names to `raw`, the
-#'   returned reference columns will be renamed with prefix "ref_".
+#'   single match in `ref`. If `type == "left"`, returns all rows of `raw`.
 #'
 #' @examples
 #' data(ne_raw)
@@ -39,8 +39,6 @@
 #'
 #' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 #'
-#' @importFrom stats setNames
-#' @import rlang dplyr
 #' @export hmatch_partial
 hmatch_partial <- function(raw,
                            ref,
@@ -48,103 +46,151 @@ hmatch_partial <- function(raw,
                            pattern_ref = pattern_raw,
                            by = NULL,
                            type = "left",
+                           ref_prefix = "ref_",
                            std_fn = string_std,
                            fuzzy = FALSE,
                            max_dist = 1L) {
 
-  # raw <- ne_raw[c(1, 1),]
+  # # for testing
+  # raw <- ne_raw
   # ref <- ne_ref
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
   # type = "left"
+  # ref_prefix = "ref_"
   # std_fn = string_std
   # fuzzy = TRUE
   # max_dist = 1L
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
-  list_prep_ref <- prep_ref(raw = raw,
-                            ref = ref,
-                            pattern_raw = pattern_raw,
-                            pattern_ref = pattern_ref,
-                            by = by)
+  ## identify hierarchical columns to match, and rename ref cols if necessary
+  prep <- prep_match_columns(raw = raw,
+                             ref = ref,
+                             pattern_raw = pattern_raw,
+                             pattern_ref = pattern_ref,
+                             by = by,
+                             ref_prefix = ref_prefix)
 
-  ref <- list_prep_ref$ref
-  by_raw <- list_prep_ref$by_raw
-  by_ref <- list_prep_ref$by_ref
-  by_join <- list_prep_ref$by_join
-
-  by_raw_join <- paste0(by_raw, "__JOIN")
-  by_ref_join <- paste0(by_ref, "__JOIN")
-
-  max_level <- length(by_raw)
-
+  ## save original column names of raw
   raw_cols_orig <- names(raw)
+
+  ## create temporary row id
   raw$TEMP_ROW_ID_PART <- seq_len(nrow(raw))
 
-  raw_join <- add_join_columns(raw, by_raw, join_cols = by_raw_join, std_fn = std_fn)
-  ref_join <- add_join_columns(ref, by_ref, join_cols = by_ref_join, std_fn = std_fn)
+  ## join colnames must be separate from original, and differ between raw/ref
+  by_raw_join <- paste0(prep$by_raw, "___JOIN_")
+  by_ref_join <- paste0(prep$by_ref, "___JOIN_")
 
+  ## add standardized columns for joining
+  raw_join <- add_join_columns(dat = raw,
+                               by = prep$by_raw,
+                               join_cols = by_raw_join,
+                               std_fn = std_fn)
+
+  ref_join <- add_join_columns(dat = prep$ref,
+                               by = prep$by_ref,
+                               join_cols = by_ref_join,
+                               std_fn = std_fn)
+
+  ## extract only the join columns
   raw_ <- raw_join[,by_raw_join, drop = FALSE]
   ref_ <- ref_join[,by_ref_join, drop = FALSE]
+
+  ## identify the maximum (highest-resolution) hierarchical level
+  max_level <- length(prep$by_raw)
 
   col_max_raw <- by_raw_join[max_level]
   col_max_ref <- by_ref_join[max_level]
 
-  col_max_sym_raw <- rlang::sym(col_max_raw)
-  col_max_sym_ref <- rlang::sym(col_max_ref)
+  ## generate all possible match combinations at max hierarchical level
+  initial_combinations <- expand.grid(x = unique(raw_[[col_max_raw]]),
+                                      y = unique(ref_[[col_max_ref]]),
+                                      stringsAsFactors = FALSE)
 
-  initial_matches <- expand.grid(x = unique(raw_[[col_max_raw]]),
-                                 y = unique(ref_[[col_max_ref]]),
-                                 stringsAsFactors = FALSE) %>%
-    setNames(c(col_max_raw, col_max_ref)) %>%
-    dplyr::as_tibble()
+  names(initial_combinations) <- c(col_max_raw, col_max_ref)
 
-  if (!fuzzy) {
-    initial_matches_filter <- initial_matches %>%
-      dplyr::filter((is.na(!!col_max_sym_raw) & is.na(!!col_max_sym_ref)) | !!col_max_sym_raw == !!col_max_sym_ref)
-  } else {
-    initial_matches_filter <- initial_matches %>%
-      dplyr::filter((is.na(!!col_max_sym_raw) & is.na(!!col_max_sym_ref)) |
-                      stringdist::stringdist(!!col_max_sym_raw, !!col_max_sym_ref) <= max_dist)
-  }
+  ## filter to actual matches at max hierarchical level
+  initial_matches <- filter_to_matches(dat = initial_combinations,
+                                       col1 = col_max_raw,
+                                       col2 = col_max_ref,
+                                       fuzzy = fuzzy,
+                                       max_dist = max_dist,
+                                       is_max_level = TRUE)
 
-  initial_matches_join <- initial_matches_filter %>%
-    dplyr::left_join(raw_join, by = col_max_raw) %>%
-    dplyr::left_join(ref_join, by = col_max_ref)
+  ## rejoin raw and ref
+  initial_matches_join <- merge(initial_matches,
+                                raw_join,
+                                by = col_max_raw,
+                                all.x = TRUE)
 
+  initial_matches_join <- merge(initial_matches_join,
+                                ref_join,
+                                by = col_max_ref,
+                                all.x = TRUE)
+
+  ## filter to matches where the max ref level is <= the max raw level
+  matches_remaining <- corresponding_levels(initial_matches_join,
+                                            prep$by_raw,
+                                            prep$by_ref)
+
+  ## for each lower hierarchical level...
   if (max_level > 1) {
     for (j in (max_level - 1):1) {
-      cols_focal_raw <- names(raw_)[j]
-      cols_focal_ref <- names(ref_)[j]
+      col_focal_raw <- names(raw_)[j]
+      col_focal_ref <- names(ref_)[j]
 
-      cols_focal_sym_raw <- rlang::sym(cols_focal_raw)
-      cols_focal_sym_ref <- rlang::sym(cols_focal_ref)
-
-      if (!fuzzy) {
-        initial_matches_join <- initial_matches_join %>%
-          dplyr::filter(is.na(!!cols_focal_sym_raw) |
-                          !!cols_focal_sym_raw == !!cols_focal_sym_ref)
-      } else {
-        initial_matches_join <- initial_matches_join %>%
-          dplyr::filter(is.na(!!cols_focal_sym_raw) |
-                          stringdist::stringdist(!!cols_focal_sym_raw, !!cols_focal_sym_ref) <= max_dist)
-      }
+      matches_remaining <- filter_to_matches(dat = matches_remaining,
+                                             col1 = col_focal_raw,
+                                             col2 = col_focal_ref,
+                                             fuzzy = fuzzy,
+                                             max_dist = max_dist,
+                                             is_max_level = FALSE)
     }
   }
 
-  matches_out <- unique(initial_matches_join[,c(raw_cols_orig, names(ref))])
-  matches_out <- corresponding_levels(matches_out, by_raw, by_ref)
+  ## remove join columns and filter to unique rows
+  matches_out <- unique(matches_remaining[,c(raw_cols_orig, names(prep$ref))])
+
+  ## add temporary column to track matches after merge
   matches_out$TEMP_IS_MATCH <- if (nrow(matches_out) > 0) "MATCH" else character(0)
 
-  out <- dplyr::left_join(raw, matches_out, by = raw_cols_orig)
+  ## merge final match data with raw
+  out <- merge(raw, matches_out, by = raw_cols_orig, all.x = TRUE)
 
+  ## execute merge type
   if (type == "inner") {
     out <- out[!is.na(out$TEMP_IS_MATCH),]
     dup_ids <- out$TEMP_ROW_ID_PART[duplicated(out$TEMP_ROW_ID_PART)]
     out <- out[!out$TEMP_ROW_ID_PART %in% dup_ids,]
   }
 
+  ## remove temporary columns and return
   out[,!names(out) %in% c("TEMP_ROW_ID_PART", "TEMP_IS_MATCH"), drop = FALSE]
 }
+
+
+
+
+#' @noRd
+#' @importFrom stringdist stringdist
+filter_to_matches <- function(dat, col1, col2, fuzzy, max_dist, is_max_level) {
+
+  match <- if (fuzzy) {
+    stringdist::stringdist(dat[[col1]], dat[[col2]]) <= max_dist
+  } else {
+    dat[[col1]] == dat[[col2]]
+  }
+
+  keep <- if (is_max_level) {
+    match | is.na(dat[[col1]]) & is.na(dat[[col2]])
+  } else {
+    match | is.na(dat[[col1]])
+  }
+
+  keep[is.na(keep)] <- FALSE
+
+  return(dat[keep,])
+}
+

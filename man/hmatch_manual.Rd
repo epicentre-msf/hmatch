@@ -13,6 +13,7 @@ hmatch_manual(
   by = NULL,
   code_col,
   type = "left",
+  ref_prefix = "ref_",
   std_fn = string_std
 )
 }
@@ -40,6 +41,9 @@ the corresponding columns in \code{ref} (see also \link{specifying_columns})}
 and \code{man}}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
+
+\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

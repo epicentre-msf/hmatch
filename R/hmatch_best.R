@@ -22,6 +22,8 @@
 #'   hierarchical columns in `ref`, and whose names are the names of the
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
+#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -44,8 +46,6 @@
 #' hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
 #'
 #' @importFrom stats setNames
-#' @importFrom tidyselect all_of
-#' @import rlang dplyr
 #' @export hmatch_best
 hmatch_best <- function(raw,
                         ref,
@@ -53,92 +53,139 @@ hmatch_best <- function(raw,
                         pattern_ref = pattern_raw,
                         by = NULL,
                         type = "left",
+                        ref_prefix = "ref_",
                         std_fn = string_std,
                         fuzzy = FALSE,
                         max_dist = 1L) {
 
+  # # for testing purposes only
+  # raw <- ne_raw
+  # ref <- ne_ref
+  # pattern_raw = NULL
+  # pattern_ref = pattern_raw
+  # by = NULL
+  # type = "left"
+  # ref_prefix = "ref_"
+  # std_fn = string_std
+  # fuzzy = TRUE
+  # max_dist = 1L
+
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
-  raw$TEMP_ROW_ID_ROLL <- seq_len(nrow(raw))
-
-  list_prep_ref <- prep_ref(raw = raw,
-                            ref = ref,
-                            pattern_raw = pattern_raw,
-                            pattern_ref = pattern_ref,
-                            by = by)
-
-  ref <- list_prep_ref$ref
-  by_raw <- list_prep_ref$by_raw
-  by_ref <- list_prep_ref$by_ref
-
-  by <- setNames(by_ref, by_raw)
-  max_level <- length(by_raw)
-
+  # names of temporary columns
   code_col <- "TEMP_CODE_COL_ROLL"
+  id_col <- "TEMP_ROW_ID_ROLL"
 
-  ref$TEMP_CODE_COL_ROLL <- hcodes_str(ref, by = by)
+  ## identify hierarchical columns to match, and rename ref cols if necessary
+  prep <- prep_match_columns(raw = raw,
+                             ref = ref,
+                             pattern_raw = pattern_raw,
+                             pattern_ref = pattern_ref,
+                             by = by,
+                             ref_prefix = ref_prefix,
+                             code_col = code_col)
 
-  raw_full <- raw
+  ## prepare match, code, and ID columns
+  by <- setNames(prep$by_ref, prep$by_raw)
 
-  for (j in max_level:1) {
+  raw[[id_col]] <- seq_len(nrow(raw))
 
-    raw_excl <- by_raw[!by_raw %in% by_raw[1:j]]
-    ref_excl <- by_ref[!by_ref %in% by_ref[1:j]]
+  raw_ <- raw[c(id_col, prep$by_raw)]
+  ref_ <- prep$ref[c(prep$by_ref, code_col)]
 
-    code_lev <- paste0(code_col, j)
+  ref_[["MAX_LEVEL"]] <- max_adm_level(ref_, by = prep$by_ref)
 
-    raw_foc <- raw[,!names(raw) %in% raw_excl]
+  ## initial df to store all temporary match columns
+  matches_full <- raw
 
-    ref_foc <- ref[,c(by_ref[1:j], code_col)] %>%
-      dplyr::filter(max_adm_level(ref[,by_ref]) <= j) %>%
-      dplyr::rename(!!!setNames(code_col, code_lev))
+  ## find matches with hmatch_partial() at each match level...
+  for (j in rev(seq_along(by))) {
 
-    raw_full <- hmatch_partial(raw_foc,
-                               ref_foc,
-                               by = by[1:j],
-                               type = "left",
-                               std_fn = std_fn,
-                               fuzzy = fuzzy,
-                               max_dist = max_dist) %>%
-      dplyr::select("TEMP_ROW_ID_ROLL", all_of(code_lev)) %>%
-      dplyr::right_join(raw_full, by = "TEMP_ROW_ID_ROLL")
+    # temp name for code_col at focal level
+    code_col_lev <- paste0(code_col, j)
+
+    # columns to exclude (> focal level)
+    j_excl <- setdiff(seq_along(by), seq_len(j))
+    cols_excl_raw <- prep$by_raw[j_excl]
+    cols_excl_ref <- prep$by_ref[j_excl]
+
+    # subset to focal columns of raw and ref
+    raw_foc <- raw_[,!names(raw_) %in% cols_excl_raw, drop = FALSE]
+    ref_foc <- ref_[,!names(ref_) %in% cols_excl_ref, drop = FALSE]
+
+    # filter ref to rows where max_level is <= the focal level
+    ref_foc <- ref_foc[ref_foc[["MAX_LEVEL"]] <= j,]
+
+    # rename code_col to focal level
+    ref_foc <- rename_col(ref_foc,
+                          col_old = code_col,
+                          col_new = code_col_lev)
+
+    # match raw to ref at given level
+    matches_level <- hmatch_partial(raw_foc,
+                                    ref_foc,
+                                    by = by[1:j],
+                                    type = "left",
+                                    std_fn = std_fn,
+                                    fuzzy = fuzzy,
+                                    max_dist = max_dist)
+
+    # compile matches at each level
+    # TODO: test whether this fails given two adm0 with e.g. identical adm1/adm2
+    #  combinations
+    matches_full <- merge(matches_full,
+                          matches_level[,c(id_col, code_col_lev)],
+                          by = id_col,
+                          all.x = TRUE)
   }
 
-  raw_best <- sort_cols(raw_full, raw)
-  # raw_best$conflict <- test_geocode_conflict(raw_best, code_col)
+  ## row ids from raw with >1 match in ref
+  ids_dup <- matches_full[[id_col]][duplicated(matches_full[[id_col]])]
 
-  dup_ids <- raw_best$TEMP_ROW_ID_ROLL[duplicated(raw_best$TEMP_ROW_ID_ROLL)]
+  ## best geocode for single-matches
+  matches_single <- matches_full[!matches_full[[id_col]] %in% ids_dup,]
+  matches_single[[code_col]] <- best_geocode(matches_single, pattern = code_col)
+  matches_single <- matches_single[!is.na(matches_single[[code_col]]), c(id_col, code_col)]
+  matches_single <- add_column(matches_single, "match_type", "best_single")
 
-  ## get best pcode
-  raw_best_single <- raw_best[!raw_best$TEMP_ROW_ID_ROLL %in% dup_ids,]
-  raw_best_single[[code_col]] <- best_geocode(raw_best_single, code_col)
-  raw_best_single$match_type <- if (nrow(raw_best_single) > 0) "best_single" else character(0)
-  raw_best_single <- raw_best_single[!is.na(raw_best_single[[code_col]]),c("TEMP_ROW_ID_ROLL", code_col, "match_type")]
+  ## best geocode for multiple-matches
+  matches_multi_init <- matches_full[matches_full[[id_col]] %in% ids_dup,]
 
-  raw_best_multiple <- raw_best[raw_best$TEMP_ROW_ID_ROLL %in% dup_ids,]
+  if (nrow(matches_multi_init) > 0) {
 
-  if (nrow(raw_best_multiple) > 0) {
-    raw_best_multiple <- raw_best_multiple %>%
-      group_by(!!sym("TEMP_ROW_ID_ROLL")) %>%
-      do(best_geocode_helper(.data, pattern = code_col, code_col = code_col)) %>%
-      ungroup()
+    matches_multi_split <- split(matches_multi_init,
+                                 matches_multi_init[[id_col]])
+
+    matches_multi_geocode <- lapply(matches_multi_split,
+                                    best_geocode_helper,
+                                    pattern = code_col,
+                                    code_col = code_col,
+                                    id_col = id_col)
+
+    matches_multi <- do.call(rbind.data.frame, matches_multi_geocode)
+  } else {
+    matches_multi <- matches_multi_init
   }
 
-  raw_best_multiple$match_type <- if (nrow(raw_best_multiple) > 0) "best_multi" else character(0)
-  raw_best_multiple <- raw_best_multiple[!is.na(raw_best_multiple[[code_col]]),]
+  matches_multi <- matches_multi[!is.na(matches_multi[[code_col]]),]
+  matches_multi <- add_column(matches_multi, "match_type", "best_multi")
 
-  ref_bind <- dplyr::bind_rows(raw_best_single, raw_best_multiple)
+  ## combine single and multiple matches
+  matches_bind <- rbind_dfs(matches_single, matches_multi)
 
-  ref_bind <- ref_bind[order(ref_bind$TEMP_ROW_ID_ROLL),] %>%
-    dplyr::left_join(ref, by = code_col) %>%
-    dplyr::select("TEMP_ROW_ID_ROLL", all_of(names(ref)), "match_type")
+  ## join to ref
+  matches_bind_ref <- merge(matches_bind, prep$ref, by = code_col, all.x = TRUE)
+  matches_bind_ref <- matches_bind_ref[,c(id_col, names(prep$ref), "match_type")]
 
-  out <- dplyr::left_join(raw, ref_bind, by = "TEMP_ROW_ID_ROLL")
+  ## join to raw
+  matches_out <- merge(raw, matches_bind_ref, by = id_col, all.x = TRUE)
 
+  ## execute match type
   if (type == "inner") {
-    out <- out[!is.na(out$match_type),]
+    matches_out <- matches_out[!is.na(matches_out$match_type),]
   }
 
-  return(out[,!names(out) %in% c("TEMP_ROW_ID_ROLL", "TEMP_CODE_COL_ROLL"), drop = FALSE])
+  ## remove temporary columns and return
+  return(matches_out[,!names(matches_out) %in% c(id_col, code_col), drop = FALSE])
 }
 
