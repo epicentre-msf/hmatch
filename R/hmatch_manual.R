@@ -82,6 +82,11 @@ hmatch_manual <- function(raw,
     raw <- raw[!names(raw) %in% code_col]
   }
 
+  ## create temporary row id in raw
+  names_raw_orig <- names(raw)
+  temp_id_col <- "TEMP_ROW_ID_MAN"
+  raw[[temp_id_col]] <- seq_len(nrow(raw))
+
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
@@ -115,6 +120,10 @@ hmatch_manual <- function(raw,
   ## merge raw and man
   out <- merge(raw_join, man_join_final, by = prep$by_join, all.x = TRUE)
 
+  ## rearrange by temp row id and strip rownames
+  out <- out[order(out[[temp_id_col]]),]
+  rownames(out) <- NULL
+
   ## execute merge type
   if (type == "inner") {
     out <- out[!is.na(out[[code_col]]),]
@@ -124,6 +133,6 @@ hmatch_manual <- function(raw,
   class(out) <- class(raw)
 
   ## remove temporary columns and return
-  out[,c(names(raw), names(prep$ref)), drop = FALSE]
+  out[,c(names_raw_orig, names(prep$ref)), drop = FALSE]
 }
 

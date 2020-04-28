@@ -53,6 +53,9 @@ hmatch_complete <- function(raw,
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
+  ## add temporary row index to raw
+  raw[["TEMP_ROW_ID_COMP"]] <- seq_len(nrow(raw))
+
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
@@ -72,13 +75,17 @@ hmatch_complete <- function(raw,
                                join_cols = prep$by_join,
                                std_fn = std_fn)
 
-  ref_join$TEMP_IS_MATCH <- "MATCH"
+  ref_join[["TEMP_IS_MATCH"]] <- "MATCH"
 
   ## merge raw and ref
   out <- merge(raw_join,
                ref_join,
                by = prep$by_join,
                all.x = TRUE)
+
+  ## rearrange by temp row id and strip rownames
+  out <- out[order(out[["TEMP_ROW_ID_COMP"]]),]
+  rownames(out) <- NULL
 
   ## execute merge type
   out <- switch(type,
@@ -90,5 +97,6 @@ hmatch_complete <- function(raw,
   class(out) <- class(raw)
 
   ## remove extra columns and return
-  out[,!names(out) %in% c(prep$by_join, "TEMP_IS_MATCH"), drop = FALSE]
+  cols_exclude <- c(prep$by_join, "TEMP_IS_MATCH", "TEMP_ROW_ID_COMP")
+  return(out[,!names(out) %in% cols_exclude, drop = FALSE])
 }

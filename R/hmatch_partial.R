@@ -76,8 +76,9 @@ hmatch_partial <- function(raw,
   ## save original column names of raw
   raw_cols_orig <- names(raw)
 
-  ## create temporary row id
-  raw$TEMP_ROW_ID_PART <- seq_len(nrow(raw))
+  ## create temporary row id in raw
+  temp_id_col <- "TEMP_ROW_ID_PART"
+  raw[[temp_id_col]] <- seq_len(nrow(raw))
 
   ## join colnames must be separate from original, and differ between raw/ref
   by_raw_join <- paste0(prep$by_raw, "___JOIN_")
@@ -159,18 +160,22 @@ hmatch_partial <- function(raw,
   ## merge final match data with raw
   out <- merge(raw, matches_out, by = raw_cols_orig, all.x = TRUE)
 
+  ## rearrange by temp row id and strip rownames
+  out <- out[order(out[[temp_id_col]]),]
+  rownames(out) <- NULL
+
   ## execute merge type
   if (type == "inner") {
     out <- out[!is.na(out$TEMP_IS_MATCH),]
-    dup_ids <- out$TEMP_ROW_ID_PART[duplicated(out$TEMP_ROW_ID_PART)]
-    out <- out[!out$TEMP_ROW_ID_PART %in% dup_ids,]
+    dup_ids <- out[[temp_id_col]][duplicated(out[[temp_id_col]])]
+    out <- out[!out[[temp_id_col]] %in% dup_ids,]
   }
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
   class(out) <- class(raw)
 
   ## remove temporary columns and return
-  out[,!names(out) %in% c("TEMP_ROW_ID_PART", "TEMP_IS_MATCH"), drop = FALSE]
+  out[,!names(out) %in% c(temp_id_col, "TEMP_IS_MATCH"), drop = FALSE]
 }
 
 
@@ -196,4 +201,3 @@ filter_to_matches <- function(dat, col1, col2, fuzzy, max_dist, is_max_level) {
 
   return(dat[keep,])
 }
-
