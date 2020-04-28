@@ -32,12 +32,12 @@ add_join_columns <- function(dat, by, join_cols, std_fn = NULL) {
 
   bind_ <- dat[, by, drop = FALSE]
   if (!is.null(std_fn)) {
-    for (i in seq_len(ncol(bind_))) {
-      bind_[[i]] <- std_fn(bind_[[i]])
+    for (j in seq_len(ncol(bind_))) {
+      bind_[[j]] <- std_fn(bind_[[j]])
     }
   }
   names(bind_) <- join_cols
-  cbind.data.frame(dat, bind_)
+  cbind(dat, bind_)
 }
 
 

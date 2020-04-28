@@ -68,7 +68,9 @@ ref_expand <- function(ref, pattern = NULL, by = NULL, lowest_level = 1L) {
     ref_bind <- rbind.data.frame(ref_bind, ref_focal)
   }
 
-  # remove rownames and return
+  ## remove rownames
   rownames(ref_bind) <- NULL
+
+  ## return
   return(ref_bind)
 }
