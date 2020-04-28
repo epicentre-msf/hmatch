@@ -47,6 +47,7 @@
 #' # find manual matches
 #' hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 #'
+#' @importFrom dplyr left_join
 #' @export hmatch_manual
 hmatch_manual <- function(raw,
                           ref,
@@ -118,11 +119,7 @@ hmatch_manual <- function(raw,
   man_join_final <- unique(man_join[!names(man_join) %in% prep$by_raw])
 
   ## merge raw and man
-  out <- merge(raw_join, man_join_final, by = prep$by_join, all.x = TRUE)
-
-  ## rearrange by temp row id and strip rownames
-  out <- out[order(out[[temp_id_col]]),]
-  rownames(out) <- NULL
+  out <- dplyr::left_join(raw_join, man_join_final, by = prep$by_join)
 
   ## execute merge type
   if (type == "inner") {

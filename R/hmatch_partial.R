@@ -39,6 +39,7 @@
 #'
 #' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 #'
+#' @importFrom dplyr left_join
 #' @export hmatch_partial
 hmatch_partial <- function(raw,
                            ref,
@@ -95,6 +96,10 @@ hmatch_partial <- function(raw,
                                join_cols = by_ref_join,
                                std_fn = std_fn)
 
+  ## add max non-missing adm level
+  raw_join[["MAX_ADM_RAW_"]] <- max_adm_level(raw_join, by = prep$by_raw)
+  ref_join[["MAX_ADM_REF_"]] <- max_adm_level(ref_join, by = prep$by_ref)
+
   ## extract only the join columns
   raw_ <- raw_join[,by_raw_join, drop = FALSE]
   ref_ <- ref_join[,by_ref_join, drop = FALSE]
@@ -121,20 +126,17 @@ hmatch_partial <- function(raw,
                                        is_max_level = TRUE)
 
   ## rejoin raw and ref
-  initial_matches_join <- merge(initial_matches,
-                                raw_join,
-                                by = col_max_raw,
-                                all.x = TRUE)
+  initial_matches_join <- dplyr::left_join(initial_matches,
+                                           raw_join,
+                                           by = col_max_raw)
 
-  initial_matches_join <- merge(initial_matches_join,
-                                ref_join,
-                                by = col_max_ref,
-                                all.x = TRUE)
+  initial_matches_join <- dplyr::left_join(initial_matches_join,
+                                           ref_join,
+                                           by = col_max_ref)
 
   ## filter to matches where the max ref level is <= the max raw level
-  matches_remaining <- corresponding_levels(initial_matches_join,
-                                            prep$by_raw,
-                                            prep$by_ref)
+  i <- initial_matches_join[["MAX_ADM_REF_"]] <= initial_matches_join[["MAX_ADM_RAW_"]]
+  matches_remaining <- initial_matches_join[i,]
 
   ## for each lower hierarchical level...
   if (max_level > 1) {
@@ -155,14 +157,10 @@ hmatch_partial <- function(raw,
   matches_out <- unique(matches_remaining[,c(raw_cols_orig, names(prep$ref))])
 
   ## add temporary column to track matches after merge
-  matches_out$TEMP_IS_MATCH <- if (nrow(matches_out) > 0) "MATCH" else character(0)
+  matches_out <- add_column(matches_out, "TEMP_IS_MATCH", "MATCH")
 
   ## merge final match data with raw
-  out <- merge(raw, matches_out, by = raw_cols_orig, all.x = TRUE)
-
-  ## rearrange by temp row id and strip rownames
-  out <- out[order(out[[temp_id_col]]),]
-  rownames(out) <- NULL
+  out <- dplyr::left_join(raw, matches_out, by = raw_cols_orig)
 
   ## execute merge type
   if (type == "inner") {

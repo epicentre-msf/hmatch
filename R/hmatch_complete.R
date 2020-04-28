@@ -31,6 +31,7 @@
 #'
 #' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
 #'
+#' @importFrom dplyr left_join
 #' @export hmatch_complete
 hmatch_complete <- function(raw,
                             ref,
@@ -78,14 +79,9 @@ hmatch_complete <- function(raw,
   ref_join[["TEMP_IS_MATCH"]] <- "MATCH"
 
   ## merge raw and ref
-  out <- merge(raw_join,
-               ref_join,
-               by = prep$by_join,
-               all.x = TRUE)
-
-  ## rearrange by temp row id and strip rownames
-  out <- out[order(out[["TEMP_ROW_ID_COMP"]]),]
-  rownames(out) <- NULL
+  out <- dplyr::left_join(raw_join,
+                          ref_join,
+                          by = prep$by_join)
 
   ## execute merge type
   out <- switch(type,

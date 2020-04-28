@@ -144,8 +144,8 @@ hmatch_partial(ne_raw, ne_ref, fuzzy = TRUE, max_dist = 2)
 #> 6           <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232
 #> 7  united_states        <NA>         king     2 United States     New York        Kings   222
 #> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>
-#> 9           <NA>        <NA>    jeffersen     2 United States Pennsylvania    Jefferson   231
-#> 10          <NA>        <NA>    jeffersen     2 United States     New York    Jefferson   221
+#> 9           <NA>        <NA>    jeffersen     2 United States     New York    Jefferson   221
+#> 10          <NA>        <NA>    jeffersen     2 United States Pennsylvania    Jefferson   231
 #> 11          <NA>        <NA>         york     2        Canada      Ontario         York   112
 #> 12          <NA>        <NA>         york     2 United States Pennsylvania         York   233
 ```

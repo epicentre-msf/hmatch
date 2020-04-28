@@ -56,6 +56,7 @@
 #' hmatch(ne_raw, ne_ref, fuzzy = FALSE)
 #'
 #' @importFrom stats setNames
+#' @importFrom dplyr left_join
 #' @export hmatch
 hmatch <- function(raw,
                    ref,
@@ -194,11 +195,11 @@ hmatch <- function(raw,
                              m_roll)
 
   ## merge to ref
-  m_bind_ref <- merge(m_full, prep$ref, by = temp_code_col)
+  m_bind_ref <- dplyr::left_join(m_full, prep$ref, by = temp_code_col)
   m_bind_ref <- m_bind_ref[,c(temp_id_col, names(prep$ref), "match_type")]
 
   ## merge to raw
-  out <- merge(raw, m_bind_ref, by = temp_id_col, all.x = TRUE)
+  out <- dplyr::left_join(raw, m_bind_ref, by = temp_id_col, all.x = TRUE)
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
   class(out) <- class(raw)

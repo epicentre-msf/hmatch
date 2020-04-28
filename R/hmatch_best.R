@@ -46,6 +46,7 @@
 #' hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
 #'
 #' @importFrom stats setNames
+#' @importFrom dplyr left_join
 #' @export hmatch_best
 hmatch_best <- function(raw,
                         ref,
@@ -133,10 +134,9 @@ hmatch_best <- function(raw,
     # compile matches at each level
     # TODO: test whether this fails given two adm0 with e.g. identical adm1/adm2
     #  combinations
-    matches_full <- merge(matches_full,
-                          matches_level[,c(id_col, code_col_lev)],
-                          by = id_col,
-                          all.x = TRUE)
+    matches_full <- dplyr::left_join(matches_full,
+                                     matches_level[,c(id_col, code_col_lev)],
+                                     by = id_col)
   }
 
   ## row ids from raw with >1 match in ref
@@ -174,11 +174,11 @@ hmatch_best <- function(raw,
   matches_bind <- rbind_dfs(matches_single, matches_multi)
 
   ## join to ref
-  matches_bind_ref <- merge(matches_bind, prep$ref, by = code_col, all.x = TRUE)
+  matches_bind_ref <- dplyr::left_join(matches_bind, prep$ref, by = code_col)
   matches_bind_ref <- matches_bind_ref[,c(id_col, names(prep$ref), "match_type")]
 
   ## join to raw
-  out <- merge(raw, matches_bind_ref, by = id_col, all.x = TRUE)
+  out <- dplyr::left_join(raw, matches_bind_ref, by = id_col)
 
   ## execute match type
   if (type == "inner") {
@@ -191,4 +191,3 @@ hmatch_best <- function(raw,
   ## remove temporary columns and return
   return(out[,!names(out) %in% c(id_col, code_col), drop = FALSE])
 }
-
