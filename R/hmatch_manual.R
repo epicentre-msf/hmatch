@@ -120,6 +120,9 @@ hmatch_manual <- function(raw,
     out <- out[!is.na(out[[code_col]]),]
   }
 
+  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  class(out) <- class(raw)
+
   ## remove temporary columns and return
   out[,c(names(raw), names(prep$ref)), drop = FALSE]
 }

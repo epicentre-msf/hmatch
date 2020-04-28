@@ -166,6 +166,9 @@ hmatch_partial <- function(raw,
     out <- out[!out$TEMP_ROW_ID_PART %in% dup_ids,]
   }
 
+  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  class(out) <- class(raw)
+
   ## remove temporary columns and return
   out[,!names(out) %in% c("TEMP_ROW_ID_PART", "TEMP_IS_MATCH"), drop = FALSE]
 }

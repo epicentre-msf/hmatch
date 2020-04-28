@@ -86,6 +86,9 @@ hmatch_complete <- function(raw,
                 "anti" = out[is.na(out$TEMP_IS_MATCH),],
                 out)
 
+  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  class(out) <- class(raw)
+
   ## remove extra columns and return
   out[,!names(out) %in% c(prep$by_join, "TEMP_IS_MATCH"), drop = FALSE]
 }

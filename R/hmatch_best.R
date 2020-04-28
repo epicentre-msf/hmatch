@@ -178,14 +178,17 @@ hmatch_best <- function(raw,
   matches_bind_ref <- matches_bind_ref[,c(id_col, names(prep$ref), "match_type")]
 
   ## join to raw
-  matches_out <- merge(raw, matches_bind_ref, by = id_col, all.x = TRUE)
+  out <- merge(raw, matches_bind_ref, by = id_col, all.x = TRUE)
 
   ## execute match type
   if (type == "inner") {
-    matches_out <- matches_out[!is.na(matches_out$match_type),]
+    out <- out[!is.na(out$match_type),]
   }
 
+  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  class(out) <- class(raw)
+
   ## remove temporary columns and return
-  return(matches_out[,!names(matches_out) %in% c(id_col, code_col), drop = FALSE])
+  return(out[,!names(out) %in% c(id_col, code_col), drop = FALSE])
 }
 

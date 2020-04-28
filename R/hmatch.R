@@ -200,6 +200,9 @@ hmatch <- function(raw,
   ## merge to raw
   out <- merge(raw, m_bind_ref, by = temp_id_col, all.x = TRUE)
 
+  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  class(out) <- class(raw)
+
   ## remove temporary columns and return
   return(out[,!names(out) %in% c(temp_id_col, temp_code_col), drop = FALSE])
 }
