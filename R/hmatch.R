@@ -30,6 +30,8 @@
 #'   hierarchical columns in `ref`, and whose names are the names of the
 #'   corresponding columns in `raw` (and `man`, if given) (see also
 #'   \link{specifying_columns})
+#' @param dict Optional dictionary for recoding values within the hierarchical
+#'   columns of `raw` (see \link{dictionary_recoding})
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man` (only required if argument `man` is given)
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
@@ -45,15 +47,20 @@
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
 #'   returns only the rows of `raw` with a single match in `ref`. If `type ==
-#'   "left"`, returns all rows of `raw`. If the hierarchical columns within
-#'   `ref` have identical names to `raw`, the returned reference columns will be
-#'   renamed with prefix "ref_".
+#'   "left"`, returns all rows of `raw`.
 #'
 #' @examples
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch(ne_raw, ne_ref, fuzzy = FALSE)
+#' hmatch(ne_raw, ne_ref, fuzzy = TRUE)
+#'
+#' # with dictionary-based recoding
+#' ne_dict <- data.frame(value = "USA",
+#'                       replacement = "United States",
+#'                       variable = "adm0")
+#'
+#' hmatch(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 #'
 #' @importFrom stats setNames
 #' @importFrom dplyr left_join
@@ -64,6 +71,7 @@ hmatch <- function(raw,
                    pattern_raw = NULL,
                    pattern_ref = pattern_raw,
                    by = NULL,
+                   dict = NULL,
                    code_col = NULL,
                    ref_prefix = "ref_",
                    std_fn = string_std,
@@ -139,6 +147,7 @@ hmatch <- function(raw,
     m_complete <- hmatch_complete(raw_remaining,
                                   ref_,
                                   by = by,
+                                  dict = dict,
                                   type = "inner",
                                   std_fn = std_fn)
 
@@ -152,6 +161,7 @@ hmatch <- function(raw,
     m_partial <- hmatch_partial(raw_remaining,
                                 ref_,
                                 by = by,
+                                dict = dict,
                                 type = "inner",
                                 std_fn = std_fn)
 
@@ -165,12 +175,13 @@ hmatch <- function(raw,
     m_fuzzy <- hmatch_partial(raw_remaining,
                               ref_,
                               by = by,
+                              dict = dict,
                               type = "inner",
                               std_fn = std_fn,
                               fuzzy = TRUE)
 
     m_fuzzy <- m_fuzzy[,c(temp_id_col, temp_code_col)]
-    m_fuzzy <- add_column(m_fuzzy, "match_type", "fuzzy")
+    m_fuzzy <- add_column(m_fuzzy, "match_type", "partial_fuzzy")
     raw_remaining <- raw_remaining[!raw_remaining[[temp_id_col]] %in% m_fuzzy[[temp_id_col]],]
   }
 
@@ -179,6 +190,7 @@ hmatch <- function(raw,
     m_roll <- hmatch_best(raw_remaining,
                           ref_,
                           by = by,
+                          dict = dict,
                           type = "inner",
                           std_fn = std_fn,
                           fuzzy = fuzzy,

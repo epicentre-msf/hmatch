@@ -11,6 +11,7 @@ hmatch(
   pattern_raw = NULL,
   pattern_ref = pattern_raw,
   by = NULL,
+  dict = NULL,
   code_col = NULL,
   ref_prefix = "ref_",
   std_fn = string_std,
@@ -39,6 +40,9 @@ hierarchical columns in \code{ref}, and whose names are the names of the
 corresponding columns in \code{raw} (and \code{man}, if given) (see also
 \link{specifying_columns})}
 
+\item{dict}{Optional dictionary for recoding values within the hierarchical
+columns of \code{raw} (see \link{dictionary_recoding})}
+
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man} (only required if argument \code{man} is given)}
 
@@ -58,9 +62,7 @@ fuzzy-matching (defaults to \code{1L})}
 \value{
 A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
 and \code{ref}, based on the matches specified in \code{man}. If \code{type == "inner"},
-returns only the rows of \code{raw} with a single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}. If the hierarchical columns within
-\code{ref} have identical names to \code{raw}, the returned reference columns will be
-renamed with prefix "ref_".
+returns only the rows of \code{raw} with a single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}.
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.
@@ -84,6 +86,13 @@ has not already been identified using the previous approaches.
 data(ne_raw)
 data(ne_ref)
 
-hmatch(ne_raw, ne_ref, fuzzy = FALSE)
+hmatch(ne_raw, ne_ref, fuzzy = TRUE)
+
+# with dictionary-based recoding
+ne_dict <- data.frame(value = "USA",
+                      replacement = "United States",
+                      variable = "adm0")
+
+hmatch(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 
 }

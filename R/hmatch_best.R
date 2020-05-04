@@ -21,6 +21,8 @@
 #' @param by named character vector whose elements are the names of the
 #'   hierarchical columns in `ref`, and whose names are the names of the
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
+#' @param dict Optional dictionary for recoding values within the hierarchical
+#'   columns of `raw` (see \link{dictionary_recoding})
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
@@ -33,17 +35,29 @@
 #'   fuzzy-matching (defaults to `1L`)
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
-#'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
-#'   returns only the rows of `raw` with a single match in `ref`. If `type ==
-#'   "left"`, returns all rows of `raw`. If the hierarchical columns within
-#'   `ref` have identical names to `raw`, the returned reference columns will be
-#'   renamed with prefix "ref_".
+#'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
+#'   single match in `ref`. If `type == "left"`, returns all rows of `raw`.
+#'
+#' Column `match_type` indicates the type of match made:
+#' - NA: no match
+#' - "best": the level of the best match from `ref` matches the level of `raw`
+#' - "best_low": the level of the best match from `ref` is lower than the level
+#' of `raw`
+#' - "best_infer": multiple rows of `ref` match `raw`; the best match
+#' corresponds to the highest level common among all matches
 #'
 #' @examples
 #' data(ne_raw)
 #' data(ne_ref)
 #'
 #' hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
+#'
+#' # with dictionary-based recoding
+#' ne_dict <- data.frame(value = "USA",
+#'                       replacement = "United States",
+#'                       variable = "adm0")
+#'
+#' hmatch_best(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 #'
 #' @importFrom stats setNames
 #' @importFrom dplyr left_join
@@ -53,6 +67,7 @@ hmatch_best <- function(raw,
                         pattern_raw = NULL,
                         pattern_ref = pattern_raw,
                         by = NULL,
+                        dict = NULL,
                         type = "left",
                         ref_prefix = "ref_",
                         std_fn = string_std,
@@ -65,6 +80,7 @@ hmatch_best <- function(raw,
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
+  # dict = NULL
   # type = "left"
   # ref_prefix = "ref_"
   # std_fn = string_std
@@ -126,6 +142,7 @@ hmatch_best <- function(raw,
     matches_level <- hmatch_partial(raw_foc,
                                     ref_foc,
                                     by = by[1:j],
+                                    dict = dict,
                                     type = "left",
                                     std_fn = std_fn,
                                     fuzzy = fuzzy,
@@ -146,7 +163,7 @@ hmatch_best <- function(raw,
   matches_single <- matches_full[!matches_full[[id_col]] %in% ids_dup,]
   matches_single[[code_col]] <- best_geocode(matches_single, pattern = code_col)
   matches_single <- matches_single[!is.na(matches_single[[code_col]]), c(id_col, code_col)]
-  matches_single <- add_column(matches_single, "match_type", "best_single")
+  matches_single <- add_column(matches_single, "match_type", "best")
 
   ## best geocode for multiple-matches
   matches_multi_init <- matches_full[matches_full[[id_col]] %in% ids_dup,]
@@ -168,7 +185,7 @@ hmatch_best <- function(raw,
   }
 
   matches_multi <- matches_multi[!is.na(matches_multi[[code_col]]),]
-  matches_multi <- add_column(matches_multi, "match_type", "best_multi")
+  matches_multi <- add_column(matches_multi, "match_type", "best_infer")
 
   ## combine single and multiple matches
   matches_bind <- rbind_dfs(matches_single, matches_multi)
@@ -179,6 +196,14 @@ hmatch_best <- function(raw,
 
   ## join to raw
   out <- dplyr::left_join(raw, matches_bind_ref, by = id_col)
+
+  ## reclassify match_type (best, best_low, best_infer)
+  max_adm_raw <- max_adm_level(out, prep$by_raw)
+  max_adm_ref <- max_adm_level(out, prep$by_ref)
+
+  best_low <- out[["match_type"]] == "best" & max_adm_ref < max_adm_raw
+  best_low[is.na(best_low)] <- FALSE
+  out[["match_type"]][best_low] <- "best_low"
 
   ## execute match type
   if (type == "inner") {

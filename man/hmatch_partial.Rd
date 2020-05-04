@@ -10,6 +10,7 @@ hmatch_partial(
   pattern_raw = NULL,
   pattern_ref = pattern_raw,
   by = NULL,
+  dict = NULL,
   type = "left",
   ref_prefix = "ref_",
   std_fn = string_std,
@@ -32,6 +33,9 @@ messy data}
 \item{by}{named character vector whose elements are the names of the
 hierarchical columns in \code{ref} and whose names are the names of the
 corresponding columns in \code{raw} (see also \link{specifying_columns})}
+
+\item{dict}{Optional dictionary for recoding values within the hierarchical
+columns of \code{raw} (see \link{dictionary_recoding})}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 
@@ -66,6 +70,13 @@ missing.
 data(ne_raw)
 data(ne_ref)
 
-hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
+hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm")
+
+# with dictionary-based recoding
+ne_dict <- data.frame(value = "USA",
+                      replacement = "United States",
+                      variable = "adm0")
+
+hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", dict = ne_dict)
 
 }

@@ -14,6 +14,8 @@
 #' @param by named character vector whose elements are the names of the
 #'   hierarchical columns in `ref` and whose names are the names of the
 #'   corresponding columns in `raw`
+#' @param dict Optional dictionary for recoding values within the hierarchical
+#'   columns of `raw` (see \link{dictionary_recoding})
 #' @param type type of join ("left", "inner", "anti") (defaults to "left")
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
@@ -29,7 +31,14 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
+#' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm")
+#'
+#' # with dictionary-based recoding
+#' ne_dict <- data.frame(value = "USA",
+#'                       replacement = "United States",
+#'                       variable = "adm0")
+#'
+#' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm", dict = ne_dict)
 #'
 #' @importFrom dplyr left_join
 #' @export hmatch_complete
@@ -38,6 +47,7 @@ hmatch_complete <- function(raw,
                             pattern_raw = NULL,
                             pattern_ref = pattern_raw,
                             by = NULL,
+                            dict = NULL,
                             type = "left",
                             ref_prefix = "ref_",
                             std_fn = string_std) {
@@ -78,6 +88,15 @@ hmatch_complete <- function(raw,
 
   ref_join[["TEMP_IS_MATCH"]] <- "MATCH"
 
+  ### implement dictionary recoding on join columns
+  if (!is.null(dict)) {
+    raw_join <- apply_dict(raw_join,
+                           dict,
+                           by_raw = prep$by_raw,
+                           by_join = prep$by_join,
+                           std_fn = std_fn)
+  }
+
   ## merge raw and ref
   out <- dplyr::left_join(raw_join,
                           ref_join,
@@ -96,3 +115,4 @@ hmatch_complete <- function(raw,
   cols_exclude <- c(prep$by_join, "TEMP_IS_MATCH", "TEMP_ROW_ID_COMP")
   return(out[,!names(out) %in% cols_exclude, drop = FALSE])
 }
+

@@ -13,8 +13,8 @@ status](https://travis-ci.org/epicentre-msf/hmatch.svg?branch=master)](https://t
 coverage](https://codecov.io/gh/epicentre-msf/hmatch/branch/master/graph/badge.svg)](https://codecov.io/gh/epicentre-msf/hmatch?branch=master)
 <!-- badges: end -->
 
-An R package for cleaning and matching messy hierarchical data
-(e.g. hierarchically-nested adminstrative districts).
+An R package for cleaning and matching messy hierarchical data (
+e.g. hierarchically-nested adminstrative districts).
 
 ### Installation
 
@@ -42,9 +42,9 @@ ne_raw # messy raw data
 #> 1  united states    new york      suffolk
 #> 2         Canada     Ontario         <NA>
 #> 3           <NA>        <NA> philadelphia
-#> 4  United States        <NA>         York
+#> 4            USA        <NA>         York
 #> 5           <NA>     NewYork    Jefferson
-#> 6           <NA> pensylvania philidelphia
+#> 6           <NA> Pensylvania      Alameda
 #> 7  united_states        <NA>         king
 #> 8           <NA>        <NA>    NJ_Bergen
 #> 9           <NA>        <NA>    jeffersen
@@ -82,18 +82,18 @@ hmatch_complete(ne_raw, ne_ref)
 #> 1  united states    new york      suffolk     2 United States New York  Suffolk   223
 #> 2         Canada     Ontario         <NA>     1        Canada  Ontario     <NA>   110
 #> 3           <NA>        <NA> philadelphia    NA          <NA>     <NA>     <NA>  <NA>
-#> 4  United States        <NA>         York    NA          <NA>     <NA>     <NA>  <NA>
+#> 4            USA        <NA>         York    NA          <NA>     <NA>     <NA>  <NA>
 #> 5           <NA>     NewYork    Jefferson    NA          <NA>     <NA>     <NA>  <NA>
-#> 6           <NA> pensylvania philidelphia    NA          <NA>     <NA>     <NA>  <NA>
+#> 6           <NA> Pensylvania      Alameda    NA          <NA>     <NA>     <NA>  <NA>
 #> 7  united_states        <NA>         king    NA          <NA>     <NA>     <NA>  <NA>
 #> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>     <NA>     <NA>  <NA>
 #> 9           <NA>        <NA>    jeffersen    NA          <NA>     <NA>     <NA>  <NA>
 #> 10          <NA>        <NA>         york    NA          <NA>     <NA>     <NA>  <NA>
 ```
 
-The default join type is “left” (as depicted above), but we can
-alternatively specify an “inner” join, which will only return the rows
-of `raw` for which a *single positive match* within `ref` is found.
+The default join type is “left”, but we can alternatively specify an
+“inner” join, which will only return the rows of `raw` for which a
+single positive match within `ref` is found.
 
 ``` r
 hmatch_complete(ne_raw, ne_ref, type = "inner")
@@ -118,9 +118,34 @@ hmatch_partial(ne_raw, ne_ref)
 #> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223
 #> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110
 #> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232
-#> 4  United States        <NA>         York     2 United States Pennsylvania         York   233
+#> 4            USA        <NA>         York    NA          <NA>         <NA>         <NA>  <NA>
 #> 5           <NA>     NewYork    Jefferson    NA          <NA>         <NA>         <NA>  <NA>
-#> 6           <NA> pensylvania philidelphia    NA          <NA>         <NA>         <NA>  <NA>
+#> 6           <NA> Pensylvania      Alameda    NA          <NA>         <NA>         <NA>  <NA>
+#> 7  united_states        <NA>         king    NA          <NA>         <NA>         <NA>  <NA>
+#> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>
+#> 9           <NA>        <NA>    jeffersen    NA          <NA>         <NA>         <NA>  <NA>
+#> 10          <NA>        <NA>         york     2        Canada      Ontario         York   112
+#> 11          <NA>        <NA>         york     2 United States Pennsylvania         York   233
+```
+
+Note that in the 4th row a match isn’t made because of the discrepancy
+between “USA” in `raw` and “United States” within `ref`. To overcome
+this we can use a dictionary to internally recode “USA” during matching
+(see `?dictionary_recoding` for more details).
+
+``` r
+ne_dict <- data.frame(value = "USA",
+                      replacement = "United States",
+                      variable = "adm0")
+
+hmatch_partial(ne_raw, ne_ref, dict = ne_dict)
+#>             adm0        adm1         adm2 level      ref_adm0     ref_adm1     ref_adm2 hcode
+#> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223
+#> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110
+#> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232
+#> 4            USA        <NA>         York     2 United States Pennsylvania         York   233
+#> 5           <NA>     NewYork    Jefferson    NA          <NA>         <NA>         <NA>  <NA>
+#> 6           <NA> Pensylvania      Alameda    NA          <NA>         <NA>         <NA>  <NA>
 #> 7  united_states        <NA>         king    NA          <NA>         <NA>         <NA>  <NA>
 #> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>
 #> 9           <NA>        <NA>    jeffersen    NA          <NA>         <NA>         <NA>  <NA>
@@ -131,17 +156,18 @@ hmatch_partial(ne_raw, ne_ref)
 #### Partial + fuzzy matching
 
 Partial matching + fuzzy matching based on the
-[stringdist](https://github.com/markvanderloo/stringdist) package.
+[stringdist](https://github.com/markvanderloo/stringdist)
+package.
 
 ``` r
-hmatch_partial(ne_raw, ne_ref, fuzzy = TRUE, max_dist = 2)
+hmatch_partial(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE, max_dist = 2)
 #>             adm0        adm1         adm2 level      ref_adm0     ref_adm1     ref_adm2 hcode
 #> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223
 #> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110
 #> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232
-#> 4  United States        <NA>         York     2 United States Pennsylvania         York   233
+#> 4            USA        <NA>         York     2 United States Pennsylvania         York   233
 #> 5           <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221
-#> 6           <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232
+#> 6           <NA> Pensylvania      Alameda    NA          <NA>         <NA>         <NA>  <NA>
 #> 7  united_states        <NA>         king     2 United States     New York        Kings   222
 #> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>
 #> 9           <NA>        <NA>    jeffersen     2 United States     New York    Jefferson   221
@@ -167,9 +193,9 @@ hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
 #> 1  united states    new york      suffolk    NA          <NA>       <NA>     <NA>  <NA>
 #> 2         Canada     Ontario         <NA>    NA          <NA>       <NA>     <NA>  <NA>
 #> 3           <NA>        <NA> philadelphia    NA          <NA>       <NA>     <NA>  <NA>
-#> 4  United States        <NA>         York    NA          <NA>       <NA>     <NA>  <NA>
+#> 4            USA        <NA>         York    NA          <NA>       <NA>     <NA>  <NA>
 #> 5           <NA>     NewYork    Jefferson    NA          <NA>       <NA>     <NA>  <NA>
-#> 6           <NA> pensylvania philidelphia    NA          <NA>       <NA>     <NA>  <NA>
+#> 6           <NA> Pensylvania      Alameda    NA          <NA>       <NA>     <NA>  <NA>
 #> 7  united_states        <NA>         king    NA          <NA>       <NA>     <NA>  <NA>
 #> 8           <NA>        <NA>    NJ_Bergen     2 United States New Jersey   Bergen   211
 #> 9           <NA>        <NA>    jeffersen    NA          <NA>       <NA>     <NA>  <NA>
@@ -185,17 +211,17 @@ possible matches to the given row of raw data.
 
 ``` r
 hmatch_best(raw = ne_raw, ref = ne_ref, fuzzy = TRUE)
-#>             adm0        adm1         adm2 level      ref_adm0     ref_adm1     ref_adm2 hcode  match_type
-#> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223 best_single
-#> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110 best_single
-#> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232 best_single
-#> 4  United States        <NA>         York     2 United States Pennsylvania         York   233 best_single
-#> 5           <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221 best_single
-#> 6           <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232 best_single
-#> 7  united_states        <NA>         king     2 United States     New York        Kings   222 best_single
-#> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>        <NA>
-#> 9           <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200  best_multi
-#> 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>        <NA>
+#>             adm0        adm1         adm2 level      ref_adm0     ref_adm1     ref_adm2 hcode match_type
+#> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223       best
+#> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110       best
+#> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232       best
+#> 4            USA        <NA>         York    NA          <NA>         <NA>         <NA>  <NA>       <NA>
+#> 5           <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221       best
+#> 6           <NA> Pensylvania      Alameda     1 United States Pennsylvania         <NA>   230   best_low
+#> 7  united_states        <NA>         king     2 United States     New York        Kings   222       best
+#> 8           <NA>        <NA>    NJ_Bergen    NA          <NA>         <NA>         <NA>  <NA>       <NA>
+#> 9           <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200 best_infer
+#> 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>       <NA>
 ```
 
 #### The all-strategies approach
@@ -206,24 +232,28 @@ Implement all matching strategies in turn, from most to least strict:
 2.  complete matching with `hmatch_complete()`
 3.  partial matching with `hmatch_partial()`
 4.  fuzzy partial matching with `hmatch_partial(..., fuzzy = TRUE)`
-5.  best-possible matching with
-`hmatch_best()`
+5.  best-possible matching with `hmatch_best()`
 
 <!-- end list -->
 
 ``` r
-hmatch(raw = ne_raw, ref = ne_ref, man = ne_man, fuzzy = TRUE, code_col = "hcode")
-#>             adm0        adm1         adm2 level      ref_adm0     ref_adm1     ref_adm2 hcode match_type
-#> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223   complete
-#> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110   complete
-#> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232    partial
-#> 4  United States        <NA>         York     2 United States Pennsylvania         York   233    partial
-#> 5           <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221      fuzzy
-#> 6           <NA> pensylvania philidelphia     2 United States Pennsylvania Philadelphia   232      fuzzy
-#> 7  united_states        <NA>         king     2 United States     New York        Kings   222      fuzzy
-#> 8           <NA>        <NA>    NJ_Bergen     2 United States   New Jersey       Bergen   211     manual
-#> 9           <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200 best_multi
-#> 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>       <NA>
+hmatch(raw = ne_raw,
+       ref = ne_ref,
+       man = ne_man,
+       dict = ne_dict,
+       fuzzy = TRUE,
+       code_col = "hcode")
+#>             adm0        adm1         adm2 level      ref_adm0     ref_adm1     ref_adm2 hcode    match_type
+#> 1  united states    new york      suffolk     2 United States     New York      Suffolk   223      complete
+#> 2         Canada     Ontario         <NA>     1        Canada      Ontario         <NA>   110      complete
+#> 3           <NA>        <NA> philadelphia     2 United States Pennsylvania Philadelphia   232       partial
+#> 4            USA        <NA>         York     2 United States Pennsylvania         York   233       partial
+#> 5           <NA>     NewYork    Jefferson     2 United States     New York    Jefferson   221 partial_fuzzy
+#> 6           <NA> Pensylvania      Alameda     1 United States Pennsylvania         <NA>   230      best_low
+#> 7  united_states        <NA>         king     2 United States     New York        Kings   222 partial_fuzzy
+#> 8           <NA>        <NA>    NJ_Bergen     2 United States   New Jersey       Bergen   211        manual
+#> 9           <NA>        <NA>    jeffersen     0 United States         <NA>         <NA>   200    best_infer
+#> 10          <NA>        <NA>         york    NA          <NA>         <NA>         <NA>  <NA>          <NA>
 ```
 
 ### Generate unique codes for each level in a reference dataset

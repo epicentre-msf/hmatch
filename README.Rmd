@@ -20,7 +20,8 @@ options(digits = 4, width = 160)
 [![Codecov test coverage](https://codecov.io/gh/epicentre-msf/hmatch/branch/master/graph/badge.svg)](https://codecov.io/gh/epicentre-msf/hmatch?branch=master)
 <!-- badges: end -->
 
-An R package for cleaning and matching messy hierarchical data (e.g. hierarchically-nested adminstrative districts).
+An R package for cleaning and matching messy hierarchical data (e.g.
+hierarchically-nested adminstrative districts).
 
 
 ### Installation
@@ -34,7 +35,9 @@ remotes::install_github("epicentre-msf/hmatch")
 
 ### Example datasets
 
-The `hmatch` package contains example datasets `ne_raw` (messy geographical data) and `ne_ref` (reference data derived from a shapefile), based on a small subset of northeastern North America.
+The `hmatch` package contains example datasets `ne_raw` (messy geographical
+data) and `ne_ref` (reference data derived from a shapefile), based on a small
+subset of northeastern North America.
 
 ```{r}
 library(hmatch)
@@ -51,20 +54,25 @@ ne_ref # reference data derived from a shapefile
 
 #### Complete matching
 
-Each hierarchical level must match in sequence, with no missing values below the match level.
+Each hierarchical level must match in sequence, with no missing values below the
+match level.
 
 ```{r}
 hmatch_complete(ne_raw, ne_ref)
 ```
 
-The default join type is "left" (as depicted above), but we can alternatively specify an "inner" join, which will only
-return the rows of `raw` for which a *single positive match* within `ref` is found.
+The default join type is "left", but we can alternatively specify an "inner"
+join, which will only return the rows of `raw` for which a single positive match
+within `ref` is found.
 
 ```{r}
 hmatch_complete(ne_raw, ne_ref, type = "inner")
 ```
 
-Notice that in the first row (Suffolk County, New York), a match is made despite the raw and reference data using different cases (lowercase vs. title case). This is possible because, internally, all input strings are standardized prior to matching (see `?string_standardization`).
+Notice that in the first row (Suffolk County, New York), a match is made despite
+the raw and reference data using different cases (lowercase vs. title case).
+This is possible because, internally, all input strings are standardized prior
+to matching (see `?string_standardization`).
 
 #### Partial matching
 
@@ -74,13 +82,26 @@ Allows for missing values at one or more level below the match level.
 hmatch_partial(ne_raw, ne_ref)
 ```
 
+Note that in the 4th row a match isn't made because of the discrepancy between
+"USA" in `raw` and "United States" within `ref`. To overcome this we can use a
+dictionary to internally recode "USA" during matching (see
+`?dictionary_recoding` for more details).
+
+```{r}
+ne_dict <- data.frame(value = "USA",
+                      replacement = "United States",
+                      variable = "adm0")
+
+hmatch_partial(ne_raw, ne_ref, dict = ne_dict)
+```
+
 #### Partial + fuzzy matching
 
 Partial matching + fuzzy matching based on the
 [stringdist](https://github.com/markvanderloo/stringdist) package.
 
 ```{r}
-hmatch_partial(ne_raw, ne_ref, fuzzy = TRUE, max_dist = 2)
+hmatch_partial(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE, max_dist = 2)
 ```
 
 #### Manual matching
@@ -120,7 +141,12 @@ Implement all matching strategies in turn, from most to least strict:
 5. best-possible matching with `hmatch_best()`
 
 ```{r}
-hmatch(raw = ne_raw, ref = ne_ref, man = ne_man, fuzzy = TRUE, code_col = "hcode")
+hmatch(raw = ne_raw,
+       ref = ne_ref,
+       man = ne_man,
+       dict = ne_dict,
+       fuzzy = TRUE,
+       code_col = "hcode")
 ```
 
 

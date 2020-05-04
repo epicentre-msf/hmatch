@@ -112,7 +112,7 @@ hmatch_manual <- function(raw,
 
   ## check for duplicated rows in man after standardization
   if (any(duplicated(man_join[, prep$by_join, drop = FALSE]))) {
-    stop("Duplicated rows in `man` after standardization")
+    warning("Duplicated rows in `man` after standardization")
   }
 
   ## remove extraneous columns from raw, and filter to unique rows

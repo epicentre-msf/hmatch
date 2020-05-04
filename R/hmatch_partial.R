@@ -18,6 +18,8 @@
 #' @param by named character vector whose elements are the names of the
 #'   hierarchical columns in `ref` and whose names are the names of the
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
+#' @param dict Optional dictionary for recoding values within the hierarchical
+#'   columns of `raw` (see \link{dictionary_recoding})
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
@@ -37,7 +39,14 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", type = "inner")
+#' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm")
+#'
+#' # with dictionary-based recoding
+#' ne_dict <- data.frame(value = "USA",
+#'                       replacement = "United States",
+#'                       variable = "adm0")
+#'
+#' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", dict = ne_dict)
 #'
 #' @importFrom dplyr left_join
 #' @export hmatch_partial
@@ -46,6 +55,7 @@ hmatch_partial <- function(raw,
                            pattern_raw = NULL,
                            pattern_ref = pattern_raw,
                            by = NULL,
+                           dict = NULL,
                            type = "left",
                            ref_prefix = "ref_",
                            std_fn = string_std,
@@ -53,8 +63,8 @@ hmatch_partial <- function(raw,
                            max_dist = 1L) {
 
   # # for testing
-  # raw <- ne_raw
-  # ref <- ne_ref
+  # raw <- drc_raw[1:500,]
+  # ref <- drc_ref
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
@@ -95,6 +105,15 @@ hmatch_partial <- function(raw,
                                by = prep$by_ref,
                                join_cols = by_ref_join,
                                std_fn = std_fn)
+
+  ### implement dictionary recoding on join columns
+  if (!is.null(dict)) {
+    raw_join <- apply_dict(raw_join,
+                           dict,
+                           by_raw = prep$by_raw,
+                           by_join = prep$by_join,
+                           std_fn = std_fn)
+  }
 
   ## add max non-missing adm level
   raw_join[["MAX_ADM_RAW_"]] <- max_adm_level(raw_join, by = prep$by_raw)
@@ -169,13 +188,14 @@ hmatch_partial <- function(raw,
     out <- out[!out[[temp_id_col]] %in% dup_ids,]
   }
 
-  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  ## arrange rows and reclass out to match raw (tibble classes with otherwise be
+  # stripped)
+  out <- out[order(out[[temp_id_col]]),]
   class(out) <- class(raw)
 
   ## remove temporary columns and return
   out[,!names(out) %in% c(temp_id_col, "TEMP_IS_MATCH"), drop = FALSE]
 }
-
 
 
 
@@ -199,3 +219,4 @@ filter_to_matches <- function(dat, col1, col2, fuzzy, max_dist, is_max_level) {
 
   return(dat[keep,])
 }
+

@@ -1,4 +1,33 @@
 
+
+#' @noRd
+#' @importFrom dplyr recode
+#' @importFrom rlang `!!!`
+#' @importFrom stats setNames
+apply_dict <- function(x, dict, by_raw, by_join, std_fn) {
+
+  if (ncol(dict) == 2) { dict[[3]] <- NA_character_ }
+  if (is.null(std_fn)) { std_fn <- as.character }
+
+  dict[[1]] <- std_fn(dict[[1]])
+  dict[[2]] <- std_fn(dict[[2]])
+
+  for (j in seq_along(by_raw)) {
+
+    by_raw_j <- by_raw[j]
+    by_join_j <- by_join[j]
+
+    dict_j <- dict[dict[[3]] == by_raw_j | is.na(dict[[3]]),]
+
+    if (nrow(dict_j) > 0) {
+      vals_recode <- setNames(dict_j[[2]], dict_j[[1]])
+      x[[by_join_j]] <- dplyr::recode(x[[by_join_j]], !!!vals_recode)
+    }
+  }
+  return(x)
+}
+
+
 #' @noRd
 add_column <- function(dat, colname, values) {
   dat[[colname]] <- if (nrow(dat) > 0) {
