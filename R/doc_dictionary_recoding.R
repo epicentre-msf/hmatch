@@ -51,7 +51,7 @@
 #' \link{string_standardization}) also applies to dictionaries. For example,
 #' given the default standardization function which includes
 #' case-standardization, a dictionary value of "USA" will match (and therefore
-#' recode) `raw` enries "USA" and "usa", but not e.g. "U.S.A".
+#' recode) `raw` enries "USA" and "usa", but not e.g. "U.S.A.".
 #'
 NULL
 
