@@ -23,13 +23,14 @@
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
 #'   fuzzy-matching (defaults to `1L`)
+#' @param std_fn Function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
+#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
@@ -58,21 +59,24 @@ hmatch_partial <- function(raw,
                            dict = NULL,
                            type = "left",
                            ref_prefix = "ref_",
-                           std_fn = string_std,
                            fuzzy = FALSE,
-                           max_dist = 1L) {
+                           max_dist = 1L,
+                           std_fn = string_std,
+                           ...) {
 
   # # for testing
-  # raw <- drc_raw[1:500,]
-  # ref <- drc_ref
+  # raw = ne_raw
+  # ref = ne_ref
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
+  # dict <- NULL
   # type = "left"
   # ref_prefix = "ref_"
   # std_fn = string_std
-  # fuzzy = TRUE
-  # max_dist = 1L
+  #
+  # raw$adm2[1] <- "Suffolk II"
+  # ref$adm2[10] <- "Suffolk 2"
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
@@ -99,12 +103,14 @@ hmatch_partial <- function(raw,
   raw_join <- add_join_columns(dat = raw,
                                by = prep$by_raw,
                                join_cols = by_raw_join,
-                               std_fn = std_fn)
+                               std_fn = std_fn,
+                               ...)
 
   ref_join <- add_join_columns(dat = prep$ref,
                                by = prep$by_ref,
                                join_cols = by_ref_join,
-                               std_fn = std_fn)
+                               std_fn = std_fn,
+                               ...)
 
   ### implement dictionary recoding on join columns
   if (!is.null(dict)) {

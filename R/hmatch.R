@@ -36,13 +36,14 @@
 #'   and `man` (only required if argument `man` is given)
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
 #'   fuzzy-matching (defaults to `1L`)
+#' @param std_fn Function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
+#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
@@ -76,7 +77,8 @@ hmatch <- function(raw,
                    ref_prefix = "ref_",
                    std_fn = string_std,
                    fuzzy = FALSE,
-                   max_dist = 1L) {
+                   max_dist = 1L,
+                   ...) {
 
   # # for testing
   # raw <- ne_raw
@@ -149,7 +151,8 @@ hmatch <- function(raw,
                                   by = by,
                                   dict = dict,
                                   type = "inner",
-                                  std_fn = std_fn)
+                                  std_fn = std_fn,
+                                  ...)
 
     m_complete <- m_complete[,c(temp_id_col, temp_code_col)]
     m_complete <- add_column(m_complete, "match_type", "complete")
@@ -163,7 +166,8 @@ hmatch <- function(raw,
                                 by = by,
                                 dict = dict,
                                 type = "inner",
-                                std_fn = std_fn)
+                                std_fn = std_fn,
+                                ...)
 
     m_partial <- m_partial[,c(temp_id_col, temp_code_col)]
     m_partial <- add_column(m_partial, "match_type", "partial")
@@ -177,8 +181,9 @@ hmatch <- function(raw,
                               by = by,
                               dict = dict,
                               type = "inner",
+                              fuzzy = TRUE,
                               std_fn = std_fn,
-                              fuzzy = TRUE)
+                              ...)
 
     m_fuzzy <- m_fuzzy[,c(temp_id_col, temp_code_col)]
     m_fuzzy <- add_column(m_fuzzy, "match_type", "partial_fuzzy")
@@ -192,9 +197,10 @@ hmatch <- function(raw,
                           by = by,
                           dict = dict,
                           type = "inner",
-                          std_fn = std_fn,
                           fuzzy = fuzzy,
-                          max_dist = max_dist)
+                          max_dist = max_dist,
+                          std_fn = std_fn,
+                          ...)
 
     m_roll <- m_roll[,c(temp_id_col, temp_code_col, "match_type")]
   }

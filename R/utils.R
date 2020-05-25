@@ -57,12 +57,12 @@ rename_col <- function(dat, col_old, col_new) {
 
 
 #' @noRd
-add_join_columns <- function(dat, by, join_cols, std_fn = NULL) {
+add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
 
   bind_ <- dat[, by, drop = FALSE]
   if (!is.null(std_fn)) {
     for (j in seq_len(ncol(bind_))) {
-      bind_[[j]] <- std_fn(bind_[[j]])
+      bind_[[j]] <- std_fn(bind_[[j]], ...)
     }
   }
   names(bind_) <- join_cols
@@ -159,6 +159,8 @@ prep_match_columns <- function(raw,
     by_ref <- intersect(names(ref), names(raw))
   }
 
+  by_ref_orig <- by_ref
+
   # rename cols of ref if necessary
   if (all(by_raw == by_ref)) {
     by_ref_i <- vapply(by_ref, function(x) which(names(ref) == x), 0L)
@@ -172,7 +174,7 @@ prep_match_columns <- function(raw,
     ref[[code_col]] <- hcodes_str(ref, by = by_ref)
   }
 
-  return(list(ref = ref, by_raw = by_raw, by_ref = by_ref, by_join = by_join))
+  return(list(ref = ref, by_raw = by_raw, by_ref = by_ref, by_ref_orig = by_ref_orig, by_join = by_join))
 }
 
 

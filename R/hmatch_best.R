@@ -26,13 +26,14 @@
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
 #'   fuzzy-matching (defaults to `1L`)
+#' @param std_fn Function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
+#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
@@ -70,9 +71,10 @@ hmatch_best <- function(raw,
                         dict = NULL,
                         type = "left",
                         ref_prefix = "ref_",
-                        std_fn = string_std,
                         fuzzy = FALSE,
-                        max_dist = 1L) {
+                        max_dist = 1L,
+                        std_fn = string_std,
+                        ...) {
 
   # # for testing purposes only
   # raw <- ne_raw
@@ -144,9 +146,10 @@ hmatch_best <- function(raw,
                                     by = by[1:j],
                                     dict = dict,
                                     type = "left",
-                                    std_fn = std_fn,
                                     fuzzy = fuzzy,
-                                    max_dist = max_dist)
+                                    max_dist = max_dist,
+                                    std_fn = std_fn,
+                                    ...)
 
     # compile matches at each level
     # TODO: test whether this fails given two adm0 with e.g. identical adm1/adm2

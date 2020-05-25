@@ -53,6 +53,6 @@ Note that string standardization as specifed by argument \code{std_fn} (see
 \link{string_standardization}) also applies to dictionaries. For example,
 given the default standardization function which includes
 case-standardization, a dictionary value of "USA" will match (and therefore
-recode) \code{raw} enries "USA" and "usa", but not e.g. "U.S.A".
+recode) \code{raw} enries "USA" and "usa", but not e.g. "U.S.A.".
 }
 

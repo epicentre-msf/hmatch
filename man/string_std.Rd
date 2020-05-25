@@ -4,10 +4,13 @@
 \alias{string_std}
 \title{String standardization prior to matching}
 \usage{
-string_std(x)
+string_std(x, convert_roman = FALSE)
 }
 \arguments{
 \item{x}{a string}
+
+\item{convert_roman}{logical indiciating whether to convert roman numerals
+(I, II, ..., X) to arabic (1, 2, ..., 10)}
 }
 \value{
 The standardized version of \code{x}
@@ -19,11 +22,23 @@ Standardizes strings prior to performing a match, using four transformations:
 \item remove sequences of non-alphanumeric characters at start or end of string
 \item replace remaining sequences of non-alphanumeric characters with "_"
 \item remove diacritics (\code{stringi::stri_trans_general})
+\item (optional) convert roman numerals (I, II, ..., X) to arabic (1, 2, ...,
+}
+\enumerate{
+\item 
 }
 }
 \examples{
 string_std("United STATES")
 string_std("R\u00e9publique  d\u00e9mocratique du  Congo")
+
+# convert roman numerals to arabic
+string_std("Mungindu-II (Sud)")
+string_std("Mungindu-II (Sud)", convert_roman = TRUE)
+
+# note the conversion only works if the numeral is separated from other
+# alphanumeric characters by punctuation or space characters
+string_std("MunginduII", convert_roman = TRUE) # roman numeral not recognized
 
 }
 \seealso{

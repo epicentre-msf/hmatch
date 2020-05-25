@@ -13,7 +13,8 @@ hmatch_complete(
   dict = NULL,
   type = "left",
   ref_prefix = "ref_",
-  std_fn = string_std
+  std_fn = string_std,
+  ...
 )
 }
 \arguments{
@@ -41,6 +42,8 @@ are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
+
+\item{...}{Additional arguments passed to \code{std_fn()}}
 }
 \value{
 A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}

@@ -22,6 +22,7 @@
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
+#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
@@ -50,7 +51,8 @@ hmatch_complete <- function(raw,
                             dict = NULL,
                             type = "left",
                             ref_prefix = "ref_",
-                            std_fn = string_std) {
+                            std_fn = string_std,
+                            ...) {
 
   # # for testing
   # raw = ne_raw
@@ -58,9 +60,13 @@ hmatch_complete <- function(raw,
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
+  # dict <- NULL
   # type = "left"
   # ref_prefix = "ref_"
   # std_fn = string_std
+  #
+  # raw$adm2[1] <- "Suffolk II"
+  # ref$adm2[10] <- "Suffolk 2"
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
 
@@ -79,12 +85,14 @@ hmatch_complete <- function(raw,
   raw_join <- add_join_columns(dat = raw,
                                by = prep$by_raw,
                                join_cols = prep$by_join,
-                               std_fn = std_fn)
+                               std_fn = std_fn,
+                               ...)
 
   ref_join <- add_join_columns(dat = prep$ref,
                                by = prep$by_ref,
                                join_cols = prep$by_join,
-                               std_fn = std_fn)
+                               std_fn = std_fn,
+                               ...)
 
   ref_join[["TEMP_IS_MATCH"]] <- "MATCH"
 
@@ -115,4 +123,3 @@ hmatch_complete <- function(raw,
   cols_exclude <- c(prep$by_join, "TEMP_IS_MATCH", "TEMP_ROW_ID_COMP")
   return(out[,!names(out) %in% cols_exclude, drop = FALSE])
 }
-

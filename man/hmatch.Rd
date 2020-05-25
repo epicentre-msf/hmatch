@@ -16,7 +16,8 @@ hmatch(
   ref_prefix = "ref_",
   std_fn = string_std,
   fuzzy = FALSE,
-  max_dist = 1L
+  max_dist = 1L,
+  ...
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ FALSE)}
 
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
+
+\item{...}{Additional arguments passed to \code{std_fn()}}
 }
 \value{
 A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
