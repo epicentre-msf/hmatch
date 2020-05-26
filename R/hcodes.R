@@ -57,7 +57,7 @@ hcodes_str <- function(ref,
     by <- grep(pattern, names(ref), value = TRUE)
   }
 
-  ref_ <- ref[, by, drop = FALSE]
+  ref_ <- as.data.frame(ref)[, by, drop = FALSE]
 
   if (!is.null(std_fn)) {
     for (i in seq_len(ncol(ref_))) {
@@ -67,7 +67,6 @@ hcodes_str <- function(ref,
 
   return(apply(ref_, 1, function(x) paste(x[!is.na(x)], collapse = sep)))
 }
-
 
 
 #' @rdname hcodes
@@ -86,7 +85,8 @@ hcodes_int <- function(ref,
     by <- grep(pattern, names(ref), value = TRUE)
   }
 
-  ref_ <- ref[, by, drop = FALSE]
+  ref_ <- as.data.frame(ref)[, by, drop = FALSE]
+  ref_ <- as.data.frame(lapply(ref_, as.character))
 
   ref_$LEVEL_ID_1 <- as.integer(as.factor(ref_[,1]))
   ref_$LEVEL_ID_1[is.na(ref_$LEVEL_ID_1)] <- 0L
