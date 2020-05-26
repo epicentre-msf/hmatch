@@ -20,7 +20,8 @@
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param type type of join ("left", "inner", "inner_unique", "anti", or
+#'   "anti_unique"). Defaults to "left". See \link{join_types}.
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
@@ -67,18 +68,21 @@ hmatch_partial <- function(raw,
   # # for testing
   # raw = ne_raw
   # ref = ne_ref
+  # raw$adm2[1] <- "Suffolk II"
+  # ref$adm2[10] <- "Suffolk 2"
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
   # dict <- NULL
   # type = "left"
   # ref_prefix = "ref_"
+  # fuzzy = TRUE
+  # max_dist = 1L
   # std_fn = string_std
-  #
-  # raw$adm2[1] <- "Suffolk II"
-  # ref$adm2[10] <- "Suffolk 2"
+  # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
@@ -188,10 +192,18 @@ hmatch_partial <- function(raw,
   out <- dplyr::left_join(raw, matches_out, by = raw_cols_orig)
 
   ## execute merge type
+  dup_ids <- out[[temp_id_col]][duplicated(out[[temp_id_col]])]
+
   if (type == "inner") {
     out <- out[!is.na(out$TEMP_IS_MATCH),]
-    dup_ids <- out[[temp_id_col]][duplicated(out[[temp_id_col]])]
-    out <- out[!out[[temp_id_col]] %in% dup_ids,]
+  } else if (type == "inner_unique") {
+    rows_keep <- !is.na(out$TEMP_IS_MATCH) & !out[[temp_id_col]] %in% dup_ids
+    out <- out[rows_keep,]
+  } else if (type == "anti") {
+    out <- out[is.na(out$TEMP_IS_MATCH), c(names(raw), "TEMP_IS_MATCH")]
+  } else if (type == "anti_unique") {
+    rows_keep <- is.na(out$TEMP_IS_MATCH) | out[[temp_id_col]] %in% dup_ids
+    out <- unique(out[rows_keep, c(names(raw), "TEMP_IS_MATCH")])
   }
 
   ## arrange rows and reclass out to match raw (tibble classes with otherwise be

@@ -21,10 +21,12 @@
 #'   and `man`
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param type type of join ("left", "inner", or "anti"). Defaults to "left".
+#'   See \link{join_types}.
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
+#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
@@ -58,7 +60,8 @@ hmatch_manual <- function(raw,
                           code_col,
                           type = "left",
                           ref_prefix = "ref_",
-                          std_fn = string_std) {
+                          std_fn = string_std,
+                          ...) {
 
   # # for testing purposes only
   # raw <- ne_raw
@@ -75,8 +78,10 @@ hmatch_manual <- function(raw,
   # type = "left"
   # ref_prefix = "ref_"
   # std_fn = string_std
+  # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  type <- match.arg(type, c("left", "inner", "anti"))
 
   if (code_col %in% names(raw)) {
     warning("`code_col` already exists in `raw`, and will be overwritten")
@@ -103,12 +108,14 @@ hmatch_manual <- function(raw,
   raw_join <- add_join_columns(dat = raw,
                                by = prep$by_raw,
                                join_cols = prep$by_join,
-                               std_fn = std_fn)
+                               std_fn = std_fn,
+                               ...)
 
   man_join <- add_join_columns(dat = man_ref,
                                by = prep$by_raw,
                                join_cols = prep$by_join,
-                               std_fn = std_fn)
+                               std_fn = std_fn,
+                               ...)
 
   ## check for duplicated rows in man after standardization
   if (any(duplicated(man_join[, prep$by_join, drop = FALSE]))) {
@@ -124,12 +131,15 @@ hmatch_manual <- function(raw,
   ## execute merge type
   if (type == "inner") {
     out <- out[!is.na(out[[code_col]]),]
+  } else if (type == "anti") {
+    out <- out[is.na(out[[code_col]]), names(raw)]
   }
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
   class(out) <- class(raw)
 
   ## remove temporary columns and return
-  out[,c(names_raw_orig, names(prep$ref)), drop = FALSE]
+  out <- out[,!names(out) %in% c(prep$by_join, temp_id_col), drop = FALSE]
+  return(out)
 }
 

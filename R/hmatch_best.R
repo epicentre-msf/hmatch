@@ -23,7 +23,8 @@
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param type type of join ("left", "inner_unique", or "anti_unique"). Defaults
+#'   to "left". See \link{join_types}.
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
@@ -85,11 +86,13 @@ hmatch_best <- function(raw,
   # dict = NULL
   # type = "left"
   # ref_prefix = "ref_"
-  # std_fn = string_std
   # fuzzy = TRUE
   # max_dist = 1L
+  # std_fn = string_std
+  # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  type <- match.arg(type, c("left", "inner_unique", "anti_unique"))
 
   # names of temporary columns
   code_col <- "TEMP_CODE_COL_ROLL"
@@ -209,13 +212,16 @@ hmatch_best <- function(raw,
   out[["match_type"]][best_low] <- "best_low"
 
   ## execute match type
-  if (type == "inner") {
+  if (type == "inner_unique") {
     out <- out[!is.na(out$match_type),]
+  } else if (type == "anti_unique") {
+    out <- out[is.na(out$match_type), names(raw)]
   }
 
-  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  # reclass out to match raw (tibble classes with otherwise be stripped)
   class(out) <- class(raw)
 
   ## remove temporary columns and return
-  return(out[,!names(out) %in% c(id_col, code_col), drop = FALSE])
+  out <- out[,!names(out) %in% c(id_col, code_col), drop = FALSE]
+  return(out)
 }

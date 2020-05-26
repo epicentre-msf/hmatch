@@ -14,7 +14,8 @@ hmatch_manual(
   code_col,
   type = "left",
   ref_prefix = "ref_",
-  std_fn = string_std
+  std_fn = string_std,
+  ...
 )
 }
 \arguments{
@@ -40,7 +41,8 @@ the corresponding columns in \code{ref} (see also \link{specifying_columns})}
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man}}
 
-\item{type}{type of join ("inner" or "left") (defaults to "left")}
+\item{type}{type of join ("left", "inner", or "anti"). Defaults to "left".
+See \link{join_types}.}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
@@ -48,6 +50,8 @@ are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
+
+\item{...}{Additional arguments passed to \code{std_fn()}}
 }
 \value{
 A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}

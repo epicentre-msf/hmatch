@@ -32,6 +32,8 @@
 #'   \link{specifying_columns})
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
+#' @param type type of join ("left", "inner_unique", or "anti_unique"). Defaults
+#'   to "left". See \link{join_types}.
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man` (only required if argument `man` is given)
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
@@ -73,11 +75,12 @@ hmatch <- function(raw,
                    pattern_ref = pattern_raw,
                    by = NULL,
                    dict = NULL,
+                   type = "left",
                    code_col = NULL,
                    ref_prefix = "ref_",
-                   std_fn = string_std,
                    fuzzy = FALSE,
                    max_dist = 1L,
+                   std_fn = string_std,
                    ...) {
 
   # # for testing
@@ -91,13 +94,17 @@ hmatch <- function(raw,
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
+  # dict <- NULL
+  # type <- "left"
   # code_col <- "hcode"
   # ref_prefix = "ref_"
-  # std_fn = string_std
   # fuzzy = FALSE
   # max_dist = 1L
+  # std_fn = string_std
+  # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  type <- match.arg(type, c("left", "inner_unique", "anti_unique"))
 
   ## names of temporary columns
   temp_id_col <- "TEMP_ROW_ID_BEST"
@@ -165,7 +172,7 @@ hmatch <- function(raw,
                                 ref_,
                                 by = by,
                                 dict = dict,
-                                type = "inner",
+                                type = "inner_unique",
                                 std_fn = std_fn,
                                 ...)
 
@@ -180,7 +187,7 @@ hmatch <- function(raw,
                               ref_,
                               by = by,
                               dict = dict,
-                              type = "inner",
+                              type = "inner_unique",
                               fuzzy = TRUE,
                               std_fn = std_fn,
                               ...)
@@ -196,7 +203,7 @@ hmatch <- function(raw,
                           ref_,
                           by = by,
                           dict = dict,
-                          type = "inner",
+                          type = "inner_unique",
                           fuzzy = fuzzy,
                           max_dist = max_dist,
                           std_fn = std_fn,
@@ -217,12 +224,21 @@ hmatch <- function(raw,
   m_bind_ref <- m_bind_ref[,c(temp_id_col, names(prep$ref), "match_type")]
 
   ## merge to raw
-  out <- dplyr::left_join(raw, m_bind_ref, by = temp_id_col, all.x = TRUE)
+  out <- dplyr::left_join(raw, m_bind_ref, by = temp_id_col)
+
+
+  ## execute merge type
+  if (type == "inner_unique") {
+    out <- out[!is.na(out$match_type),]
+  } else if (type == "anti_unique") {
+    out <- out[is.na(out$match_type), names(raw)]
+  }
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
   class(out) <- class(raw)
 
   ## remove temporary columns and return
-  return(out[,!names(out) %in% c(temp_id_col, temp_code_col), drop = FALSE])
+  out <- out[,!names(out) %in% c(temp_id_col, temp_code_col), drop = FALSE]
+  return(out)
 }
 

@@ -16,7 +16,8 @@
 #'   corresponding columns in `raw`
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("left", "inner", "anti") (defaults to "left")
+#' @param type type of join ("left", "inner", or "anti"). Defaults to "left".
+#'   See \link{join_types}.
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
@@ -57,6 +58,8 @@ hmatch_complete <- function(raw,
   # # for testing
   # raw = ne_raw
   # ref = ne_ref
+  # raw$adm2[1] <- "Suffolk II"
+  # ref$adm2[10] <- "Suffolk 2"
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
@@ -64,11 +67,10 @@ hmatch_complete <- function(raw,
   # type = "left"
   # ref_prefix = "ref_"
   # std_fn = string_std
-  #
-  # raw$adm2[1] <- "Suffolk II"
-  # ref$adm2[10] <- "Suffolk 2"
+  # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  type <- match.arg(type, c("left", "inner", "anti"))
 
   ## add temporary row index to raw
   raw[["TEMP_ROW_ID_COMP"]] <- seq_len(nrow(raw))
@@ -111,10 +113,11 @@ hmatch_complete <- function(raw,
                           by = prep$by_join)
 
   ## execute merge type
-  out <- switch(type,
-                "inner" = out[!is.na(out$TEMP_IS_MATCH),],
-                "anti" = out[is.na(out$TEMP_IS_MATCH),],
-                out)
+  if (type == "inner") {
+    out <- out[!is.na(out$TEMP_IS_MATCH),]
+  } else if (type == "anti") {
+    out <- out[is.na(out$TEMP_IS_MATCH), c(names(raw), "TEMP_IS_MATCH")]
+  }
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
   class(out) <- class(raw)

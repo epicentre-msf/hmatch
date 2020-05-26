@@ -12,11 +12,12 @@ hmatch(
   pattern_ref = pattern_raw,
   by = NULL,
   dict = NULL,
+  type = "left",
   code_col = NULL,
   ref_prefix = "ref_",
-  std_fn = string_std,
   fuzzy = FALSE,
   max_dist = 1L,
+  std_fn = string_std,
   ...
 )
 }
@@ -44,21 +45,24 @@ corresponding columns in \code{raw} (and \code{man}, if given) (see also
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
+\item{type}{type of join ("left", "inner_unique", or "anti_unique"). Defaults
+to "left". See \link{join_types}.}
+
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man} (only required if argument \code{man} is given)}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
-\code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
-also \link{string_standardization}.}
-
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
 
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
+
+\item{std_fn}{Function to standardize strings during matching. Defaults to
+\code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
+also \link{string_standardization}.}
 
 \item{...}{Additional arguments passed to \code{std_fn()}}
 }

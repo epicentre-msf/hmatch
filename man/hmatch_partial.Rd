@@ -38,7 +38,8 @@ corresponding columns in \code{raw} (see also \link{specifying_columns})}
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{type}{type of join ("inner" or "left") (defaults to "left")}
+\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
+"anti_unique"). Defaults to "left". See \link{join_types}.}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}

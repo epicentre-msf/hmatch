@@ -30,11 +30,17 @@ test_that("Basic functionality", {
   expect_is(m_partial_i, "data.frame")
   expect_lte(nrow(m_partial_i), nrow(ne_raw))
 
+  m_partial_iu <- hmatch_partial(ne_raw, ne_ref, type = "inner_unique")
+  expect_lt(nrow(m_partial_iu), nrow(m_partial_i))
+
   m_partial_l <- hmatch_partial(ne_raw, ne_ref, type = "left")
   expect_gte(nrow(m_partial_l), nrow(ne_raw))
 
+  m_partial_a <- hmatch_partial(ne_raw, ne_ref, type = "anti")
+  expect_equal(names(m_partial_a), names(ne_raw))
+
   ## fuzzy join
-  m_fuzzy_i <- hmatch_partial(ne_raw, ne_ref, type = "inner", fuzzy = TRUE, max_dist = 2)
+  m_fuzzy_i <- hmatch_partial(ne_raw, ne_ref, type = "inner_unique", fuzzy = TRUE, max_dist = 2)
   expect_is(m_fuzzy_i, "data.frame")
   expect_lte(nrow(m_fuzzy_i), nrow(ne_raw))
 
@@ -42,7 +48,7 @@ test_that("Basic functionality", {
   expect_gte(nrow(m_fuzzy_l), nrow(ne_raw))
 
   ## rolling join
-  m_best_i <- hmatch_best(ne_raw, ne_ref, type = "inner")
+  m_best_i <- hmatch_best(ne_raw, ne_ref, type = "inner_unique")
   expect_is(m_best_i, "data.frame")
   expect_lte(nrow(m_best_i), nrow(ne_raw))
 
