@@ -5,12 +5,12 @@
 #' 2. remove sequences of non-alphanumeric characters at start or end of string
 #' 3. replace remaining sequences of non-alphanumeric characters with "_"
 #' 4. remove diacritics (`stringi::stri_trans_general`)
-#' 5. (optional) convert roman numerals (I, II, ..., X) to arabic (1, 2, ...,
-#' 10)
+#' 5. (optional) convert roman numerals (I, II, ..., XLIX) to arabic (1, 2, ...,
+#' 49)
 #'
 #' @param x a string
 #' @param convert_roman logical indiciating whether to convert roman numerals
-#'   (I, II, ..., X) to arabic (1, 2, ..., 10)
+#'   (I, II, ..., XLIX) to arabic (1, 2, ..., 49)
 #'
 #' @return
 #' The standardized version of `x`
@@ -47,7 +47,13 @@ roman_to_arabic <- function(x) {
   if (is.na(x)) {
     out <- x
   } else {
-    rom <- c("i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x")
+    rom <- c(
+      "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix",
+      "x",  "xi", "xii", "xiii", "xiv", "xv", "xvi", "xvii", "xviii", "xix",
+      "xx", "xxi", "xxii", "xxiii", "xxiv", "xxv", "xxvi", "xxvii", "xxviii", "xxix",
+      "xxx", "xxxi", "xxxii", "xxxiii", "xxxiv", "xxxv", "xxxvi", "xxxvii", "xxxviii", "xxxix",
+      "xl", "xli", "xlii", "xliii", "xliv", "xlv", "xlvi", "xlvii", "xlviii", "xlix"
+    )
     xx <- strsplit(x, "_")[[1]]
     xi <- xx %in% rom
     xx[xi] <- match(xx[xi], rom)
