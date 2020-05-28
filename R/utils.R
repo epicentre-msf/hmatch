@@ -240,3 +240,120 @@ max_before_false <- function(x) {
   }
 }
 
+
+
+#' @importFrom dplyr arrange group_by_all ungroup
+split_raw <- function(raw, by, lev) {
+  out <- unique(raw[, by[1:lev], drop = FALSE])
+
+  all_na <- apply(out, 1, function(x) all(is.na(x)))
+  out <- out[!all_na, , drop = FALSE]
+
+  out <- out[!is.na(out[[by[lev]]]), , drop = FALSE]
+
+  # arrange by col
+  out_grp <- dplyr::group_by_all(out)
+  out_arn <- dplyr::arrange(out_grp, .by_group = TRUE)
+  out <- ungroup(out_arn)
+  class(out) <- class(raw)
+  out
+}
+
+
+split_ref <- function(ref, by, lev, lower_levels = FALSE) {
+
+  l <- max_adm_level(ref, by = by)
+
+  out <- if (lower_levels) {
+    ref[l <= lev,]
+  } else {
+    ref[l == lev,]
+  }
+
+  if (lev < length(by)) {
+    cols_excl <- by[(lev + 1):length(by)]
+    out <- out[,!names(out) %in% cols_excl, drop = FALSE]
+  }
+  return(out)
+}
+
+
+#' @importFrom stats setNames
+split_by <- function(lev, by_raw, by_ref) {
+  setNames(by_raw[1:lev], by_ref[1:lev])
+}
+
+
+
+#' @noRd
+ordered_split <- function(x, f, N) {
+  s <- split(x, f)
+  i <- as.numeric(names(s))
+  out <- vector("list", N)
+  out[i] <- s
+  return(out)
+}
+
+
+spmatch_prep_levels <- function(levels, by) {
+
+  if (is.null(levels)) {
+    valid <- TRUE
+    out <- seq_along(by)
+  } else if (is.numeric(levels)) {
+    valid <- levels %in% seq_along(by)
+    out <- levels
+  } else {
+    valid <- levels %in% by
+    out <- match(levels, by)
+  }
+
+  if (!all(valid)) {
+    stop("the following elements of `levels` could not be matched to a ",
+         "hierarchical column within `raw`: ",
+         paste(levels[!valid], collapse = "; "))
+  }
+  return(out)
+}
+
+
+spmatch_prep <- function(raw,
+                         ref,
+                         pattern_raw,
+                         pattern_ref,
+                         by,
+                         ref_prefix,
+                         levels,
+                         lower_levels = FALSE) {
+
+  prep <- prep_match_columns(raw = raw,
+                             ref = ref,
+                             pattern_raw = pattern_raw,
+                             pattern_ref = pattern_ref,
+                             by = by,
+                             ref_prefix = ref_prefix)
+
+  levels <- spmatch_prep_levels(levels, prep$by_raw)
+
+  raw_split <- lapply(seq_along(prep$by_raw)[levels],
+                      split_raw,
+                      raw = raw,
+                      by = prep$by_raw)
+
+  ref_split <- lapply(seq_along(prep$by_ref)[levels],
+                      split_ref,
+                      ref = ref,
+                      by = prep$by_ref_orig,
+                      lower_levels = lower_levels)
+
+  by_split <- lapply(seq_along(prep$by_raw)[levels],
+                     split_by,
+                     by_raw = prep$by_raw,
+                     by_ref = prep$by_ref_orig)
+
+  return(list(raw_split = raw_split,
+              ref_split = ref_split,
+              by_split = by_split,
+              names = prep$by_raw[levels]))
+}
+
