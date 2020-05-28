@@ -16,8 +16,8 @@
 #'   corresponding columns in `raw`
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("left", "inner", or "anti"). Defaults to "left".
-#'   See \link{join_types}.
+#' @param type type of join ("left", "inner", "inner_unique", "anti", or
+#'   "anti_unique"). Defaults to "left". See \link{join_types}.
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
@@ -25,9 +25,9 @@
 #'   also \link{string_standardization}.
 #' @param ... Additional arguments passed to `std_fn()`
 #'
-#' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
-#'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
-#'   single match in `ref`. If `type == "left"`, returns all rows of `raw`.
+#' @return a data frame obtained by matching the hierarchical columns in `raw`
+#'   and `ref`, using the join type specified by argument `type` (see
+#'   \link{join_types} for more details)
 #'
 #' @examples
 #' data(ne_raw)
@@ -70,10 +70,11 @@ hmatch_complete <- function(raw,
   # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "anti"))
+  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
 
   ## add temporary row index to raw
-  raw[["TEMP_ROW_ID_COMP"]] <- seq_len(nrow(raw))
+  temp_id_col <- "TEMP_ROW_ID_COMP"
+  raw[[temp_id_col]] <- seq_len(nrow(raw))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
@@ -113,16 +114,26 @@ hmatch_complete <- function(raw,
                           by = prep$by_join)
 
   ## execute merge type
+  dup_ids <- out[[temp_id_col]][duplicated(out[[temp_id_col]])]
+
   if (type == "inner") {
     out <- out[!is.na(out$TEMP_IS_MATCH),]
+  } else if (type == "inner_unique") {
+    rows_keep <- !is.na(out$TEMP_IS_MATCH) & !out[[temp_id_col]] %in% dup_ids
+    out <- out[rows_keep,]
   } else if (type == "anti") {
     out <- out[is.na(out$TEMP_IS_MATCH), c(names(raw), "TEMP_IS_MATCH")]
+  } else if (type == "anti_unique") {
+    rows_keep <- is.na(out$TEMP_IS_MATCH) | out[[temp_id_col]] %in% dup_ids
+    out <- unique(out[rows_keep, c(names(raw), "TEMP_IS_MATCH")])
   }
 
-  ## reclass out to match raw (tibble classes with otherwise be stripped)
+  ## reclass out to match raw (tibble classes will otherwise be stripped)
   class(out) <- class(raw)
 
   ## remove extra columns and return
-  cols_exclude <- c(prep$by_join, "TEMP_IS_MATCH", "TEMP_ROW_ID_COMP")
-  return(out[,!names(out) %in% cols_exclude, drop = FALSE])
+  cols_exclude <- c(prep$by_join, temp_id_col, "TEMP_IS_MATCH")
+  out <- out[,!names(out) %in% cols_exclude, drop = FALSE]
+
+  return(out)
 }

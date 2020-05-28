@@ -36,9 +36,9 @@
 #'   also \link{string_standardization}.
 #' @param ... Additional arguments passed to `std_fn()`
 #'
-#' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
-#'   and `ref`. If `type == "inner"`, returns only the rows of `raw` with a
-#'   single match in `ref`. If `type == "left"`, returns all rows of `raw`.
+#' @return a data frame obtained by matching the hierarchical columns in `raw`
+#'   and `ref`, using the join type specified by argument `type` (see
+#'   \link{join_types} for more details)
 #'
 #' Column `match_type` indicates the type of match made:
 #' - NA: no match

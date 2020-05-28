@@ -21,19 +21,16 @@
 #'   and `man`
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param type type of join ("left", "inner", or "anti"). Defaults to "left".
-#'   See \link{join_types}.
+#' @param type type of join ("left", "inner", "inner_unique", "anti", or
+#'   "anti_unique"). Defaults to "left". See \link{join_types}.
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
 #' @param ... Additional arguments passed to `std_fn()`
 #'
-#' @return A `data.frame` obtained by matching the hierarchical columns in `raw`
-#'   and `ref`, based on the matches specified in `man`. If `type == "inner"`,
-#'   returns only the rows of `raw` with a single match in `ref`. If `type ==
-#'   "left"`, returns all rows of `raw`. If the hierarchical columns within
-#'   `ref` have identical names to `raw`, the returned reference columns will be
-#'   renamed with prefix "ref_".
+#' @return a data frame obtained by matching the hierarchical columns in `raw`
+#'   and `ref` based on sets of matches specified in `man`, using the join type
+#'   specified by argument `type` (see \link{join_types} for more details)
 #'
 #' @examples
 #' data(ne_raw)
@@ -81,7 +78,7 @@ hmatch_manual <- function(raw,
   # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "anti"))
+  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
 
   if (code_col %in% names(raw)) {
     warning("`code_col` already exists in `raw`, and will be overwritten")
@@ -129,10 +126,18 @@ hmatch_manual <- function(raw,
   out <- dplyr::left_join(raw_join, man_join_final, by = prep$by_join)
 
   ## execute merge type
+  dup_ids <- out[[temp_id_col]][duplicated(out[[temp_id_col]])]
+
   if (type == "inner") {
     out <- out[!is.na(out[[code_col]]),]
+  } else if (type == "inner_unique") {
+    rows_keep <- !is.na(out[[code_col]]) & !out[[temp_id_col]] %in% dup_ids
+    out <- out[rows_keep,]
   } else if (type == "anti") {
     out <- out[is.na(out[[code_col]]), names(raw)]
+  } else if (type == "anti_unique") {
+    rows_keep <- is.na(out[[code_col]]) | out[[temp_id_col]] %in% dup_ids
+    out <- unique(out[rows_keep, names(raw)])
   }
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
@@ -140,6 +145,7 @@ hmatch_manual <- function(raw,
 
   ## remove temporary columns and return
   out <- out[,!names(out) %in% c(prep$by_join, temp_id_col), drop = FALSE]
+
   return(out)
 }
 

@@ -41,8 +41,8 @@ the corresponding columns in \code{ref} (see also \link{specifying_columns})}
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man}}
 
-\item{type}{type of join ("left", "inner", or "anti"). Defaults to "left".
-See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
+"anti_unique"). Defaults to "left". See \link{join_types}.}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
@@ -54,11 +54,9 @@ also \link{string_standardization}.}
 \item{...}{Additional arguments passed to \code{std_fn()}}
 }
 \value{
-A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
-and \code{ref}, based on the matches specified in \code{man}. If \code{type == "inner"},
-returns only the rows of \code{raw} with a single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}. If the hierarchical columns within
-\code{ref} have identical names to \code{raw}, the returned reference columns will be
-renamed with prefix "ref_".
+a data frame obtained by matching the hierarchical columns in \code{raw}
+and \code{ref} based on sets of matches specified in \code{man}, using the join type
+specified by argument \code{type} (see \link{join_types} for more details)
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.

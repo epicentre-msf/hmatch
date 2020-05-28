@@ -67,9 +67,9 @@ also \link{string_standardization}.}
 \item{...}{Additional arguments passed to \code{std_fn()}}
 }
 \value{
-A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
-and \code{ref}, based on the matches specified in \code{man}. If \code{type == "inner"},
-returns only the rows of \code{raw} with a single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}.
+a data frame obtained by matching the hierarchical columns in \code{raw}
+and \code{ref}, using the join type specified by argument \code{type} (see
+\link{join_types} for more details)
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.

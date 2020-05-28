@@ -34,8 +34,8 @@ corresponding columns in \code{raw}}
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{type}{type of join ("left", "inner", or "anti"). Defaults to "left".
-See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
+"anti_unique"). Defaults to "left". See \link{join_types}.}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
@@ -47,9 +47,9 @@ also \link{string_standardization}.}
 \item{...}{Additional arguments passed to \code{std_fn()}}
 }
 \value{
-A \code{data.frame} obtained by matching the hierarchical columns in \code{raw}
-and \code{ref}. If \code{type == "inner"}, returns only the rows of \code{raw} with a
-single match in \code{ref}. If \code{type == "left"}, returns all rows of \code{raw}.
+a data frame obtained by matching the hierarchical columns in \code{raw}
+and \code{ref}, using the join type specified by argument \code{type} (see
+\link{join_types} for more details)
 }
 \description{
 Match a data.frame with raw, potentially messy hierarchical data (e.g.
