@@ -18,7 +18,8 @@ hmatch(
   fuzzy = FALSE,
   max_dist = 1L,
   std_fn = string_std,
-  ...
+  ...,
+  concise = FALSE
 )
 }
 \arguments{
@@ -45,8 +46,8 @@ corresponding columns in \code{raw} (and \code{man}, if given) (see also
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{type}{type of join ("left", "inner_unique", or "anti_unique"). Defaults
-to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "anti", "inner_complete",
+"inner_incomplete"). Defaults to "left". See \link{join_types}.}
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man} (only required if argument \code{man} is given)}
@@ -65,6 +66,9 @@ fuzzy-matching (defaults to \code{1L})}
 also \link{string_standardization}.}
 
 \item{...}{Additional arguments passed to \code{std_fn()}}
+
+\item{concise}{logical indicating whether to return only the hierarchical
+columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}

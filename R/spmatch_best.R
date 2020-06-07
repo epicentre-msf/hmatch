@@ -15,11 +15,14 @@
 #' United States | New York | New York \cr L3: United States | Pennsylvania |
 #' Philadelphia
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch_best
 #'
 #' @param levels a vector of names or integer indices corresponding to one or
 #'   more of the hierarchical columns in `raw` to match at. Defaults to `NULL`
 #'   in which case matches are made at each hierarchical level.
+#' @param always_list logical indicating whether to always return a list, even
+#'   when argument `levels`` specifies a single match level (defaults to
+#'   `FALSE`)
 #'
 #' @return A list of data frames, each returned by a call to `hmatch_best` on
 #' the unique combination of hierarchical values at the given hierarchical
@@ -35,14 +38,14 @@
 #' spmatch_best(ne_raw, ne_ref, type = "left", fuzzy = TRUE)
 #'
 #' # find all matches ("inner"-join) at only the adm2 level
-#' spmatch_best(ne_raw, ne_ref, type = "inner", levels = "adm2")
+#' spmatch_best(ne_raw, ne_ref, type = "inner_unique", levels = "adm2")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' spmatch_best(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
+#' spmatch_best(ne_raw, ne_ref, type = "inner_unique", dict = ne_dict, levels = "adm2")
 #'
 #' @export spmatch_best
 spmatch_best <- function(raw,
@@ -57,7 +60,8 @@ spmatch_best <- function(raw,
                          max_dist = 1L,
                          std_fn = string_std,
                          ...,
-                         levels = NULL) {
+                         levels = NULL,
+                         always_list = FALSE) {
 
   # # for testing
   # raw = ne_raw
@@ -66,7 +70,7 @@ spmatch_best <- function(raw,
   # pattern_ref = pattern_raw
   # by = NULL
   # dict <- NULL
-  # type = "left"
+  # type = "inner_incomplete"
   # ref_prefix = "ref_"
   # fuzzy = TRUE
   # max_dist = 1L
@@ -89,8 +93,8 @@ spmatch_best <- function(raw,
     hmatch_best,
     raw = prep$raw_split,
     ref = prep$ref_split,
-    by = prep$by_split,
     MoreArgs = list(
+      by = prep$by_split,
       dict = dict,
       type = type,
       ref_prefix = ref_prefix,
@@ -103,6 +107,8 @@ spmatch_best <- function(raw,
   )
 
   names(out) <- prep$names
+
+  if (length(levels) == 1L & !always_list) out <- out[[1]]
 
   return(out)
 }

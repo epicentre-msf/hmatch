@@ -15,14 +15,18 @@
 #' Rows in `raw` with no match in `ref` will have NA values in the new columns
 #' taken from `ref`. If there are multiple matches between `raw` and `ref`, all
 #' combinations of the matches are returned.}
+#'
 #' \item{inner}{return all rows from `raw` where there are matches in `ref`, and
 #' all columns from `raw` and `ref`. If there are multiple matches between `raw`
 #' and `ref`, all combinations of the matches are returned.}
+#'
 #' \item{inner_unique}{similar to "inner", except that any row of `raw` with
 #' multiple matches in `ref` is considered non-matching and so will not be
 #' returned.}
+#'
 #' \item{anti}{return all rows from `raw` where there are not matches in `ref`,
 #' keeping just columns from `raw`}
+#'
 #' \item{anti_unique}{similar to "anti" except that any row of `raw` with
 #' multiple matches in `ref` is considered non-matching, and returned as a
 #' single row.}

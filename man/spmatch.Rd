@@ -18,7 +18,9 @@ spmatch(
   max_dist = 1L,
   std_fn = string_std,
   ...,
-  levels = NULL
+  concise = FALSE,
+  levels = NULL,
+  always_list = FALSE
 )
 }
 \arguments{
@@ -28,20 +30,21 @@ messy data}
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}
 
 \item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
-(see also \link{specifying_columns})}
+(and \code{man} if given) (see also \link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
 (see also \link{specifying_columns})}
 
 \item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref} and whose names are the names of the
-corresponding columns in \code{raw} (see also \link{specifying_columns})}
+hierarchical columns in \code{ref}, and whose names are the names of the
+corresponding columns in \code{raw} (and \code{man}, if given) (see also
+\link{specifying_columns})}
 
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
-"anti_unique"). Defaults to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "anti", "inner_complete",
+"inner_incomplete"). Defaults to "left". See \link{join_types}.}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
@@ -58,9 +61,15 @@ also \link{string_standardization}.}
 
 \item{...}{Additional arguments passed to \code{std_fn()}}
 
+\item{concise}{logical indicating whether to return only the hierarchical
+columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
+
 \item{levels}{a vector of names or integer indices corresponding to one or
 more of the hierarchical columns in \code{raw} to match at. Defaults to \code{NULL}
 in which case matches are made at each hierarchical level.}
+
+\item{always_list}{logical indicating whether to always return a list, even
+when argument \verb{levels`` specifies a single match level (defaults to }FALSE`)}
 }
 \value{
 A list of data frames, each returned by a call to \code{hmatch} on the unique
@@ -68,6 +77,9 @@ combination of hierarchical values at the given hierarchical level. The
 number of elements in the list corresponds to the number of hierarchical
 columns in \code{raw}, or, if specified, the number of elements in argument
 \code{levels}.
+
+However, if \code{always_list = FALSE} and \code{length(levels) == 1}, a single data
+frame is returned (i.e. not wrapped in a list).
 }
 \description{
 Implements hierarchical matching with \code{\link{hmatch}}, separately at
@@ -92,7 +104,7 @@ data(ne_raw)
 data(ne_ref)
 
 # find all non-matches ("anti"-join) at each hierarchical level
-spmatch(ne_raw, ne_ref, type = "left", fuzzy = TRUE)
+spmatch(ne_raw, ne_ref, type = "anti", fuzzy = TRUE)
 
 # find all matches ("inner"-join) at only the adm2 level
 spmatch(ne_raw, ne_ref, type = "inner", levels = "adm2")

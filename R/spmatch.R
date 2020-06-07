@@ -19,11 +19,14 @@
 #' L3: United States | New York | New York \cr
 #' L3: United States | Pennsylvania | Philadelphia
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch
 #'
 #' @param levels a vector of names or integer indices corresponding to one or
 #'   more of the hierarchical columns in `raw` to match at. Defaults to `NULL`
 #'   in which case matches are made at each hierarchical level.
+#' @param always_list logical indicating whether to always return a list, even
+#'   when argument `levels`` specifies a single match level (defaults to
+#'   `FALSE`)
 #'
 #' @return
 #' A list of data frames, each returned by a call to `hmatch` on the unique
@@ -32,12 +35,15 @@
 #' columns in `raw`, or, if specified, the number of elements in argument
 #' `levels`.
 #'
+#' However, if `always_list = FALSE` and `length(levels) == 1`, a single data
+#' frame is returned (i.e. not wrapped in a list).
+#'
 #' @examples
 #' data(ne_raw)
 #' data(ne_ref)
 #'
 #' # find all non-matches ("anti"-join) at each hierarchical level
-#' spmatch(ne_raw, ne_ref, type = "left", fuzzy = TRUE)
+#' spmatch(ne_raw, ne_ref, type = "anti", fuzzy = TRUE)
 #'
 #' # find all matches ("inner"-join) at only the adm2 level
 #' spmatch(ne_raw, ne_ref, type = "inner", levels = "adm2")
@@ -62,7 +68,9 @@ spmatch <- function(raw,
                     max_dist = 1L,
                     std_fn = string_std,
                     ...,
-                    levels = NULL) {
+                    concise = FALSE,
+                    levels = NULL,
+                    always_list = FALSE) {
 
   # # for testing
   # raw = ne_raw
@@ -71,7 +79,7 @@ spmatch <- function(raw,
   # pattern_ref = pattern_raw
   # by = NULL
   # dict <- NULL
-  # type = "left"
+  # type = "anti"
   # ref_prefix = "ref_"
   # fuzzy = TRUE
   # max_dist = 1L
@@ -94,20 +102,23 @@ spmatch <- function(raw,
     hmatch,
     raw = prep$raw_split,
     ref = prep$ref_split,
-    by = prep$by_split,
     MoreArgs = list(
+      by = prep$by_split,
       dict = dict,
       type = type,
       ref_prefix = ref_prefix,
       fuzzy = fuzzy,
       max_dist = max_dist,
       std_fn = std_fn,
-      ...
+      ...,
+      concise = concise
     ),
     SIMPLIFY = FALSE
   )
 
   names(out) <- prep$names
+
+  if (length(levels) == 1L & !always_list) out <- out[[1]]
 
   return(out)
 }

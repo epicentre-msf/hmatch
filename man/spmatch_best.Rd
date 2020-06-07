@@ -17,7 +17,8 @@ spmatch_best(
   max_dist = 1L,
   std_fn = string_std,
   ...,
-  levels = NULL
+  levels = NULL,
+  always_list = FALSE
 )
 }
 \arguments{
@@ -33,14 +34,14 @@ messy data}
 (see also \link{specifying_columns})}
 
 \item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref} and whose names are the names of the
+hierarchical columns in \code{ref}, and whose names are the names of the
 corresponding columns in \code{raw} (see also \link{specifying_columns})}
 
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
-"anti_unique"). Defaults to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "anti", "inner_complete",
+"inner_incomplete"). Defaults to "left". See \link{join_types}.}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
@@ -60,6 +61,9 @@ also \link{string_standardization}.}
 \item{levels}{a vector of names or integer indices corresponding to one or
 more of the hierarchical columns in \code{raw} to match at. Defaults to \code{NULL}
 in which case matches are made at each hierarchical level.}
+
+\item{always_list}{logical indicating whether to always return a list, even
+when argument \verb{levels`` specifies a single match level (defaults to }FALSE`)}
 }
 \value{
 A list of data frames, each returned by a call to \code{hmatch_best} on
@@ -91,13 +95,13 @@ data(ne_ref)
 spmatch_best(ne_raw, ne_ref, type = "left", fuzzy = TRUE)
 
 # find all matches ("inner"-join) at only the adm2 level
-spmatch_best(ne_raw, ne_ref, type = "inner", levels = "adm2")
+spmatch_best(ne_raw, ne_ref, type = "inner_unique", levels = "adm2")
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",
                       replacement = "United States",
                       variable = "adm0")
 
-spmatch_best(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
+spmatch_best(ne_raw, ne_ref, type = "inner_unique", dict = ne_dict, levels = "adm2")
 
 }

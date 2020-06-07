@@ -15,7 +15,8 @@ spmatch_complete(
   ref_prefix = "ref_",
   std_fn = string_std,
   ...,
-  levels = NULL
+  levels = NULL,
+  always_list = FALSE
 )
 }
 \arguments{
@@ -50,6 +51,9 @@ also \link{string_standardization}.}
 \item{levels}{a vector of names or integer indices corresponding to one or
 more of the hierarchical columns in \code{raw} to match at. Defaults to \code{NULL}
 in which case matches are made at each hierarchical level.}
+
+\item{always_list}{logical indicating whether to always return a list, even
+when argument \verb{levels`` specifies a single match level (defaults to }FALSE`)}
 }
 \value{
 A list of data frames, each returned by a call to \code{hmatch_complete} on the
@@ -57,6 +61,9 @@ unique combination of hierarchical values at the given hierarchical level.
 The number of elements in the list corresponds to the number of hierarchical
 columns in \code{raw}, or, if specified, the number of elements in argument
 \code{levels}.
+
+However, if \code{always_list = FALSE} and \code{length(levels) == 1}, a single data
+frame is returned (i.e. not wrapped in a list).
 }
 \description{
 Implements hierarchical matching with \code{\link{hmatch_complete}},
@@ -81,7 +88,7 @@ data(ne_raw)
 data(ne_ref)
 
 # find all non-matches ("anti"-join) at each hierarchical level
-spmatch_complete(ne_raw, ne_ref, type = "anti")
+spmatch_complete(ne_raw, ne_ref, type = "left")
 
 # find all matches ("inner"-join) at only the adm0 level
 spmatch_complete(ne_raw, ne_ref, type = "inner", levels = "adm0")

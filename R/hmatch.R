@@ -32,8 +32,8 @@
 #'   \link{specifying_columns})
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("left", "inner_unique", or "anti_unique"). Defaults
-#'   to "left". See \link{join_types}.
+#' @param type type of join ("left", "inner", "anti", "inner_complete",
+#'   "inner_incomplete"). Defaults to "left". See \link{join_types}.
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man` (only required if argument `man` is given)
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
@@ -46,6 +46,8 @@
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
 #' @param ... Additional arguments passed to `std_fn()`
+#' @param concise logical indicating whether to return only the hierarchical
+#' columns (from both `raw` and `ref`) (defaults to `FALSE`)
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -80,7 +82,13 @@ hmatch <- function(raw,
                    fuzzy = FALSE,
                    max_dist = 1L,
                    std_fn = string_std,
-                   ...) {
+                   ...,
+                   concise = FALSE) {
+
+  # raw <- readRDS("~/desktop/raw.rds")
+  # ref <- readRDS("~/desktop/ref.rds")
+  # man <- readRDS("~/desktop/man.rds")
+  # pattern_raw <- "adm"
 
   # # for testing
   # raw <- ne_raw
@@ -103,7 +111,7 @@ hmatch <- function(raw,
   # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner_unique", "anti_unique"))
+  type <- match.arg(type, c("left", "inner", "anti", "inner_complete", "inner_incomplete"))
 
   ## names of temporary columns
   temp_id_col <- "TEMP_ROW_ID_BEST"
@@ -156,7 +164,7 @@ hmatch <- function(raw,
                                   ref_,
                                   by = by,
                                   dict = dict,
-                                  type = "inner",
+                                  type = "inner_unique",
                                   std_fn = std_fn,
                                   ...)
 
@@ -218,6 +226,7 @@ hmatch <- function(raw,
                              m_fuzzy,
                              m_roll)
 
+
   ## merge to ref
   m_bind_ref <- dplyr::left_join(m_full, prep$ref, by = temp_code_col)
   m_bind_ref <- m_bind_ref[,c(temp_id_col, names(prep$ref), "match_type")]
@@ -225,19 +234,29 @@ hmatch <- function(raw,
   ## merge to raw
   out <- dplyr::left_join(raw, m_bind_ref, by = temp_id_col)
 
+  ## reclassify match_type (best, best_low, best_infer)
+  max_adm_raw <- max_levels(out, by = prep$by_raw)
+  max_adm_ref <- max_levels(out, by = prep$by_ref)
 
-  ## execute merge type
-  if (type == "inner_unique") {
+  ## execute match type
+  if (type == "inner") {
     out <- out[!is.na(out$match_type),]
-  } else if (type == "anti_unique") {
+  } else if (type == "anti") {
     out <- out[is.na(out$match_type), names(raw)]
+  } else if (type == "inner_complete") {
+    out <- out[max_adm_ref == max_adm_raw,]
+  } else if (type == "inner_incomplete") {
+    out <- out[max_adm_ref < max_adm_raw,]
   }
 
   ## reclass out to match raw (tibble classes with otherwise be stripped)
+  row.names(out) <- NULL
   class(out) <- class(raw)
 
   ## remove temporary columns and return
   out <- out[,!names(out) %in% c(temp_id_col, temp_code_col), drop = FALSE]
+  if (concise) out <- out[,c(prep$by_raw, prep$by_ref)]
+
   return(out)
 }
 

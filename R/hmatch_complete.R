@@ -56,15 +56,15 @@ hmatch_complete <- function(raw,
                             ...) {
 
   # # for testing
-  # raw = ne_raw
-  # ref = ne_ref
-  # raw$adm2[1] <- "Suffolk II"
-  # ref$adm2[10] <- "Suffolk 2"
+  # raw = drc_raw
+  # ref = drc_ref
+  # # raw$adm2[1] <- "Suffolk II"
+  # # ref$adm2[10] <- "Suffolk 2"
   # pattern_raw = NULL
   # pattern_ref = pattern_raw
   # by = NULL
   # dict <- NULL
-  # type = "left"
+  # type = "inner"
   # ref_prefix = "ref_"
   # std_fn = string_std
   # ... <- NULL

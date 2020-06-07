@@ -71,43 +71,17 @@ add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
 
 
 #' @noRd
-test_geocode_conflict <- function(data, pattern) {
-  code_columns <- sort(grep(pattern, names(data), value = TRUE))
-  data <- data[, code_columns, drop = FALSE]
-  apply(data, 1, test_geocode_conflict_row)
-}
-
-
-#' @noRd
-test_geocode_conflict_row <- function(x) {
-
-  x <- x[!is.na(x)]
-  n <- length(x)
-  conflict <- FALSE
-
-  if (n > 1) {
-    for (i in seq_len(n-1)) {
-      if (!grepl(x[i], x[i+1])) {
-        conflict <- TRUE
-      }
-    }
-  }
-  conflict
-}
-
-
-#' @noRd
 corresponding_levels <- function(dat, by_raw, by_ref) {
-  max_level_raw <- apply(dat[, by_raw, drop = FALSE], 1, max_not_na, no_na = -1L)
-  max_level_ref <- apply(dat[, by_ref, drop = FALSE], 1, max_not_na, no_na = 0L)
-  dat[max_level_raw >= max_level_ref,]
+  max_level_raw <- max_levels(dat, by = by_raw)
+  max_level_ref <- max_levels(dat, by = by_ref)
+  dat[max_level_raw >= max_level_ref & max_level_ref > 0,]
 }
 
 
-#' @noRd
-max_not_na <- function(x, no_na = 0L, value = FALSE) {
-  ifelse(any(!is.na(x)), max(which(!is.na(x))), no_na)
-}
+#' #' @noRd
+#' max_not_na <- function(x, no_na = 0L, value = FALSE) {
+#'   ifelse(any(!is.na(x)), max(which(!is.na(x))), no_na)
+#' }
 
 
 #' @noRd
@@ -117,24 +91,9 @@ max_not_na_value <- function(x) {
 
 
 #' @noRd
-max_adm_level <- function(dat, by = NULL, no_na = 0L) {
-  by <- if (is.null(by)) { names(dat) } else { by }
-  apply(dat[, by, drop = FALSE], 1, max_not_na, no_na = no_na)
-}
-
-
-#' @noRd
 best_geocode <- function(dat, pattern) {
   cols <- grep(pattern, names(dat), value = TRUE)
   apply(dat[, sort(cols), drop = FALSE], 1, max_not_na_value)
-}
-
-
-#' @noRd
-sort_cols <- function(dat, ref) {
-  cols_1 <- intersect(names(ref), names(dat))
-  cols_2 <- setdiff(names(dat), names(ref))
-  dat[, c(cols_1, cols_2), drop = FALSE]
 }
 
 
@@ -174,20 +133,11 @@ prep_match_columns <- function(raw,
     ref[[code_col]] <- hcodes_str(ref, by = by_ref)
   }
 
-  return(list(ref = ref, by_raw = by_raw, by_ref = by_ref, by_ref_orig = by_ref_orig, by_join = by_join))
-}
-
-
-#' @noRd
-best_geocode_group <- function(dat, pattern, id_col, code_col, split = "__") {
-  cols <- grep(pattern, names(dat), value = TRUE)
-  dat_ <- dat[,sort(cols), drop = FALSE]
-  dat_split <- split(dat_, dat[[id_col]])
-  vapply(dat_split,
-         best_geocode_helper,
-         character(1),
-         code_col = code_col,
-         USE.NAMES = FALSE)
+  return(list(ref = ref,
+              by_raw = by_raw,
+              by_ref = by_ref,
+              by_ref_orig = by_ref_orig,
+              by_join = by_join))
 }
 
 
@@ -251,6 +201,8 @@ split_raw <- function(raw, by, lev) {
 
   out <- out[!is.na(out[[by[lev]]]), , drop = FALSE]
 
+  out[,setdiff(by, names(out))] <- NA_character_ # test
+
   # arrange by col
   out_grp <- dplyr::group_by_all(out)
   out_arn <- dplyr::arrange(out_grp, .by_group = TRUE)
@@ -262,7 +214,7 @@ split_raw <- function(raw, by, lev) {
 
 split_ref <- function(ref, by, lev, lower_levels = FALSE) {
 
-  l <- max_adm_level(ref, by = by)
+  l <- max_levels(ref, by = by)
 
   out <- if (lower_levels) {
     ref[l <= lev,]
@@ -270,18 +222,18 @@ split_ref <- function(ref, by, lev, lower_levels = FALSE) {
     ref[l == lev,]
   }
 
-  if (lev < length(by)) {
-    cols_excl <- by[(lev + 1):length(by)]
-    out <- out[,!names(out) %in% cols_excl, drop = FALSE]
-  }
+  # if (lev < length(by)) {
+  #   cols_excl <- by[(lev + 1):length(by)]
+  #   out <- out[,!names(out) %in% cols_excl, drop = FALSE]
+  # }
   return(out)
 }
 
 
-#' @importFrom stats setNames
-split_by <- function(lev, by_raw, by_ref) {
-  setNames(by_raw[1:lev], by_ref[1:lev])
-}
+#' #' @importFrom stats setNames
+#' split_by <- function(lev, by_raw, by_ref) {
+#'   setNames(by_raw[1:lev], by_ref[1:lev])
+#' }
 
 
 
@@ -317,6 +269,7 @@ spmatch_prep_levels <- function(levels, by) {
 }
 
 
+#' @importFrom stats setNames
 spmatch_prep <- function(raw,
                          ref,
                          pattern_raw,
@@ -346,10 +299,12 @@ spmatch_prep <- function(raw,
                       by = prep$by_ref_orig,
                       lower_levels = lower_levels)
 
-  by_split <- lapply(seq_along(prep$by_raw)[levels],
-                     split_by,
-                     by_raw = prep$by_raw,
-                     by_ref = prep$by_ref_orig)
+  # by_split <- lapply(seq_along(prep$by_raw)[levels],
+  #                    split_by,
+  #                    by_raw = prep$by_raw,
+  #                    by_ref = prep$by_ref_orig)
+
+  by_split <- setNames(prep$by_ref_orig, prep$by_raw)
 
   return(list(raw_split = raw_split,
               ref_split = ref_split,

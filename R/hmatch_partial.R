@@ -126,8 +126,8 @@ hmatch_partial <- function(raw,
   }
 
   ## add max non-missing adm level
-  raw_join[["MAX_ADM_RAW_"]] <- max_adm_level(raw_join, by = prep$by_raw)
-  ref_join[["MAX_ADM_REF_"]] <- max_adm_level(ref_join, by = prep$by_ref)
+  raw_join[["MAX_ADM_RAW_"]] <- max_levels(raw_join, by = prep$by_raw)
+  ref_join[["MAX_ADM_REF_"]] <- max_levels(ref_join, by = prep$by_ref)
 
   ## extract only the join columns
   raw_ <- raw_join[,by_raw_join, drop = FALSE]

@@ -23,6 +23,9 @@
 #' @param levels a vector of names or integer indices corresponding to one or
 #'   more of the hierarchical columns in `raw` to match at. Defaults to `NULL`
 #'   in which case matches are made at each hierarchical level.
+#' @param always_list logical indicating whether to always return a list, even
+#'   when argument `levels`` specifies a single match level (defaults to
+#'   `FALSE`)
 #'
 #' @return
 #' A list of data frames, each returned by a call to `hmatch_complete` on the
@@ -31,12 +34,15 @@
 #' columns in `raw`, or, if specified, the number of elements in argument
 #' `levels`.
 #'
+#' However, if `always_list = FALSE` and `length(levels) == 1`, a single data
+#' frame is returned (i.e. not wrapped in a list).
+#'
 #' @examples
 #' data(ne_raw)
 #' data(ne_ref)
 #'
 #' # find all non-matches ("anti"-join) at each hierarchical level
-#' spmatch_complete(ne_raw, ne_ref, type = "anti")
+#' spmatch_complete(ne_raw, ne_ref, type = "left")
 #'
 #' # find all matches ("inner"-join) at only the adm0 level
 #' spmatch_complete(ne_raw, ne_ref, type = "inner", levels = "adm0")
@@ -59,7 +65,8 @@ spmatch_complete <- function(raw,
                              ref_prefix = "ref_",
                              std_fn = string_std,
                              ...,
-                             levels = NULL) {
+                             levels = NULL,
+                             always_list = FALSE) {
 
   # # for testing
   # raw = ne_raw
@@ -88,8 +95,8 @@ spmatch_complete <- function(raw,
     hmatch_complete,
     raw = prep$raw_split,
     ref = prep$ref_split,
-    by = prep$by_split,
     MoreArgs = list(
+      by = prep$by_split,
       dict = dict,
       type = type,
       ref_prefix = ref_prefix,
@@ -100,6 +107,8 @@ spmatch_complete <- function(raw,
   )
 
   names(out) <- prep$names
+
+  if (length(levels) == 1L & !always_list) out <- out[[1]]
 
   return(out)
 }

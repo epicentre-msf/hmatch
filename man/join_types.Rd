@@ -8,14 +8,18 @@
 Rows in \code{raw} with no match in \code{ref} will have NA values in the new columns
 taken from \code{ref}. If there are multiple matches between \code{raw} and \code{ref}, all
 combinations of the matches are returned.}
+
 \item{inner}{return all rows from \code{raw} where there are matches in \code{ref}, and
 all columns from \code{raw} and \code{ref}. If there are multiple matches between \code{raw}
 and \code{ref}, all combinations of the matches are returned.}
+
 \item{inner_unique}{similar to "inner", except that any row of \code{raw} with
 multiple matches in \code{ref} is considered non-matching and so will not be
 returned.}
+
 \item{anti}{return all rows from \code{raw} where there are not matches in \code{ref},
 keeping just columns from \code{raw}}
+
 \item{anti_unique}{similar to "anti" except that any row of \code{raw} with
 multiple matches in \code{ref} is considered non-matching, and returned as a
 single row.}

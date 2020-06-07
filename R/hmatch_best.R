@@ -23,8 +23,8 @@
 #'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param dict Optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("left", "inner_unique", or "anti_unique"). Defaults
-#'   to "left". See \link{join_types}.
+#' @param type type of join ("left", "inner", "anti", "inner_complete",
+#'   "inner_incomplete"). Defaults to "left". See \link{join_types}.
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
@@ -92,7 +92,7 @@ hmatch_best <- function(raw,
   # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner_unique", "anti_unique"))
+  type <- match.arg(type, c("left", "inner_unique", "inner_complete", "inner_incomplete", "anti_unique"))
 
   # names of temporary columns
   code_col <- "TEMP_CODE_COL_ROLL"
@@ -115,7 +115,7 @@ hmatch_best <- function(raw,
   raw_ <- raw[c(id_col, prep$by_raw)]
   ref_ <- prep$ref[c(prep$by_ref, code_col)]
 
-  ref_[["MAX_LEVEL"]] <- max_adm_level(ref_, by = prep$by_ref)
+  ref_[["MAX_LEVEL"]] <- max_levels(ref_, by = prep$by_ref)
 
   ## initial df to store all temporary match columns
   matches_full <- raw
@@ -204,8 +204,8 @@ hmatch_best <- function(raw,
   out <- dplyr::left_join(raw, matches_bind_ref, by = id_col)
 
   ## reclassify match_type (best, best_low, best_infer)
-  max_adm_raw <- max_adm_level(out, prep$by_raw)
-  max_adm_ref <- max_adm_level(out, prep$by_ref)
+  max_adm_raw <- max_levels(out, by = prep$by_raw)
+  max_adm_ref <- max_levels(out, by = prep$by_ref)
 
   best_low <- out[["match_type"]] == "best" & max_adm_ref < max_adm_raw
   best_low[is.na(best_low)] <- FALSE
@@ -216,6 +216,10 @@ hmatch_best <- function(raw,
     out <- out[!is.na(out$match_type),]
   } else if (type == "anti_unique") {
     out <- out[is.na(out$match_type), names(raw)]
+  } else if (type == "inner_complete") {
+    out <- out[max_adm_ref == max_adm_raw,]
+  } else if (type == "inner_incomplete") {
+    out <- out[max_adm_ref < max_adm_raw,]
   }
 
   # reclass out to match raw (tibble classes with otherwise be stripped)
