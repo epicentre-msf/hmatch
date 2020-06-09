@@ -7,9 +7,10 @@
 spmatch_complete(
   raw,
   ref,
-  pattern_raw = NULL,
-  pattern_ref = pattern_raw,
+  pattern = NULL,
+  pattern_ref = pattern,
   by = NULL,
+  by_ref = by_ref,
   dict = NULL,
   type = "left",
   ref_prefix = "ref_",
@@ -25,13 +26,17 @@ messy data}
 
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
+(columns can be matched using either the \code{pattern} or \code{by} arguments, as
+described in \link{specifying_columns})}
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}}
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
+(defaults to \code{pattern})}
 
-\item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref} and whose names are the names of the
-corresponding columns in \code{raw}}
+\item{by}{vector giving the names of the hierarchical columns in \code{raw}}
+
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
+(defaults to \code{by})}
 
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
@@ -53,7 +58,7 @@ more of the hierarchical columns in \code{raw} to match at. Defaults to \code{NU
 in which case matches are made at each hierarchical level.}
 
 \item{always_list}{logical indicating whether to always return a list, even
-when argument \verb{levels`` specifies a single match level (defaults to }FALSE`)}
+when argument \code{levels} specifies a single match level (defaults to \code{FALSE})}
 }
 \value{
 A list of data frames, each returned by a call to \code{hmatch_complete} on the
@@ -88,7 +93,7 @@ data(ne_raw)
 data(ne_ref)
 
 # find all non-matches ("anti"-join) at each hierarchical level
-spmatch_complete(ne_raw, ne_ref, type = "left")
+spmatch_complete(ne_raw, ne_ref, type = "anti")
 
 # find all matches ("inner"-join) at only the adm0 level
 spmatch_complete(ne_raw, ne_ref, type = "inner", levels = "adm0")

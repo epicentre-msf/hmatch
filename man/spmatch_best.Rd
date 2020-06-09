@@ -7,9 +7,10 @@
 spmatch_best(
   raw,
   ref,
-  pattern_raw = NULL,
-  pattern_ref = pattern_raw,
+  pattern = NULL,
+  pattern_ref = pattern,
   by = NULL,
+  by_ref = by_ref,
   dict = NULL,
   type = "left",
   ref_prefix = "ref_",
@@ -27,15 +28,17 @@ messy data}
 
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
-(see also \link{specifying_columns})}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
+(columns can be matched using either the \code{pattern} or \code{by} arguments, as
+described in \link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(see also \link{specifying_columns})}
+(defaults to \code{pattern})}
 
-\item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref}, and whose names are the names of the
-corresponding columns in \code{raw} (see also \link{specifying_columns})}
+\item{by}{vector giving the names of the hierarchical columns in \code{raw}}
+
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
+(defaults to \code{by})}
 
 \item{dict}{Optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
@@ -63,7 +66,7 @@ more of the hierarchical columns in \code{raw} to match at. Defaults to \code{NU
 in which case matches are made at each hierarchical level.}
 
 \item{always_list}{logical indicating whether to always return a list, even
-when argument \verb{levels`` specifies a single match level (defaults to }FALSE`)}
+when argument \code{levels} specifies a single match level (defaults to \code{FALSE})}
 }
 \value{
 A list of data frames, each returned by a call to \code{hmatch_best} on
@@ -92,16 +95,16 @@ data(ne_raw)
 data(ne_ref)
 
 # find all non-matches ("anti"-join) at each hierarchical level
-spmatch_best(ne_raw, ne_ref, type = "left", fuzzy = TRUE)
+spmatch_best(ne_raw, ne_ref, type = "anti", fuzzy = TRUE)
 
 # find all matches ("inner"-join) at only the adm2 level
-spmatch_best(ne_raw, ne_ref, type = "inner_unique", levels = "adm2")
+spmatch_best(ne_raw, ne_ref, type = "inner", levels = "adm2")
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",
                       replacement = "United States",
                       variable = "adm0")
 
-spmatch_best(ne_raw, ne_ref, type = "inner_unique", dict = ne_dict, levels = "adm2")
+spmatch_best(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
 
 }

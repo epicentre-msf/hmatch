@@ -8,18 +8,19 @@ hmatch(
   raw,
   ref,
   man = NULL,
-  pattern_raw = NULL,
-  pattern_ref = pattern_raw,
+  pattern = NULL,
+  pattern_ref = pattern,
   by = NULL,
-  dict = NULL,
+  by_ref = by,
   type = "left",
+  dict = NULL,
   code_col = NULL,
   ref_prefix = "ref_",
   fuzzy = FALSE,
   max_dist = 1L,
+  concise = FALSE,
   std_fn = string_std,
-  ...,
-  concise = FALSE
+  ...
 )
 }
 \arguments{
@@ -32,22 +33,23 @@ messy data}
 given set of hierarchical values to the code within \code{ref} to which those
 values correspond}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
 (and \code{man} if given) (see also \link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(see also \link{specifying_columns})}
+(defaults to \code{pattern})}
 
-\item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref}, and whose names are the names of the
-corresponding columns in \code{raw} (and \code{man}, if given) (see also
-\link{specifying_columns})}
+\item{by}{vector giving the names of the hierarchical columns in \code{raw} (and
+\code{man} if given)}
 
-\item{dict}{Optional dictionary for recoding values within the hierarchical
-columns of \code{raw} (see \link{dictionary_recoding})}
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
+(defaults to \code{by})}
 
 \item{type}{type of join ("left", "inner", "anti", "inner_complete",
 "inner_incomplete"). Defaults to "left". See \link{join_types}.}
+
+\item{dict}{Optional dictionary for recoding values within the hierarchical
+columns of \code{raw} (see \link{dictionary_recoding})}
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man} (only required if argument \code{man} is given)}
@@ -61,14 +63,14 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
+\item{concise}{logical indicating whether to return only the hierarchical
+columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
+
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
 \item{...}{Additional arguments passed to \code{std_fn()}}
-
-\item{concise}{logical indicating whether to return only the hierarchical
-columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}

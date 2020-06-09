@@ -8,30 +8,12 @@
 #' township) even if one or more lower-resolution levels (e.g. province) is
 #' missing.
 #'
-#' @param raw `data.frame` containing hierarchical columns with raw, potentially
-#'   messy data
-#' @param ref `data.frame` containing hierarchical columns with reference data
-#' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
-#'   (see also \link{specifying_columns})
-#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#'   (see also \link{specifying_columns})
-#' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `ref` and whose names are the names of the
-#'   corresponding columns in `raw` (see also \link{specifying_columns})
-#' @param dict Optional dictionary for recoding values within the hierarchical
-#'   columns of `raw` (see \link{dictionary_recoding})
-#' @param type type of join ("left", "inner", "inner_unique", "anti", or
-#'   "anti_unique"). Defaults to "left". See \link{join_types}.
-#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
-#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
+#' @inheritParams hmatch_complete
+#'
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
 #'   fuzzy-matching (defaults to `1L`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
-#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -41,27 +23,29 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm")
+#' hmatch_partial(ne_raw, ne_ref, pattern = "adm")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' hmatch_partial(ne_raw, ne_ref, pattern_raw = "adm", dict = ne_dict)
+#' hmatch_partial(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
 #'
 #' @importFrom dplyr left_join
 #' @export hmatch_partial
 hmatch_partial <- function(raw,
                            ref,
-                           pattern_raw = NULL,
-                           pattern_ref = pattern_raw,
+                           pattern = NULL,
+                           pattern_ref = pattern,
                            by = NULL,
-                           dict = NULL,
+                           by_ref = by,
                            type = "left",
+                           dict = NULL,
                            ref_prefix = "ref_",
                            fuzzy = FALSE,
                            max_dist = 1L,
+                           concise = FALSE,
                            std_fn = string_std,
                            ...) {
 
@@ -70,12 +54,13 @@ hmatch_partial <- function(raw,
   # ref = ne_ref
   # raw$adm2[1] <- "Suffolk II"
   # ref$adm2[10] <- "Suffolk 2"
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
+  # pattern = NULL
+  # pattern_ref = pattern
   # by = NULL
   # dict <- NULL
   # type = "left"
   # ref_prefix = "ref_"
+  # concise = FALSE
   # fuzzy = TRUE
   # max_dist = 1L
   # std_fn = string_std
@@ -87,9 +72,10 @@ hmatch_partial <- function(raw,
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
-                             pattern_raw = pattern_raw,
+                             pattern = pattern,
                              pattern_ref = pattern_ref,
                              by = by,
+                             by_ref = by_ref,
                              ref_prefix = ref_prefix)
 
   ## save original column names of raw
@@ -212,7 +198,10 @@ hmatch_partial <- function(raw,
   class(out) <- class(raw)
 
   ## remove temporary columns and return
-  out[,!names(out) %in% c(temp_id_col, "TEMP_IS_MATCH"), drop = FALSE]
+  out <- out[,!names(out) %in% c(temp_id_col, "TEMP_IS_MATCH"), drop = FALSE]
+  if (concise) out <- out[,c(prep$by_raw, prep$by_ref)]
+
+  return(out)
 }
 
 

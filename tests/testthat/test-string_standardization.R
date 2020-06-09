@@ -1,6 +1,5 @@
 test_that("String standardization", {
 
-
   # convert raw to lowercase so no complete matches (if no standardization)
   ne_raw_upr <- ne_raw
   ne_raw_upr$adm0 <- toupper(ne_raw_upr$adm0)

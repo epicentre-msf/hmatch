@@ -8,12 +8,14 @@ hmatch_manual(
   raw,
   ref,
   man,
-  pattern_raw = NULL,
-  pattern_ref = pattern_raw,
+  pattern = NULL,
+  pattern_ref = pattern,
   by = NULL,
+  by_ref = by,
   code_col,
   type = "left",
   ref_prefix = "ref_",
+  concise = FALSE,
   std_fn = string_std,
   ...
 )
@@ -28,15 +30,17 @@ messy data}
 of hierarchical values to the code within \code{ref} to which those values
 correspond}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
 and \code{man} (see also \link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(see also \link{specifying_columns})}
+(defaults to \code{pattern})}
 
-\item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{raw} and \code{man}, and whose names are the names of
-the corresponding columns in \code{ref} (see also \link{specifying_columns})}
+\item{by}{vector giving the names of the hierarchical columns in \code{raw} and
+\code{man}}
+
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
+(defaults to \code{by})}
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man}}
@@ -46,6 +50,9 @@ and \code{man}}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+
+\item{concise}{logical indicating whether to return only the hierarchical
+columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

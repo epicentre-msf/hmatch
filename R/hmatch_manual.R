@@ -4,29 +4,17 @@
 #' province, county, township) against a reference dataset, using a dictionary
 #' of manually-specified matches.
 #'
-#' @param raw `data.frame` containing hierarchical columns with raw, potentially
-#'   messy data
-#' @param ref `data.frame` containing hierarchical columns with reference data
+#' @inheritParams hmatch_complete
+#'
 #' @param man `data.frame` of manually-specified matches, relating a given set
 #'   of hierarchical values to the code within `ref` to which those values
 #'   correspond
-#' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
+#' @param pattern regex pattern to match the hierarchical columns in `raw`
 #'   and `man` (see also \link{specifying_columns})
-#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#'   (see also \link{specifying_columns})
-#' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `raw` and `man`, and whose names are the names of
-#'   the corresponding columns in `ref` (see also \link{specifying_columns})
+#' @param by vector giving the names of the hierarchical columns in `raw` and
+#'   `man`
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man`
-#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
-#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param type type of join ("left", "inner", "inner_unique", "anti", or
-#'   "anti_unique"). Defaults to "left". See \link{join_types}.
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
-#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref` based on sets of matches specified in `man`, using the join type
@@ -51,12 +39,14 @@
 hmatch_manual <- function(raw,
                           ref,
                           man,
-                          pattern_raw = NULL,
-                          pattern_ref = pattern_raw,
+                          pattern = NULL,
+                          pattern_ref = pattern,
                           by = NULL,
+                          by_ref = by,
                           code_col,
                           type = "left",
                           ref_prefix = "ref_",
+                          concise = FALSE,
                           std_fn = string_std,
                           ...) {
 
@@ -68,11 +58,13 @@ hmatch_manual <- function(raw,
   #                   adm2 = "NJ_Bergen",
   #                   hcode = "211",
   #                   stringsAsFactors = FALSE)
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
+  # pattern = NULL
+  # pattern_ref = pattern
   # by = NULL
+  # by_ref = by
   # code_col <- "hcode"
   # type = "left"
+  # concise = FALSE
   # ref_prefix = "ref_"
   # std_fn = string_std
   # ... <- NULL
@@ -93,9 +85,10 @@ hmatch_manual <- function(raw,
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
-                             pattern_raw = pattern_raw,
+                             pattern = pattern,
                              pattern_ref = pattern_ref,
                              by = by,
+                             by_ref = by_ref,
                              ref_prefix = ref_prefix)
 
   ## join ref to man by code_col
@@ -145,6 +138,7 @@ hmatch_manual <- function(raw,
 
   ## remove temporary columns and return
   out <- out[,!names(out) %in% c(prep$by_join, temp_id_col), drop = FALSE]
+  if (concise) out <- out[,c(prep$by_raw, prep$by_ref)]
 
   return(out)
 }

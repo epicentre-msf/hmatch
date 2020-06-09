@@ -48,7 +48,7 @@ test_that("Basic functionality", {
   expect_gte(nrow(m_fuzzy_l), nrow(ne_raw))
 
   ## rolling join
-  m_best_i <- hmatch_best(ne_raw, ne_ref, type = "inner_unique")
+  m_best_i <- hmatch_best(ne_raw, ne_ref, type = "inner")
   expect_is(m_best_i, "data.frame")
   expect_lte(nrow(m_best_i), nrow(ne_raw))
 
@@ -67,7 +67,7 @@ test_that("Basic functionality", {
 
   ## composite hmatch (all match exactly)
   ne_raw_test <- ne_ref_code[,grepl("adm", names(ne_ref_code))]
-  m_comp_exact <- hmatch(ne_raw_test, ne_ref_code, ne_man, pattern_raw = "^adm", code_col = "pcode", fuzzy = TRUE)
+  m_comp_exact <- hmatch(ne_raw_test, ne_ref_code, ne_man, pattern = "^adm", code_col = "pcode", fuzzy = TRUE)
   expect_equal(nrow(m_comp_exact), nrow(ne_ref))
   expect_true(all(m_comp_exact$match_type == "complete"))
 })

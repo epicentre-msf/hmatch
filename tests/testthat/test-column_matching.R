@@ -2,21 +2,22 @@ test_that("Column matching works", {
 
   ne_ref_r <- setNames(ne_ref, c("level", "geo0", "geo1", "geo2", "hcode"))
 
-  by <- setNames(c("geo0", "geo1", "geo2"),
-                 c("adm0", "adm1", "adm2"))
+  by_raw <- c("adm0", "adm1", "adm2")
+  by_ref <- c("geo0", "geo1", "geo2")
 
   ## complete join
   m_complete_0 <- hmatch_complete(ne_raw, ne_ref, type = "inner")
 
   m_complete_r1 <- hmatch_complete(ne_raw,
                                    ne_ref_r,
-                                   pattern_raw = "^adm",
+                                   pattern = "^adm",
                                    pattern_ref = "^geo",
                                    type = "inner")
 
   m_complete_r2 <- hmatch_complete(ne_raw,
                                    ne_ref_r,
-                                   by = by,
+                                   by = by_raw,
+                                   by_ref = by_ref,
                                    type = "inner")
 
   expect_equal(nrow(m_complete_0), nrow(m_complete_r1))
@@ -43,7 +44,7 @@ test_that("Column matching works", {
   m_manual_r1 <- hmatch_manual(ne_raw,
                                ne_ref_r,
                                ne_man,
-                               pattern_raw = "^adm",
+                               pattern = "^adm",
                                pattern_ref = "^geo",
                                code_col = "pcode",
                                type = "inner")
@@ -51,7 +52,8 @@ test_that("Column matching works", {
   m_manual_r2 <- hmatch_manual(ne_raw,
                                ne_ref_r,
                                ne_man,
-                               by = by,
+                               by = by_raw,
+                               by_ref = by_ref,
                                code_col = "pcode",
                                type = "inner")
 

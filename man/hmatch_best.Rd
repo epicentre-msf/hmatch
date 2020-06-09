@@ -7,14 +7,16 @@
 hmatch_best(
   raw,
   ref,
-  pattern_raw = NULL,
-  pattern_ref = pattern_raw,
+  pattern = NULL,
+  pattern_ref = pattern,
   by = NULL,
-  dict = NULL,
+  by_ref = by,
   type = "left",
+  dict = NULL,
   ref_prefix = "ref_",
   fuzzy = FALSE,
   max_dist = 1L,
+  concise = FALSE,
   std_fn = string_std,
   ...
 )
@@ -25,21 +27,23 @@ messy data}
 
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
-(see also \link{specifying_columns})}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
+(columns can be matched using either the \code{pattern} or \code{by} arguments, as
+described in \link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(see also \link{specifying_columns})}
+(defaults to \code{pattern})}
 
-\item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref}, and whose names are the names of the
-corresponding columns in \code{raw} (see also \link{specifying_columns})}
+\item{by}{vector giving the names of the hierarchical columns in \code{raw}}
 
-\item{dict}{Optional dictionary for recoding values within the hierarchical
-columns of \code{raw} (see \link{dictionary_recoding})}
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
+(defaults to \code{by})}
 
 \item{type}{type of join ("left", "inner", "anti", "inner_complete",
 "inner_incomplete"). Defaults to "left". See \link{join_types}.}
+
+\item{dict}{Optional dictionary for recoding values within the hierarchical
+columns of \code{raw} (see \link{dictionary_recoding})}
 
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
@@ -49,6 +53,9 @@ FALSE)}
 
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
+
+\item{concise}{logical indicating whether to return only the hierarchical
+columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
@@ -86,7 +93,7 @@ is consistent among all possible matches to the given row of raw data.
 data(ne_raw)
 data(ne_ref)
 
-hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
+hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE)
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",

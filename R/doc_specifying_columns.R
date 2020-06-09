@@ -31,7 +31,7 @@
 #' non-hierarchical columns within `raw` or `ref` that may inadvertently be
 #' matched by the given pattern.
 #'
-#' **2. Named vector** (argument `by`)
+#' **2. Vector of column names** (arguments `by` and `by_ref`)
 #'
 #' Alternatively, argument `by` takes a named vector whose elements are the
 #' names of the hierarchical columns in `ref` and whose names are the names of

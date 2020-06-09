@@ -11,30 +11,10 @@
 #' second level, etc. The 'best-possible' match reflects the highest-level that
 #' is consistent among all possible matches to the given row of raw data.
 #'
-#' @param raw `data.frame` containing hierarchical columns with raw, potentially
-#'   messy data
-#' @param ref `data.frame` containing hierarchical columns with reference data
-#' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
-#'   (see also \link{specifying_columns})
-#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#'   (see also \link{specifying_columns})
-#' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `ref`, and whose names are the names of the
-#'   corresponding columns in `raw` (see also \link{specifying_columns})
-#' @param dict Optional dictionary for recoding values within the hierarchical
-#'   columns of `raw` (see \link{dictionary_recoding})
+#' @inheritParams hmatch_partial
+#'
 #' @param type type of join ("left", "inner", "anti", "inner_complete",
 #'   "inner_incomplete"). Defaults to "left". See \link{join_types}.
-#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
-#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
-#'   FALSE)
-#' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
-#'   fuzzy-matching (defaults to `1L`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
-#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -52,7 +32,7 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_best(ne_raw, ne_ref, fuzzy = TRUE)
+#' hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE)
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
@@ -61,28 +41,30 @@
 #'
 #' hmatch_best(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 #'
-#' @importFrom stats setNames
 #' @importFrom dplyr left_join
 #' @export hmatch_best
 hmatch_best <- function(raw,
                         ref,
-                        pattern_raw = NULL,
-                        pattern_ref = pattern_raw,
+                        pattern = NULL,
+                        pattern_ref = pattern,
                         by = NULL,
-                        dict = NULL,
+                        by_ref = by,
                         type = "left",
+                        dict = NULL,
                         ref_prefix = "ref_",
                         fuzzy = FALSE,
                         max_dist = 1L,
+                        concise = FALSE,
                         std_fn = string_std,
                         ...) {
 
   # # for testing purposes only
   # raw <- ne_raw
   # ref <- ne_ref
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
+  # pattern = NULL
+  # pattern_ref = pattern
   # by = NULL
+  # by_ref = by
   # dict = NULL
   # type = "left"
   # ref_prefix = "ref_"
@@ -92,7 +74,7 @@ hmatch_best <- function(raw,
   # ... <- NULL
 
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner_unique", "inner_complete", "inner_incomplete", "anti_unique"))
+  type <- match.arg(type, c("left", "inner", "anti", "inner_complete", "inner_incomplete"))
 
   # names of temporary columns
   code_col <- "TEMP_CODE_COL_ROLL"
@@ -101,14 +83,16 @@ hmatch_best <- function(raw,
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
-                             pattern_raw = pattern_raw,
+                             pattern = pattern,
                              pattern_ref = pattern_ref,
                              by = by,
+                             by_ref = by_ref,
                              ref_prefix = ref_prefix,
                              code_col = code_col)
 
   ## prepare match, code, and ID columns
-  by <- setNames(prep$by_ref, prep$by_raw)
+  by <- prep$by_raw
+  by_ref <- prep$by_ref
 
   raw[[id_col]] <- seq_len(nrow(raw))
 
@@ -147,6 +131,7 @@ hmatch_best <- function(raw,
     matches_level <- hmatch_partial(raw_foc,
                                     ref_foc,
                                     by = by[1:j],
+                                    by_ref = by_ref[1:j],
                                     dict = dict,
                                     type = "left",
                                     fuzzy = fuzzy,
@@ -212,9 +197,9 @@ hmatch_best <- function(raw,
   out[["match_type"]][best_low] <- "best_low"
 
   ## execute match type
-  if (type == "inner_unique") {
+  if (type == "inner") {
     out <- out[!is.na(out$match_type),]
-  } else if (type == "anti_unique") {
+  } else if (type == "anti") {
     out <- out[is.na(out$match_type), names(raw)]
   } else if (type == "inner_complete") {
     out <- out[max_adm_ref == max_adm_raw,]
@@ -227,5 +212,7 @@ hmatch_best <- function(raw,
 
   ## remove temporary columns and return
   out <- out[,!names(out) %in% c(id_col, code_col), drop = FALSE]
+  if (concise) out <- out[,c(prep$by_raw, prep$by_ref)]
+
   return(out)
 }

@@ -19,13 +19,7 @@
 #' L3: United States | Pennsylvania | Philadelphia
 #'
 #' @inheritParams hmatch_partial
-#'
-#' @param levels a vector of names or integer indices corresponding to one or
-#'   more of the hierarchical columns in `raw` to match at. Defaults to `NULL`
-#'   in which case matches are made at each hierarchical level.
-#' @param always_list logical indicating whether to always return a list, even
-#'   when argument `levels`` specifies a single match level (defaults to
-#'   `FALSE`)
+#' @inheritParams spmatch_complete
 #'
 #' @return
 #' A list of data frames, each returned by a call to `hmatch_partial` on the
@@ -57,9 +51,10 @@
 #' @export spmatch_partial
 spmatch_partial <- function(raw,
                             ref,
-                            pattern_raw = NULL,
-                            pattern_ref = pattern_raw,
+                            pattern = NULL,
+                            pattern_ref = pattern,
                             by = NULL,
+                            by_ref = by_ref,
                             dict = NULL,
                             type = "left",
                             ref_prefix = "ref_",
@@ -73,8 +68,8 @@ spmatch_partial <- function(raw,
   # # for testing
   # raw = ne_raw
   # ref = ne_ref
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
+  # pattern = NULL
+  # pattern_ref = pattern
   # by = NULL
   # dict <- NULL
   # type = "inner"
@@ -88,9 +83,10 @@ spmatch_partial <- function(raw,
   prep <- spmatch_prep(
     raw = raw,
     ref = ref,
-    pattern_raw = pattern_raw,
+    pattern = pattern,
     pattern_ref = pattern_ref,
     by = by,
+    by_ref = by_ref,
     ref_prefix = ref_prefix,
     levels = levels
   )
@@ -100,9 +96,10 @@ spmatch_partial <- function(raw,
     raw = prep$raw_split,
     ref = prep$ref_split,
     MoreArgs = list(
-      by = prep$by_split,
-      dict = dict,
+      by = prep$by_raw_split,
+      by_ref = prep$by_ref_split,
       type = type,
+      dict = dict,
       ref_prefix = ref_prefix,
       fuzzy = fuzzy,
       max_dist = max_dist,

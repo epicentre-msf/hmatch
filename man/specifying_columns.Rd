@@ -36,7 +36,7 @@ However, the user should excercise care to ensure that there are no
 non-hierarchical columns within \code{raw} or \code{ref} that may inadvertently be
 matched by the given pattern.
 
-\strong{2. Named vector} (argument \code{by})
+\strong{2. Vector of column names} (arguments \code{by} and \code{by_ref})
 
 Alternatively, argument \code{by} takes a named vector whose elements are the
 names of the hierarchical columns in \code{ref} and whose names are the names of

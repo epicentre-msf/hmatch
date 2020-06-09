@@ -9,17 +9,22 @@
 #' @param raw `data.frame` containing hierarchical columns with raw, potentially
 #'   messy data
 #' @param ref `data.frame` containing hierarchical columns with reference data
-#' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
+#' @param pattern regex pattern to match the hierarchical columns in `raw`
+#'   (columns can be matched using either the `pattern` or `by` arguments, as
+#'   described in \link{specifying_columns})
 #' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `ref` and whose names are the names of the
-#'   corresponding columns in `raw`
-#' @param dict Optional dictionary for recoding values within the hierarchical
-#'   columns of `raw` (see \link{dictionary_recoding})
+#'   (defaults to `pattern`)
+#' @param by vector giving the names of the hierarchical columns in `raw`
+#' @param by_ref vector giving the names of the hierarchical columns in `ref`
+#'   (defaults to `by`)
 #' @param type type of join ("left", "inner", "inner_unique", "anti", or
 #'   "anti_unique"). Defaults to "left". See \link{join_types}.
+#' @param dict Optional dictionary for recoding values within the hierarchical
+#'   columns of `raw` (see \link{dictionary_recoding})
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
+#' @param concise logical indicating whether to return only the hierarchical
+#' columns (from both `raw` and `ref`) (defaults to `FALSE`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -33,39 +38,43 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm")
+#' hmatch_complete(ne_raw, ne_ref, pattern = "^adm")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' hmatch_complete(ne_raw, ne_ref, pattern_raw = "adm", dict = ne_dict)
+#' hmatch_complete(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
 #'
 #' @importFrom dplyr left_join
 #' @export hmatch_complete
 hmatch_complete <- function(raw,
                             ref,
-                            pattern_raw = NULL,
-                            pattern_ref = pattern_raw,
+                            pattern = NULL,
+                            pattern_ref = pattern,
                             by = NULL,
-                            dict = NULL,
+                            by_ref = by,
                             type = "left",
+                            dict = NULL,
                             ref_prefix = "ref_",
+                            concise = FALSE,
                             std_fn = string_std,
                             ...) {
 
   # # for testing
-  # raw = drc_raw
-  # ref = drc_ref
+  # raw = ne_raw
+  # ref = ne_ref
   # # raw$adm2[1] <- "Suffolk II"
   # # ref$adm2[10] <- "Suffolk 2"
-  # pattern_raw = NULL
-  # pattern_ref = pattern_raw
+  # pattern = NULL
+  # pattern_ref = pattern
   # by = NULL
+  # by_ref = by
   # dict <- NULL
   # type = "inner"
   # ref_prefix = "ref_"
+  # concise = FALSE
   # std_fn = string_std
   # ... <- NULL
 
@@ -79,9 +88,10 @@ hmatch_complete <- function(raw,
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
-                             pattern_raw = pattern_raw,
+                             pattern = pattern,
                              pattern_ref = pattern_ref,
                              by = by,
+                             by_ref = by_ref,
                              ref_prefix = ref_prefix)
 
   ## add standardized columns for joining
@@ -134,6 +144,7 @@ hmatch_complete <- function(raw,
   ## remove extra columns and return
   cols_exclude <- c(prep$by_join, temp_id_col, "TEMP_IS_MATCH")
   out <- out[,!names(out) %in% cols_exclude, drop = FALSE]
+  if (concise) out <- out[,c(prep$by_raw, prep$by_ref)]
 
   return(out)
 }

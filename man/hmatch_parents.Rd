@@ -11,9 +11,10 @@ hmatch_parents(
   level,
   mmin,
   pmin,
-  pattern_raw = NULL,
-  pattern_ref = pattern_raw,
+  pattern = NULL,
+  pattern_ref = pattern,
   by = NULL,
+  by_ref = by,
   type = "left",
   ref_prefix = "ref_",
   fuzzy = FALSE,
@@ -41,15 +42,17 @@ considered a match}
 be considered a match (reflects the proportion of offspring in \code{raw} with
 match in \code{ref})}
 
-\item{pattern_raw}{regex pattern to match the hierarchical columns in \code{raw}
-(see also \link{specifying_columns})}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
+(columns can be matched using either the \code{pattern} or \code{by} arguments, as
+described in \link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(see also \link{specifying_columns})}
+(defaults to \code{pattern})}
 
-\item{by}{named character vector whose elements are the names of the
-hierarchical columns in \code{ref} and whose names are the names of the
-corresponding columns in \code{raw} (see also \link{specifying_columns})}
+\item{by}{vector giving the names of the hierarchical columns in \code{raw}}
+
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
+(defaults to \code{by})}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 
@@ -89,7 +92,7 @@ data(ne_ref)
 hmatch_parents(ne_raw,
                ne_raw,
                ne_ref,
-               pattern_raw = "adm",
+               pattern = "adm",
                level = 1,
                mmin = 1,
                pmin = 0.5)

@@ -8,36 +8,18 @@
 #' township) even if one or more lower-resolution levels (e.g. province) is
 #' missing.
 #'
+#' @inheritParams hmatch_partial
+#'
 #' @param x a `data.frame` representing one or more rows from `raw`, and
 #'   optionally including matching columns from `ref` to help narrow down the
 #'   set of possible offspring to try matching
-#' @param raw `data.frame` containing hierarchical columns with raw, potentially
-#'   messy data
-#' @param ref `data.frame` containing hierarchical columns with reference data
 #' @param level integer index of the hierarchical level to match at
 #' @param mmin minimum number of matching offspring required for parents to be
 #'   considered a match
 #' @param pmin minimum proportion of matching offspring required for parents to
 #'   be considered a match (reflects the proportion of offspring in `raw` with
 #'   match in `ref`)
-#' @param pattern_raw regex pattern to match the hierarchical columns in `raw`
-#'   (see also \link{specifying_columns})
-#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#'   (see also \link{specifying_columns})
-#' @param by named character vector whose elements are the names of the
-#'   hierarchical columns in `ref` and whose names are the names of the
-#'   corresponding columns in `raw` (see also \link{specifying_columns})
 #' @param type type of join ("inner" or "left") (defaults to "left")
-#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
-#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
-#'   FALSE)
-#' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
-#'   fuzzy-matching (defaults to `1L`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
-#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
-#'   also \link{string_standardization}.
-#' @param ... Additional arguments passed to `std_fn()`
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -50,7 +32,7 @@
 #' hmatch_parents(ne_raw,
 #'                ne_raw,
 #'                ne_ref,
-#'                pattern_raw = "adm",
+#'                pattern = "adm",
 #'                level = 1,
 #'                mmin = 1,
 #'                pmin = 0.5)
@@ -63,9 +45,10 @@ hmatch_parents <- function(x,
                            level,
                            mmin,
                            pmin,
-                           pattern_raw = NULL,
-                           pattern_ref = pattern_raw,
+                           pattern = NULL,
+                           pattern_ref = pattern,
                            by = NULL,
+                           by_ref = by,
                            type = "left",
                            ref_prefix = "ref_",
                            fuzzy = FALSE,
@@ -73,8 +56,8 @@ hmatch_parents <- function(x,
                            std_fn = string_std,
                            ...) {
 
-  # pattern_raw = "adm"
-  # pattern_ref = pattern_raw
+  # pattern = "adm"
+  # pattern_ref = pattern
   # level <- 2
   # by = NULL
   # dict <- NULL
@@ -91,9 +74,10 @@ hmatch_parents <- function(x,
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
-                             pattern_raw = pattern_raw,
+                             pattern = pattern,
                              pattern_ref = pattern_ref,
                              by = by,
+                             by_ref = by_ref,
                              ref_prefix = ref_prefix)
 
   # add any missing `ref` names to x

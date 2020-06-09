@@ -100,19 +100,20 @@ best_geocode <- function(dat, pattern) {
 #' @noRd
 prep_match_columns <- function(raw,
                                ref,
-                               pattern_raw,
+                               pattern,
                                pattern_ref,
                                by,
+                               by_ref,
                                ref_prefix = "ref_",
                                join_suffix = "___JOIN_",
                                code_col = NULL) {
 
-  if (!is.null(pattern_raw)) {
-    by_raw <- grep(pattern_raw, names(raw), value = TRUE)
+  if (!is.null(pattern)) {
+    by_raw <- grep(pattern, names(raw), value = TRUE)
     by_ref <- grep(pattern_ref, names(ref), value = TRUE)
   } else if (!is.null(by)) {
-    by_raw <- names(by)
-    by_ref <- by
+    by_raw <- by
+    by_ref <- by_ref
   } else {
     by_raw <- intersect(names(ref), names(raw))
     by_ref <- intersect(names(ref), names(raw))
@@ -230,12 +231,6 @@ split_ref <- function(ref, by, lev, lower_levels = FALSE) {
 }
 
 
-#' #' @importFrom stats setNames
-#' split_by <- function(lev, by_raw, by_ref) {
-#'   setNames(by_raw[1:lev], by_ref[1:lev])
-#' }
-
-
 
 #' @noRd
 ordered_split <- function(x, f, N) {
@@ -272,18 +267,20 @@ spmatch_prep_levels <- function(levels, by) {
 #' @importFrom stats setNames
 spmatch_prep <- function(raw,
                          ref,
-                         pattern_raw,
+                         pattern,
                          pattern_ref,
                          by,
+                         by_ref = by_ref,
                          ref_prefix,
                          levels,
                          lower_levels = FALSE) {
 
   prep <- prep_match_columns(raw = raw,
                              ref = ref,
-                             pattern_raw = pattern_raw,
+                             pattern = pattern,
                              pattern_ref = pattern_ref,
                              by = by,
+                             by_ref = by_ref,
                              ref_prefix = ref_prefix)
 
   levels <- spmatch_prep_levels(levels, prep$by_raw)
@@ -299,16 +296,10 @@ spmatch_prep <- function(raw,
                       by = prep$by_ref_orig,
                       lower_levels = lower_levels)
 
-  # by_split <- lapply(seq_along(prep$by_raw)[levels],
-  #                    split_by,
-  #                    by_raw = prep$by_raw,
-  #                    by_ref = prep$by_ref_orig)
-
-  by_split <- setNames(prep$by_ref_orig, prep$by_raw)
-
   return(list(raw_split = raw_split,
               ref_split = ref_split,
-              by_split = by_split,
+              by_raw_split = prep$by_raw,
+              by_ref_split = prep$by_ref_orig,
               names = prep$by_raw[levels]))
 }
 
