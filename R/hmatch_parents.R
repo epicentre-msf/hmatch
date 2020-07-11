@@ -1,12 +1,17 @@
-#' Hierarchichal matching of parents based on sets of common offspring
+#' Hierarchical matching of parents based on sets of common offspring
 #'
-#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
-#' province, county, township) against a reference dataset, using partial
-#' matching. "Partial" here means that one or more hierarchical levels within
-#' the raw data may be missing (i.e. NA). More specifically, for a given row of
-#' raw data, matches can potentially be made to a high-resolution level (e.g.
-#' township) even if one or more lower-resolution levels (e.g. province) is
-#' missing.
+#' @description
+#' Match a hierarchical column (e.g. region, province, or county) within a raw,
+#' potentially messy dataset against a corresponding column within a reference
+#' dataset, by searching for similar sets of 'offspring' (i.e. values at the
+#' next hierarchical level).
+#'
+#' For example, if the raw dataset uses admin1 level "NY" whereas the reference
+#' dataset uses "New York", it would be difficult to automatically match these
+#' values using only fuzzy-matching. However, we might nonetheless be able to
+#' match "NY" to "New York" if they share a common and unique set of 'offspring'
+#' (i.e. admin2 values) across both datasets (e.g "Kings", "Queens", "New York",
+#' "Suffolk", "Bronx", etc.).
 #'
 #' @inheritParams hmatch_partial
 #'
@@ -17,8 +22,8 @@
 #' @param mmin minimum number of matching offspring required for parents to be
 #'   considered a match
 #' @param pmin minimum proportion of matching offspring required for parents to
-#'   be considered a match (reflects the proportion of offspring in `raw` with
-#'   match in `ref`)
+#'   be considered a match (i.e. the proportion of offspring in `raw` with match
+#'   in `ref`)
 #' @param type type of join ("inner" or "left") (defaults to "left")
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
@@ -26,16 +31,24 @@
 #'   \link{join_types} for more details)
 #'
 #' @examples
-#' data(ne_raw)
-#' data(ne_ref)
+#' # prepare example data
+#' raw <- ne_ref
+#' raw$adm1[raw$adm1 == "Ontario"] <- "ON"
+#' raw$adm1[raw$adm1 == "New York"] <- "NY"
+#' raw$adm1[raw$adm1 == "New Jersey"] <- "NJ"
+#' raw$adm1[raw$adm1 == "Pennsylvania"] <- "PA"
+#' x <- raw[raw$level == 1,]
 #'
-#' hmatch_parents(ne_raw,
-#'                ne_raw,
-#'                ne_ref,
-#'                pattern = "adm",
-#'                level = 1,
-#'                mmin = 1,
-#'                pmin = 0.5)
+#' hmatch_parents(
+#'   x,
+#'   raw,
+#'   ne_ref,
+#'   pattern = "adm",
+#'   level = 2,
+#'   mmin = 2,
+#'   pmin = 0.5,
+#'   type = "inner"
+#' )
 #'
 #' @importFrom dplyr left_join bind_rows
 #' @export hmatch_parents
@@ -56,6 +69,11 @@ hmatch_parents <- function(x,
                            std_fn = string_std,
                            ...) {
 
+  # # for testing purposes only
+  # raw <- ne_ref
+  # raw$adm1[raw$adm1 == "New York"] <- "NY"
+  # x <- raw[raw$level == 1,]
+  # ref <- ne_ref
   # pattern = "adm"
   # pattern_ref = pattern
   # level <- 2
@@ -69,16 +87,25 @@ hmatch_parents <- function(x,
   # pmin = 0.5
   # ... <- NULL
 
-  x$TEMP_ROW_ID <- seq_len(nrow(x))
+  ## match args
+  type <- match.arg(type, c("left", "inner"))
+
+  ## temp cols
+  temp_col_id <- "TEMP_ROW_ID"
+  temp_col_match <- "TEMP_MATCH"
+
+  x[[temp_col_id]] <- seq_len(nrow(x))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
-  prep <- prep_match_columns(raw = raw,
-                             ref = ref,
-                             pattern = pattern,
-                             pattern_ref = pattern_ref,
-                             by = by,
-                             by_ref = by_ref,
-                             ref_prefix = ref_prefix)
+  prep <- prep_match_columns(
+    raw = raw,
+    ref = ref,
+    pattern = pattern,
+    pattern_ref = pattern_ref,
+    by = by,
+    by_ref = by_ref,
+    ref_prefix = ref_prefix
+  )
 
   # add any missing `ref` names to x
   ref_names_missing <- setdiff(prep$by_ref, names(x))
@@ -124,22 +151,31 @@ hmatch_parents <- function(x,
                     SIMPLIFY = FALSE)
 
   match_join <- dplyr::bind_rows(match_l)
+  match_join[[temp_col_match]] <- TRUE
 
   match_join_ref <- left_join(match_join, ref_prep_split[[level]], by = prep$by_ref[1:level])
-  match_join_ref <- match_join_ref[,c("TEMP_ROW_ID", names(prep$ref), "m", "nraw", "nref")]
+  match_join_ref <- match_join_ref[,c(temp_col_id, temp_col_match, names(prep$ref), "m", "nraw", "nref")]
 
   xjoin <- x[,setdiff(names(x), names(prep$ref))]
-  out <- dplyr::left_join(xjoin, match_join_ref, by = "TEMP_ROW_ID")
+  matches_out <- dplyr::left_join(xjoin, match_join_ref, by = temp_col_id)
 
-  out <- out[,!names(out) %in% "TEMP_ROW_ID"]
-
-  return(out)
+  ## execute match type and remove temporary columns
+  prep_output(
+    x = matches_out,
+    type = type,
+    temp_col_id = temp_col_id,
+    temp_col_match = temp_col_match,
+    cols_raw_orig = names(raw),
+    class_raw = class(x)
+  )
 }
 
 
 
+
 #' @noRd
-#' @importFrom dplyr `%>%` mutate group_by_at ungroup summarize filter n
+#' @importFrom dplyr left_join
+#' @importFrom stats aggregate
 #' @importFrom stringdist stringdistmatrix
 match_parents <- function(xraw_i,
                           xref_i,
@@ -155,14 +191,25 @@ match_parents <- function(xraw_i,
     xref_i[[child_ref]]
   )
 
-  xref_i %>%
-    mutate(match = apply(dmat <= max_dist, 2, any)) %>%
-    group_by_at(group_vars) %>%
-    summarize(m = sum(match),
-              nraw = length(xraw_i[[child_raw]]),
-              nref = n()) %>%
-    ungroup() %>%
-    filter(m >= mmin, m / nraw >= pmin)
+  xref_i$match <- apply(dmat <= max_dist, 2, any)
+
+  out_orig <- stats::aggregate(
+    list(m = xref_i$match),
+    by = as.list(xref_i[group_vars]),
+    sum
+  )
+
+  out_orig$nraw <- length(xraw_i[[child_raw]])
+
+  out_nref <- stats::aggregate(
+    list(nref = xref_i$match),
+    by = as.list(xref_i[group_vars]),
+    length
+  )
+
+  out <- dplyr::left_join(out_orig, out_nref, by = group_vars)
+
+  out[out$m >= mmin & out$m / out$nraw >= pmin,]
 }
 
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/hmatch_parents.R
 \name{hmatch_parents}
 \alias{hmatch_parents}
-\title{Hierarchichal matching of parents based on sets of common offspring}
+\title{Hierarchical matching of parents based on sets of common offspring}
 \usage{
 hmatch_parents(
   x,
@@ -39,8 +39,8 @@ messy data}
 considered a match}
 
 \item{pmin}{minimum proportion of matching offspring required for parents to
-be considered a match (reflects the proportion of offspring in \code{raw} with
-match in \code{ref})}
+be considered a match (i.e. the proportion of offspring in \code{raw} with match
+in \code{ref})}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
 (columns can be matched using either the \code{pattern} or \code{by} arguments, as
@@ -77,24 +77,36 @@ and \code{ref}, using the join type specified by argument \code{type} (see
 \link{join_types} for more details)
 }
 \description{
-Match a data.frame with raw, potentially messy hierarchical data (e.g.
-province, county, township) against a reference dataset, using partial
-matching. "Partial" here means that one or more hierarchical levels within
-the raw data may be missing (i.e. NA). More specifically, for a given row of
-raw data, matches can potentially be made to a high-resolution level (e.g.
-township) even if one or more lower-resolution levels (e.g. province) is
-missing.
+Match a hierarchical column (e.g. region, province, or county) within a raw,
+potentially messy dataset against a corresponding column within a reference
+dataset, by searching for similar sets of 'offspring' (i.e. values at the
+next hierarchical level).
+
+For example, if the raw dataset uses admin1 level "NY" whereas the reference
+dataset uses "New York", it would be difficult to automatically match these
+values using only fuzzy-matching. However, we might nonetheless be able to
+match "NY" to "New York" if they share a common and unique set of 'offspring'
+(i.e. admin2 values) across both datasets (e.g "Kings", "Queens", "New York",
+"Suffolk", "Bronx", etc.).
 }
 \examples{
-data(ne_raw)
-data(ne_ref)
+# prepare example data
+raw <- ne_ref
+raw$adm1[raw$adm1 == "Ontario"] <- "ON"
+raw$adm1[raw$adm1 == "New York"] <- "NY"
+raw$adm1[raw$adm1 == "New Jersey"] <- "NJ"
+raw$adm1[raw$adm1 == "Pennsylvania"] <- "PA"
+x <- raw[raw$level == 1,]
 
-hmatch_parents(ne_raw,
-               ne_raw,
-               ne_ref,
-               pattern = "adm",
-               level = 1,
-               mmin = 1,
-               pmin = 0.5)
+hmatch_parents(
+  x,
+  raw,
+  ne_ref,
+  pattern = "adm",
+  level = 2,
+  mmin = 2,
+  pmin = 0.5,
+  type = "inner"
+)
 
 }
