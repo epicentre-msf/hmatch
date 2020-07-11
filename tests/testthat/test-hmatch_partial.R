@@ -1,7 +1,7 @@
 test_that("hmatch_partial works as expected", {
 
   # test join types
-  raw_types <- ne_raw[c(1, 8, 10),] # match, no-match, double-match
+  raw_types <- ne_raw[c(1, 8, 11),] # match, no-match, double-match
   raw_types$id <- 1:3
 
   m_left <- hmatch_partial(raw_types, ne_ref, type = "left")

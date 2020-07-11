@@ -35,7 +35,7 @@ test_that("hmatch_complete works as expected", {
     stringsAsFactors = FALSE
   )
 
-  dat_raw <- ne_raw[c(1, 11, 4),] # match, dict-match, no-match
+  dat_raw <- ne_raw[c(1, 12, 4),] # match, dict-match, no-match
   dat_raw$id <- 1:3
 
   m_dict1 <- hmatch_complete(dat_raw, ne_ref, type = "inner")

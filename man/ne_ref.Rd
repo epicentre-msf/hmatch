@@ -5,7 +5,7 @@
 \alias{ne_ref}
 \title{Reference dataset}
 \format{
-A data.frame with 15 rows and 4 variables:
+A data.frame with 16 rows and 4 variables:
 \describe{
 \item{level}{Administrative level}
 \item{adm0}{Name of administrative 0 level (country)}
@@ -17,7 +17,7 @@ A data.frame with 15 rows and 4 variables:
 ne_ref
 }
 \description{
-Reference table of select adminstrative districts in the northeastern
+Reference table of select administrative districts in the northeastern
 portion of North America.
 }
 \keyword{datasets}

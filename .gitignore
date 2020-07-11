@@ -1,7 +1,7 @@
 .Rproj.user
 .Rhistory
 .DS_Store
-data-raw/ref.csv
-data-raw/raw.csv
-data-raw/man.csv
 docs/
+data-raw/tests.R
+data-raw/covid*
+data-raw/drc*
