@@ -18,7 +18,6 @@ hmatch(
   ref_prefix = "ref_",
   fuzzy = FALSE,
   max_dist = 1L,
-  concise = FALSE,
   std_fn = string_std,
   ...
 )
@@ -63,9 +62,6 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
-\item{concise}{logical indicating whether to return only the hierarchical
-columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
-
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
@@ -83,7 +79,7 @@ province, county, township) against a reference dataset, using a variety of
 matching strategies implemented in sequence to identify the best-possible
 match (i.e. highest-resolution) for each row.
 
-The sequence of matching stragies is:
+The sequence of matching strategies is:
 \enumerate{
 \item (optional) manually-specified matching with \code{\link{hmatch_manual}}
 \item complete matching with \code{\link{hmatch_complete}}
@@ -99,7 +95,7 @@ has not already been identified using the previous approaches.
 data(ne_raw)
 data(ne_ref)
 
-hmatch(ne_raw, ne_ref, fuzzy = TRUE)
+hmatch(ne_raw, ne_ref, fuzzy = TRUE, type = "inner")
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",

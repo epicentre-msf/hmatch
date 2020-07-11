@@ -17,7 +17,6 @@ spmatch(
   ref_prefix = "ref_",
   fuzzy = FALSE,
   max_dist = 1L,
-  concise = FALSE,
   std_fn = string_std,
   ...,
   levels = NULL,
@@ -56,9 +55,6 @@ FALSE)}
 
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
-
-\item{concise}{logical indicating whether to return only the hierarchical
-columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
 
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

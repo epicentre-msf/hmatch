@@ -50,7 +50,12 @@ max_levels <- function(x,
   m <- cbind(rep(TRUE, nrow(m)), m)
   j <- apply(m, 1, function(x) max(which(x))) - 1L
 
-  out <- if (type == "name") by[j] else j
+  if (type == "name") {
+    names_out <- c(NA_character_, by)
+    out <- names_out[j + 1L]
+  } else {
+    out <- j
+  }
 
   out
 }

@@ -23,8 +23,6 @@
 #'   columns of `raw` (see \link{dictionary_recoding})
 #' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
 #'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param concise logical indicating whether to return only the hierarchical
-#' columns (from both `raw` and `ref`) (defaults to `FALSE`)
 #' @param std_fn Function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -45,9 +43,8 @@
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' hmatch_complete(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
+#' hmatch_complete(ne_raw, ne_ref, pattern = "^adm", dict = ne_dict)
 #'
-#' @importFrom dplyr left_join
 #' @export hmatch_complete
 hmatch_complete <- function(raw,
                             ref,
@@ -58,7 +55,6 @@ hmatch_complete <- function(raw,
                             type = "left",
                             dict = NULL,
                             ref_prefix = "ref_",
-                            concise = FALSE,
                             std_fn = string_std,
                             ...) {
 
@@ -71,80 +67,107 @@ hmatch_complete <- function(raw,
   # pattern_ref = pattern
   # by = NULL
   # by_ref = by
-  # dict <- NULL
+  # dict <- ne_dict
   # type = "inner"
   # ref_prefix = "ref_"
-  # concise = FALSE
   # std_fn = string_std
   # ... <- NULL
 
+  ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
   type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
 
-  ## add temporary row index to raw
-  temp_id_col <- "TEMP_ROW_ID_COMP"
-  raw[[temp_id_col]] <- seq_len(nrow(raw))
-
   ## identify hierarchical columns to match, and rename ref cols if necessary
-  prep <- prep_match_columns(raw = raw,
-                             ref = ref,
-                             pattern = pattern,
-                             pattern_ref = pattern_ref,
-                             by = by,
-                             by_ref = by_ref,
-                             ref_prefix = ref_prefix)
+  prep <- prep_match_columns(
+    raw = raw,
+    ref = ref,
+    pattern = pattern,
+    pattern_ref = pattern_ref,
+    by = by,
+    by_ref = by_ref,
+    ref_prefix = ref_prefix
+  )
 
   ## add standardized columns for joining
-  raw_join <- add_join_columns(dat = raw,
-                               by = prep$by_raw,
-                               join_cols = prep$by_join,
-                               std_fn = std_fn,
-                               ...)
+  raw_join <- add_join_columns(
+    dat = raw,
+    by = prep$by_raw,
+    join_cols = prep$by_raw_join,
+    std_fn = std_fn,
+    ...
+  )
 
-  ref_join <- add_join_columns(dat = prep$ref,
-                               by = prep$by_ref,
-                               join_cols = prep$by_join,
-                               std_fn = std_fn,
-                               ...)
-
-  ref_join[["TEMP_IS_MATCH"]] <- "MATCH"
+  ref_join <- add_join_columns(
+    dat = prep$ref,
+    by = prep$by_ref,
+    join_cols = prep$by_raw_join,
+    std_fn = std_fn,
+    ...
+  )
 
   ### implement dictionary recoding on join columns
   if (!is.null(dict)) {
-    raw_join <- apply_dict(raw_join,
-                           dict,
-                           by_raw = prep$by_raw,
-                           by_join = prep$by_join,
-                           std_fn = std_fn)
+    raw_join <- apply_dict(
+      raw_join,
+      dict,
+      by_raw = prep$by_raw,
+      by_join = prep$by_raw_join,
+      std_fn = std_fn
+    )
   }
 
-  ## merge raw and ref
-  out <- dplyr::left_join(raw_join,
-                          ref_join,
-                          by = prep$by_join)
+  ## run main matching routine
+  hmatch_complete_(
+    raw_join,
+    ref_join,
+    by_raw_join = prep$by_raw_join,
+    type = type,
+    class_raw = class(raw)
+  )
+}
 
-  ## execute merge type
-  dup_ids <- out[[temp_id_col]][duplicated(out[[temp_id_col]])]
 
-  if (type == "inner") {
-    out <- out[!is.na(out$TEMP_IS_MATCH),]
-  } else if (type == "inner_unique") {
-    rows_keep <- !is.na(out$TEMP_IS_MATCH) & !out[[temp_id_col]] %in% dup_ids
-    out <- out[rows_keep,]
-  } else if (type == "anti") {
-    out <- out[is.na(out$TEMP_IS_MATCH), c(names(raw), "TEMP_IS_MATCH")]
-  } else if (type == "anti_unique") {
-    rows_keep <- is.na(out$TEMP_IS_MATCH) | out[[temp_id_col]] %in% dup_ids
-    out <- unique(out[rows_keep, c(names(raw), "TEMP_IS_MATCH")])
-  }
 
-  ## reclass out to match raw (tibble classes will otherwise be stripped)
-  class(out) <- class(raw)
 
-  ## remove extra columns and return
-  cols_exclude <- c(prep$by_join, temp_id_col, "TEMP_IS_MATCH")
-  out <- out[,!names(out) %in% cols_exclude, drop = FALSE]
-  if (concise) out <- out[,c(prep$by_raw, prep$by_ref)]
+#' @noRd
+#' @importFrom dplyr left_join
+hmatch_complete_ <- function(raw_join,
+                             ref_join,
+                             by_raw_join,
+                             by_ref_join = by_raw_join,
+                             type = "left",
+                             class_raw = "data.frame") {
 
-  return(out)
+
+  ## add temporary row-id column to aid in matching
+  temp_col_id <- "TEMP_ROW_ID_COMPLETE"
+  raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
+
+  ## add temporary match column to ref_join
+  temp_col_match <- "TEMP_MATCH_COMPLETE"
+  ref_join[[temp_col_match]] <- TRUE
+
+  ## re-derive initial (pre-join) column names
+  names_raw_prep <- setdiff(names(raw_join), by_raw_join)
+  names_raw_orig <- setdiff(names_raw_prep, temp_col_id)
+
+  ## complete join
+  matches_out <- dplyr::left_join(
+    raw_join,
+    ref_join,
+    by = set_names(by_ref_join, by_raw_join)
+  )
+
+  ## remove join cols
+  matches_out <- matches_out[, !names(matches_out) %in% by_raw_join, drop = FALSE]
+
+  ## execute match type and remove temporary columns
+  prep_output(
+    x = matches_out,
+    type = type,
+    temp_col_id = temp_col_id,
+    temp_col_match = temp_col_match,
+    cols_raw_orig = names_raw_orig,
+    class_raw = class_raw
+  )
 }

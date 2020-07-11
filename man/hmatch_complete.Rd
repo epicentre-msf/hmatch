@@ -14,7 +14,6 @@ hmatch_complete(
   type = "left",
   dict = NULL,
   ref_prefix = "ref_",
-  concise = FALSE,
   std_fn = string_std,
   ...
 )
@@ -46,9 +45,6 @@ columns of \code{raw} (see \link{dictionary_recoding})}
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 
-\item{concise}{logical indicating whether to return only the hierarchical
-columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
-
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
@@ -78,6 +74,6 @@ ne_dict <- data.frame(value = "USA",
                       replacement = "United States",
                       variable = "adm0")
 
-hmatch_complete(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
+hmatch_complete(ne_raw, ne_ref, pattern = "^adm", dict = ne_dict)
 
 }

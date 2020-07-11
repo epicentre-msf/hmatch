@@ -1,4 +1,38 @@
 
+#' @noRd
+set_names <- function(object = nm, nm) {
+  names(object) <- nm
+  object
+}
+
+
+#' @noRd
+n_levels <- function(x,
+                     pattern = NULL,
+                     by = NULL,
+                     sort = FALSE) {
+
+  if (!is.null(pattern) & !is.null(by)) {
+    stop("only one of `pattern` or `by` should be provided")
+  } else if (is.null(by) & is.null(pattern)) {
+    by <- names(x)
+  } else if (!is.null(pattern)) {
+    by <- grep(pattern, names(x), value = TRUE)
+  }
+
+  if (sort) by <- sort(by)
+
+  m <- !is.na(x[, by, drop = FALSE])
+  apply(m, 1, sum)
+}
+
+
+#' @noRd
+unique_excl_na <- function(x) {
+  all(is.na(x)) | length(unique(x[!is.na(x)])) == 1L
+}
+
+
 
 #' @noRd
 #' @importFrom dplyr recode
@@ -70,6 +104,7 @@ add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
 }
 
 
+
 #' @noRd
 corresponding_levels <- function(dat, by_raw, by_ref) {
   max_level_raw <- max_levels(dat, by = by_raw)
@@ -108,6 +143,7 @@ prep_match_columns <- function(raw,
                                join_suffix = "___JOIN_",
                                code_col = NULL) {
 
+
   if (!is.null(pattern)) {
     by_raw <- grep(pattern, names(raw), value = TRUE)
     by_ref <- grep(pattern_ref, names(ref), value = TRUE)
@@ -123,12 +159,12 @@ prep_match_columns <- function(raw,
 
   # rename cols of ref if necessary
   if (all(by_raw == by_ref)) {
-    by_ref_i <- vapply(by_ref, function(x) which(names(ref) == x), 0L)
     by_ref <- paste0(ref_prefix, by_ref)
-    names(ref)[by_ref_i] <- by_ref
+    names(ref)[match(by_raw, names(ref))] <- by_ref
   }
 
-  by_join <- paste0(by_raw, join_suffix)
+  by_raw_join <- paste0(by_raw, join_suffix)
+  by_ref_join <- paste0(by_ref, join_suffix)
 
   if (!is.null(code_col)) {
     ref[[code_col]] <- hcodes_str(ref, by = by_ref)
@@ -138,7 +174,8 @@ prep_match_columns <- function(raw,
               by_raw = by_raw,
               by_ref = by_ref,
               by_ref_orig = by_ref_orig,
-              by_join = by_join))
+              by_raw_join = by_raw_join,
+              by_ref_join = by_ref_join))
 }
 
 
@@ -209,6 +246,7 @@ split_raw <- function(raw, by, lev) {
   out_arn <- dplyr::arrange(out_grp, .by_group = TRUE)
   out <- ungroup(out_arn)
   class(out) <- class(raw)
+
   out
 }
 
@@ -275,31 +313,95 @@ spmatch_prep <- function(raw,
                          levels,
                          lower_levels = FALSE) {
 
-  prep <- prep_match_columns(raw = raw,
-                             ref = ref,
-                             pattern = pattern,
-                             pattern_ref = pattern_ref,
-                             by = by,
-                             by_ref = by_ref,
-                             ref_prefix = ref_prefix)
+  prep <- prep_match_columns(
+    raw = raw,
+    ref = ref,
+    pattern = pattern,
+    pattern_ref = pattern_ref,
+    by = by,
+    by_ref = by_ref,
+    ref_prefix = ref_prefix
+  )
 
   levels <- spmatch_prep_levels(levels, prep$by_raw)
 
-  raw_split <- lapply(seq_along(prep$by_raw)[levels],
-                      split_raw,
-                      raw = raw,
-                      by = prep$by_raw)
+  raw_split <- lapply(
+    seq_along(prep$by_raw)[levels],
+    split_raw,
+    raw = raw,
+    by = prep$by_raw
+  )
 
-  ref_split <- lapply(seq_along(prep$by_ref)[levels],
-                      split_ref,
-                      ref = ref,
-                      by = prep$by_ref_orig,
-                      lower_levels = lower_levels)
+  ref_split <- lapply(
+    seq_along(prep$by_ref)[levels],
+    split_ref,
+    ref = ref,
+    by = prep$by_ref_orig,
+    lower_levels = lower_levels
+  )
 
   return(list(raw_split = raw_split,
               ref_split = ref_split,
               by_raw_split = prep$by_raw,
               by_ref_split = prep$by_ref_orig,
               names = prep$by_raw[levels]))
+}
+
+
+
+
+#' @noRd
+prep_output <- function(x,
+                        type,
+                        temp_col_id,
+                        temp_col_match,
+                        cols_raw_orig,
+                        class_raw,
+                        by_raw, # only used in hmatch_settle
+                        by_ref, # only used in hmatch_settle
+                        exclude_cols_temp = TRUE) {
+
+  x_id <- x[[temp_col_id]]
+  x_match <- x[[temp_col_match]]
+
+  ## arrange rows
+  # x <- x[order(x_id), , drop = FALSE]
+
+  ## execute merge type
+  if (type == "left") {
+    out <- x
+  } else if (type == "inner") {
+    keep <- !is.na(x_match)
+    out <- x[keep, , drop = FALSE]
+  } else if (type == "inner_unique") {
+    ids_duplicated <- x_id[duplicated(x_id)]
+    keep <- !is.na(x_match) & !x_id %in% ids_duplicated
+    out <- x[keep, , drop = FALSE]
+  } else if (type == "anti") {
+    keep <- is.na(x_match)
+    out <- x[keep, cols_raw_orig, drop = FALSE]
+  } else if (type == "anti_unique") {
+    ids_duplicated <- x_id[duplicated(x_id)]
+    keep <- is.na(x_match) | x_id %in% ids_duplicated
+    out <- unique(x[keep, cols_raw_orig, drop = FALSE])
+  } else if (type == "inner_complete") {
+    max_adm_raw <- max_levels(x, by = by_raw)
+    max_adm_ref <- max_levels(x, by = by_ref)
+    out <- x[max_adm_ref == max_adm_raw,]
+  } else if (type == "inner_incomplete") {
+    max_adm_raw <- max_levels(x, by = by_raw)
+    max_adm_ref <- max_levels(x, by = by_ref)
+    out <- x[max_adm_ref < max_adm_raw,]
+  }
+
+  ## remove temporary and excluded names
+  if (exclude_cols_temp) {
+    out <- out[,!names(out) %in% c(temp_col_id, temp_col_match), drop = FALSE]
+  }
+
+  ## reclass
+  class(out) <- class_raw
+
+  return(out)
 }
 

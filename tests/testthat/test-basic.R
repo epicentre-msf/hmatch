@@ -1,12 +1,5 @@
 test_that("Basic functionality", {
 
-  ## complete join
-  m_complete_i <- hmatch_complete(ne_raw, ne_ref, type = "inner")
-  expect_is(m_complete_i, "data.frame")
-  expect_lte(nrow(m_complete_i), nrow(ne_raw))
-
-  m_complete_l <- hmatch_complete(ne_raw, ne_ref, type = "left")
-  expect_equal(nrow(m_complete_l), nrow(ne_raw))
 
   ## manual join
   ne_ref_code <- ne_ref
@@ -25,19 +18,6 @@ test_that("Basic functionality", {
   m_manual_l <- hmatch_manual(ne_raw, ne_ref_code, ne_man, code_col = "pcode", type = "left")
   expect_equal(nrow(m_manual_l), nrow(ne_raw))
 
-  ## partial join
-  m_partial_i <- hmatch_partial(ne_raw, ne_ref, type = "inner")
-  expect_is(m_partial_i, "data.frame")
-  expect_lte(nrow(m_partial_i), nrow(ne_raw))
-
-  m_partial_iu <- hmatch_partial(ne_raw, ne_ref, type = "inner_unique")
-  expect_lt(nrow(m_partial_iu), nrow(m_partial_i))
-
-  m_partial_l <- hmatch_partial(ne_raw, ne_ref, type = "left")
-  expect_gte(nrow(m_partial_l), nrow(ne_raw))
-
-  m_partial_a <- hmatch_partial(ne_raw, ne_ref, type = "anti")
-  expect_equal(names(m_partial_a), names(ne_raw))
 
   ## fuzzy join
   m_fuzzy_i <- hmatch_partial(ne_raw, ne_ref, type = "inner_unique", fuzzy = TRUE, max_dist = 2)
@@ -67,6 +47,7 @@ test_that("Basic functionality", {
 
   ## composite hmatch (all match exactly)
   ne_raw_test <- ne_ref_code[,grepl("adm", names(ne_ref_code))]
+
   m_comp_exact <- hmatch(ne_raw_test, ne_ref_code, ne_man, pattern = "^adm", code_col = "pcode", fuzzy = TRUE)
   expect_equal(nrow(m_comp_exact), nrow(ne_ref))
   expect_true(all(m_comp_exact$match_type == "complete"))

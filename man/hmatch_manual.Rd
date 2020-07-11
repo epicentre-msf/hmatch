@@ -15,7 +15,6 @@ hmatch_manual(
   code_col,
   type = "left",
   ref_prefix = "ref_",
-  concise = FALSE,
   std_fn = string_std,
   ...
 )
@@ -51,9 +50,6 @@ and \code{man}}
 \item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
 
-\item{concise}{logical indicating whether to return only the hierarchical
-columns (from both \code{raw} and \code{ref}) (defaults to \code{FALSE})}
-
 \item{std_fn}{Function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
@@ -82,6 +78,6 @@ ne_man <- data.frame(adm0 = NA_character_,
                      stringsAsFactors = FALSE)
 
 # find manual matches
-hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
+hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode", type = "inner")
 
 }

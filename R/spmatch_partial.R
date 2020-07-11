@@ -111,6 +111,8 @@ spmatch_partial <- function(raw,
 
   names(out) <- prep$names
 
+  if (length(levels) == 1L & !always_list) out <- out[[1]]
+
   return(out)
 }
 
