@@ -1,7 +1,7 @@
 #' Implement a variety of hierarchical matching strategies in sequence
 #'
 #' @description
-#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
+#' Match a data frame with raw, potentially messy hierarchical data (e.g.
 #' province, county, township) against a reference dataset, using a variety of
 #' matching strategies implemented in sequence to identify the best-possible
 #' match (i.e. highest-resolution) for each row.
@@ -18,7 +18,7 @@
 #'
 #' @inheritParams hmatch_best
 #'
-#' @param man (optional) `data.frame` of manually-specified matches, relating a
+#' @param man (optional) data frame of manually-specified matches, relating a
 #'   given set of hierarchical values to the code within `ref` to which those
 #'   values correspond
 #' @param pattern regex pattern to match the hierarchical columns in `raw`
@@ -27,6 +27,8 @@
 #'   `man` if given)
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man` (only required if argument `man` is given)
+#' @param type type of join ("resolve_left", "resolve_inner", or
+#'   "resolve_anti"). Defaults to "left". See \link{join_types}.
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -36,7 +38,7 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch(ne_raw, ne_ref, fuzzy = TRUE, type = "inner")
+#' hmatch(ne_raw, ne_ref, fuzzy = TRUE, type = "resolve_inner")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
@@ -54,7 +56,7 @@ hmatch <- function(raw,
                    pattern_ref = pattern,
                    by = NULL,
                    by_ref = by,
-                   type = "left",
+                   type = "resolve_left",
                    dict = NULL,
                    code_col = NULL,
                    ref_prefix = "ref_",
@@ -64,12 +66,8 @@ hmatch <- function(raw,
                    ...
                    ) {
 
-  # raw <- readRDS("~/desktop/raw.rds")
-  # ref <- readRDS("~/desktop/ref.rds")
-  # man <- readRDS("~/desktop/man.rds")
-  # pattern <- "adm"
 
-  # # for testing
+  # # for testing only
   # raw <- ne_raw
   # ref <- ne_ref
   # man <- data.frame(
@@ -83,7 +81,7 @@ hmatch <- function(raw,
   # pattern_ref = pattern
   # by = NULL
   # dict <- NULL
-  # type <- "left"
+  # type <- "resolve_left"
   # code_col <- "hcode"
   # ref_prefix = "ref_"
   # fuzzy = FALSE
@@ -94,7 +92,7 @@ hmatch <- function(raw,
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "anti", "inner_complete", "inner_incomplete"))
+  type <- match.arg(type, c("resolve_left", "resolve_inner", "resolve_anti"))
 
   ## save original colnames of raw
   names_raw_orig <- names(raw)
@@ -174,6 +172,7 @@ hmatch <- function(raw,
       raw_join = raw_join,
       man_join = man_join,
       by_raw = prep$by_raw,
+      by_ref = prep$by_ref,
       by_join = prep$by_raw_join,
       type = "inner",
       class_raw = class(raw)
@@ -192,9 +191,11 @@ hmatch <- function(raw,
     m_complete <- hmatch_complete_(
       raw_join_remaining,
       ref_join,
+      by_raw = prep$by_raw,
+      by_ref = prep$by_ref,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
-      type = "inner_unique"
+      type = "resolve_inner"
     )
 
     m_complete <- m_complete[,c(temp_col_id, temp_col_code)]
@@ -210,9 +211,11 @@ hmatch <- function(raw,
     m_partial <- hmatch_partial_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
+      by_raw = prep$by_raw,
+      by_ref = prep$by_ref,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
-      type = "inner_unique",
+      type = "resolve_inner",
       fuzzy = FALSE
     )
 
@@ -229,9 +232,11 @@ hmatch <- function(raw,
     m_fuzzy <- hmatch_partial_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
+      by_raw = prep$by_raw,
+      by_ref = prep$by_ref,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
-      type = "inner_unique",
+      type = "resolve_inner",
       fuzzy = TRUE,
       max_dist = max_dist
     )
@@ -253,12 +258,13 @@ hmatch <- function(raw,
       by_ref = prep$by_ref,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
-      type = "inner",
+      type = "resolve_inner",
       fuzzy = fuzzy,
       max_dist = max_dist
     )
 
-    m_settle <- m_settle[,c(temp_col_id, temp_col_code, "match_type")]
+    m_settle <- m_settle[,c(temp_col_id, temp_col_code)]
+    m_settle$match_type <- rep("settle", nrow(m_settle))
   }
 
   ## combine results from all match types
@@ -280,7 +286,7 @@ hmatch <- function(raw,
   ## execute match type and remove temporary columns
   prep_output(
     x = out,
-    type = type,
+    type = gsub("^resolve_", "", type),
     temp_col_id = temp_col_id,
     temp_col_match = temp_col_code,
     cols_raw_orig = names_raw_orig,

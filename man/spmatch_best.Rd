@@ -23,14 +23,13 @@ spmatch_best(
 )
 }
 \arguments{
-\item{raw}{\code{data.frame} containing hierarchical columns with raw, potentially
-messy data}
+\item{raw}{data frame containing hierarchical columns with raw data}
 
-\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+\item{ref}{data frame containing hierarchical columns with reference data}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either the \code{pattern} or \code{by} arguments, as
-described in \link{specifying_columns})}
+(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
+\link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
 (defaults to \code{pattern})}
@@ -40,14 +39,15 @@ described in \link{specifying_columns})}
 \item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
 (defaults to \code{by})}
 
-\item{dict}{Optional dictionary for recoding values within the hierarchical
+\item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{type}{type of join ("left", "inner", "anti", "inner_complete",
-"inner_incomplete"). Defaults to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "anti", "resolve_left",
+"resolve_inner", or "resolve_anti"). Defaults to "left". See
+\link{join_types}.}
 
-\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -55,11 +55,11 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
+\item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
-\item{...}{Additional arguments passed to \code{std_fn()}}
+\item{...}{additional arguments passed to \code{std_fn()}}
 
 \item{levels}{a vector of names or integer indices corresponding to one or
 more of the hierarchical columns in \code{raw} to match at. Defaults to \code{NULL}
@@ -95,16 +95,16 @@ data(ne_raw)
 data(ne_ref)
 
 # find all non-matches ("anti"-join) at each hierarchical level
-spmatch_best(ne_raw, ne_ref, type = "anti", fuzzy = TRUE)
+spmatch_best(ne_raw, ne_ref, type = "resolve_anti", fuzzy = TRUE)
 
 # find all matches ("inner"-join) at only the adm2 level
-spmatch_best(ne_raw, ne_ref, type = "inner", levels = "adm2")
+spmatch_best(ne_raw, ne_ref, type = "resolve_inner", levels = "adm2")
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",
                       replacement = "United States",
                       variable = "adm0")
 
-spmatch_best(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
+spmatch_best(ne_raw, ne_ref, type = "resolve_inner", dict = ne_dict, levels = "adm2")
 
 }

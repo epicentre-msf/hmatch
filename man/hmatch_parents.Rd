@@ -28,10 +28,9 @@ hmatch_parents(
 optionally including matching columns from \code{ref} to help narrow down the
 set of possible offspring to try matching}
 
-\item{raw}{\code{data.frame} containing hierarchical columns with raw, potentially
-messy data}
+\item{raw}{data frame containing hierarchical columns with raw data}
 
-\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+\item{ref}{data frame containing hierarchical columns with reference data}
 
 \item{level}{integer index of the hierarchical level to match at}
 
@@ -43,8 +42,8 @@ be considered a match (i.e. the proportion of offspring in \code{raw} with match
 in \code{ref})}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either the \code{pattern} or \code{by} arguments, as
-described in \link{specifying_columns})}
+(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
+\link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
 (defaults to \code{pattern})}
@@ -56,8 +55,8 @@ described in \link{specifying_columns})}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 
-\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -65,11 +64,11 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
+\item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
-\item{...}{Additional arguments passed to \code{std_fn()}}
+\item{...}{additional arguments passed to \code{std_fn()}}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}

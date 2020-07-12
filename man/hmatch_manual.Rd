@@ -20,10 +20,9 @@ hmatch_manual(
 )
 }
 \arguments{
-\item{raw}{\code{data.frame} containing hierarchical columns with raw, potentially
-messy data}
+\item{raw}{data frame containing hierarchical columns with raw data}
 
-\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+\item{ref}{data frame containing hierarchical columns with reference data}
 
 \item{man}{\code{data.frame} of manually-specified matches, relating a given set
 of hierarchical values to the code within \code{ref} to which those values
@@ -44,17 +43,18 @@ and \code{man} (see also \link{specifying_columns})}
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man}}
 
-\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
-"anti_unique"). Defaults to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", or "anti"). Defaults to "left".
+See \link{join_types}. Note that this function does not allow 'resolve
+joins', unlike most other \code{hmatch_} functions.}
 
-\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
+\item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
-\item{...}{Additional arguments passed to \code{std_fn()}}
+\item{...}{additional arguments passed to \code{std_fn()}}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}

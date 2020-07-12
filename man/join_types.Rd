@@ -4,31 +4,44 @@
 \alias{join_types}
 \title{Types of hierarchical joins}
 \value{
-\item{left}{return all rows from \code{raw}, and all columns from \code{raw} and \code{ref}.
-Rows in \code{raw} with no match in \code{ref} will have NA values in the new columns
-taken from \code{ref}. If there are multiple matches between \code{raw} and \code{ref}, all
-combinations of the matches are returned.}
+\item{left}{return all rows from \code{raw}, and all columns from \code{raw}
+and \code{ref}. Rows in \code{raw} with no match in \code{ref} will have NA values in the
+new columns taken from \code{ref}. If there are multiple matches between \code{raw} and
+\code{ref}, all combinations of the matches are returned.}
 
-\item{inner}{return all rows from \code{raw} where there are matches in \code{ref}, and
+\item{inner}{return only the rows of \code{raw} that have matches in \code{ref}, and
 all columns from \code{raw} and \code{ref}. If there are multiple matches between \code{raw}
 and \code{ref}, all combinations of the matches are returned.}
-
-\item{inner_unique}{similar to "inner", except that any row of \code{raw} with
-multiple matches in \code{ref} is considered non-matching and so will not be
-returned.}
 
 \item{anti}{return all rows from \code{raw} where there are not matches in \code{ref},
 keeping just columns from \code{raw}}
 
-\item{anti_unique}{similar to "anti" except that any row of \code{raw} with
-multiple matches in \code{ref} is considered non-matching, and returned as a
-single row.}
+\item{resolve_left}{similar to "left", except that any row of \code{raw} that
+initially has multiple matches to \code{ref} is resolved to either a single 'best'
+match or no match. All rows of \code{raw} are returned, and rows of \code{raw} are
+never duplicated.}
+
+\item{resolve_inner}{similar to "inner", except that any row of \code{raw} that
+initially has multiple matches to \code{ref} is resolved to either a single 'best'
+match or no match. Only the rows of \code{raw} that can be resolved to a single
+best match are returned, and rows of \code{raw} are never duplicated.}
+
+\item{resolve_anti}{similar to "anti", except that any row of \code{raw} that
+initially has multiple matches to \code{ref} is considered non-matching (along
+with rows of \code{raw} that initially have no matches to \code{ref}), and returned as
+a single row. Rows of \code{raw} are never duplicated.}
 }
 \description{
-Join types used in the \code{hmatch} package ("left", "inner", "anti") are
-conceptually equivalent to \link{dplyr}'s \code{\link[dplyr]{join}} types.
-However, for some functions we also add two new join types ("inner_unique"
-and "anti_unique"), which are similar to the parent types except that
-"_unique" joins consider rows in \code{raw} with \emph{multiple} matches in \code{ref}
-as \emph{non}-matches. That is, a match must be unique to count.
+The basic join types used in the \code{hmatch} package ("left", "inner",
+"anti") are conceptually equivalent to \link{dplyr}'s
+\code{\link[dplyr]{join}} types.
+
+For each of the three join types there is also a counterpart prefixed by
+"resolve_" ("resolve_left", "resolve_inner", "resolve_anti"). In a resolve
+join rows of \code{raw} with matches to multiple rows of \code{ref} are resolved either
+to a single best match or no match before the subsequent join type is
+implemented. In a resolve join, rows of \code{raw} are never duplicated.
+
+The exact details of match resolution vary somewhat among functions, and are
+explained within each function's documentation.
 }

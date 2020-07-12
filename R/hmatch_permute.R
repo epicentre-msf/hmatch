@@ -1,36 +1,40 @@
 #' Hierarchical matching with sequential column permutation to allow for values
-#' entered at wrong hierarchical level
+#' entered at the wrong hierarchical level
 #'
 #' @description
-#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
+#' Match a data frame with raw, potentially messy hierarchical data (e.g.
 #' province, county, township) against a reference dataset, using sequential
 #' permutation of the hierarchical columns to allow for values entered at the
 #' wrong hierarchical level.
 #'
 #' The function calls \code{\link{hmatch_partial}} on each possible permutation
-#' of the hierarchical columns, and then resolves the returned match data to a
-#' maximum of one unique match per row of `raw`.
-#'
-#' If the various permutations of a given row of `raw` match multiple rows
-#' within `ref` that are hierarchically consistent, then the broadest-level
-#' match will be returned. E.g. a raw value "New York" could match at both the
-#' state and county-level. The matches are consistent because New York county is
-#' a child of New York state, and so the broader-level match (the state level)
-#' will be returned.
-#'
-#' Alternatively, if the permutations of a given row of `raw` match multiple
-#' conflicting rows within `ref`, then no match will be returned for that row.
-#' E.g. a raw value "Suffolk" could match multiple counties in different states,
-#' Suffolk NY, Suffolk MA, etc, which are not hierarchically consistent.
+#' of the hierarchical columns, and then combines the results. Rows of `raw`
+#' yielding multiple matches to `ref` can optionally be resolved using a
+#' resolve-type join (see section **Resolve joins** below).
 #'
 #' @inheritParams hmatch_partial
-#'
-#' @param type type of join ("left", "inner", "anti"). Defaults to "left". See
-#'   \link{join_types}.
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
 #'   \link{join_types} for more details)
+#'
+#' @section Resolve joins:
+#' In `hmatch_permute`, if argument `type` corresponds to a resolve join, rows
+#' of `raw` with multiple matches to `ref` are resolved to the highest
+#' hierarchical level that is common among all matches (or no match if there is
+#' a conflict at the very first level). E.g.
+#'
+#' `raw`: \cr
+#' `1. | United States | <NA>     | New York |` \cr
+#'
+#' Relevant rows from `ref`: \cr
+#' `1. | United States | New York | <NA>     |` \cr
+#' `2. | United States | New York | New York |` \cr
+#'
+#' In a regular join with `hmatch_permute`, the single row from `raw` (above)
+#' will match both of the depicted rows from `ref`. However, in a resolve join
+#' the two matches will resolve to the first row from `ref`, because it reflects
+#' the highest hierarchical level that is common to all matches.
 #'
 #' @examples
 #' data(ne_raw)
@@ -74,12 +78,11 @@ hmatch_permute <- function(raw,
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
-  # TODO: think more about match types. left should return all matches even if inconsistent
+  type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
 
   ## temporary columns to aid in matching
-  temp_col_code <- "TEMP_CODE_COL_SHIFT"
-  temp_col_id <- "TEMP_ROW_ID_SHIFT"
+  temp_col_code <- "TEMP_CODE_COL_PERMUTE"
+  temp_col_id <- "TEMP_ROW_ID_PERMUTE"
 
   raw[[temp_col_id]] <- seq_len(nrow(raw))
 
@@ -143,40 +146,26 @@ hmatch_permute <- function(raw,
   )
 
   ## bind matches
-  matches_bind <- dplyr::bind_rows(raw_perm_match)
-  matches_bind <- unique(matches_bind[,c(temp_col_id, temp_col_code)])
+  matches_join_prep <- unique(dplyr::bind_rows(raw_perm_match))
+  matches_join_prep <- matches_join_prep[,c(temp_col_id, names(prep$ref))]
 
-  ## resolve best code for each id
-  codes_by_id <- split(
-    matches_bind[[temp_col_code]],
-    matches_bind[[temp_col_id]]
-  )
-
-  codes_by_id_resolved <- vapply(
-    codes_by_id,
-    resolve_geocode,
-    "",
-    ref = prep$ref,
-    by_ref = prep$by_ref,
-    temp_col_code = temp_col_code
-  )
-
-  matches_join_init <- data.frame(
-    id = as.integer(names(codes_by_id_resolved)),
-    codes_by_id_resolved,
-    stringsAsFactors = FALSE
-  )
-
-  names(matches_join_init) <- c(temp_col_id, temp_col_code)
+  ## if resolve join
+  if (grepl("^resolve", type)) {
+    matches_join_prep <- resolve_join(
+      matches_join_prep,
+      by_ref = prep$by_ref,
+      temp_col_id = temp_col_id,
+      consistent = "min"
+    )
+  }
 
   ## assemble output
-  matches_join <- dplyr::left_join(matches_join_init, prep$ref, by = temp_col_code)
-  matches_out <- dplyr::left_join(raw, matches_join, by = temp_col_id)
+  matches_out <- dplyr::left_join(raw, matches_join_prep, by = temp_col_id)
 
   ## execute match type and remove temporary columns
   prep_output(
     x = matches_out,
-    type = type,
+    type = gsub("^resolve_", "", type),
     temp_col_id = temp_col_id,
     temp_col_match = temp_col_code,
     cols_raw_orig = setdiff(names(raw), temp_col_id),
@@ -194,13 +183,7 @@ permute_columns <- function(x, by_x) {
   rows <- apply(xx, 1, function(x) length(unique(x)) == len_x)
   xx <- xx[rows,, drop = FALSE]
   col_permutations <- as.list(as.data.frame(t(xx)))
-
-  lapply(
-    col_permutations,
-    rename_helper,
-    x = x,
-    name = by_x
-  )
+  lapply(col_permutations, rename_helper, x = x, name = by_x)
 }
 
 
@@ -212,33 +195,5 @@ rename_helper <- function(x, name, name_replace) {
   x <- dplyr::rename(x, all_of(vec_rename))
   names_other <- setdiff(names(x), name)
   x[,c(name, names_other), drop = FALSE]
-}
-
-
-#' @noRd
-resolve_geocode <- function(x, ref, by_ref, temp_col_code) {
-
-  ref_sub <- unique(ref[ref[[temp_col_code]] %in% x,, drop = FALSE])
-
-  if (nrow(ref_sub) == 0L) {
-    out <- NA_character_
-  } else if (nrow(ref_sub) == 1L) {
-    out <- ref_sub[[temp_col_code]][1L]
-  } else {
-    ref_sub_ <- ref_sub[,by_ref, drop = FALSE]
-    matches_consistent <- all(vapply(ref_sub_, unique_excl_na, FALSE))
-    if (!matches_consistent) {
-      out <- NA_character_
-    } else {
-      max_ref_levels <- max_levels(ref_sub_)
-      is_min_ref_level <- max_ref_levels == min(max_ref_levels)
-      if (sum(is_min_ref_level) > 1L) {
-        out <- NA_character_
-      } else {
-        out <- ref_sub[[temp_col_code]][is_min_ref_level]
-      }
-    }
-  }
-  return(out)
 }
 

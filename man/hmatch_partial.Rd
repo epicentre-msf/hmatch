@@ -21,14 +21,13 @@ hmatch_partial(
 )
 }
 \arguments{
-\item{raw}{\code{data.frame} containing hierarchical columns with raw, potentially
-messy data}
+\item{raw}{data frame containing hierarchical columns with raw data}
 
-\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+\item{ref}{data frame containing hierarchical columns with reference data}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either the \code{pattern} or \code{by} arguments, as
-described in \link{specifying_columns})}
+(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
+\link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
 (defaults to \code{pattern})}
@@ -38,14 +37,15 @@ described in \link{specifying_columns})}
 \item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
 (defaults to \code{by})}
 
-\item{type}{type of join ("left", "inner", "inner_unique", "anti", or
-"anti_unique"). Defaults to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "anti", "resolve_left",
+"resolve_inner", or "resolve_anti"). Defaults to "left". See
+\link{join_types}.}
 
-\item{dict}{Optional dictionary for recoding values within the hierarchical
+\item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -53,11 +53,11 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
+\item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
-\item{...}{Additional arguments passed to \code{std_fn()}}
+\item{...}{additional arguments passed to \code{std_fn()}}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}
@@ -65,7 +65,7 @@ and \code{ref}, using the join type specified by argument \code{type} (see
 \link{join_types} for more details)
 }
 \description{
-Match a data.frame with raw, potentially messy hierarchical data (e.g.
+Match a data frame with raw, potentially messy hierarchical data (e.g.
 province, county, township) against a reference dataset, using partial
 matching. "Partial" here means that one or more hierarchical levels within
 the raw data may be missing (i.e. NA). More specifically, for a given row of
@@ -73,11 +73,31 @@ raw data, matches can potentially be made to a high-resolution level (e.g.
 township) even if one or more lower-resolution levels (e.g. province) is
 missing.
 }
+\section{Resolve joins}{
+
+In \code{hmatch_partial}, if argument \code{type} corresponds to a resolve join, rows
+of \code{raw} with multiple matches to \code{ref} are always resolved to 'no match'.
+This is because \code{hmatch_partial} does not accept matches below the highest
+non-missing level within a given row of \code{raw}. E.g.
+
+\code{raw}: \cr
+\verb{1. | United States | <NA>         | Jefferson |} \cr
+
+Relevant rows from \code{ref}: \cr
+\verb{1. | United States | New York     | Jefferson |} \cr
+\verb{2. | United States | Pennsylvania | Jefferson |}
+
+In a regular join with \code{hmatch_partial}, the single row from \code{raw} (above)
+will match both rows of \code{ref}. However, in a resolve join the multiple
+conflicting matches (i.e. conflicting values at the 2nd hierarchical level)
+will result in the row from \code{raw} being treated as non-matching to \code{ref}.
+}
+
 \examples{
 data(ne_raw)
 data(ne_ref)
 
-hmatch_partial(ne_raw, ne_ref, pattern = "adm")
+hmatch_partial(ne_raw, ne_ref, pattern = "adm", type = "inner")
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",

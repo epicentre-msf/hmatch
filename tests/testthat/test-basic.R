@@ -18,15 +18,6 @@ test_that("Basic functionality", {
   m_manual_l <- hmatch_manual(ne_raw, ne_ref_code, ne_man, code_col = "pcode", type = "left")
   expect_equal(nrow(m_manual_l), nrow(ne_raw))
 
-
-  ## fuzzy join
-  m_fuzzy_i <- hmatch_partial(ne_raw, ne_ref, type = "inner_unique", fuzzy = TRUE, max_dist = 2)
-  expect_is(m_fuzzy_i, "data.frame")
-  expect_lte(nrow(m_fuzzy_i), nrow(ne_raw))
-
-  m_fuzzy_l <- hmatch_partial(ne_raw, ne_ref, type = "left", fuzzy = TRUE, max_dist = 2)
-  expect_gte(nrow(m_fuzzy_l), nrow(ne_raw))
-
   ## rolling join
   m_best_i <- hmatch_best(ne_raw, ne_ref, type = "inner")
   expect_is(m_best_i, "data.frame")

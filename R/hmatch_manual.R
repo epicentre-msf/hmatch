@@ -15,6 +15,9 @@
 #'   `man`
 #' @param code_col name of the code column containing codes for matching `ref`
 #'   and `man`
+#' @param type type of join ("left", "inner", or "anti"). Defaults to "left".
+#'   See \link{join_types}. Note that this function does not allow 'resolve
+#'   joins', unlike most other `hmatch_` functions.
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref` based on sets of matches specified in `man`, using the join type
@@ -69,7 +72,7 @@ hmatch_manual <- function(raw,
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
+  type <- match.arg(type, c("left", "inner", "anti"))
 
   ## validate arg code_col
   if (code_col %in% names(raw)) {
@@ -117,6 +120,7 @@ hmatch_manual <- function(raw,
     raw_join = raw_join,
     man_join = man_join,
     by_raw = prep$by_raw,
+    by_ref = prep$by_ref,
     by_join = prep$by_raw_join,
     type = type,
     class_raw = class(raw)
@@ -129,6 +133,7 @@ hmatch_manual <- function(raw,
 hmatch_manual_ <- function(raw_join,
                            man_join,
                            by_raw,
+                           by_ref,
                            by_join,
                            type = "left",
                            class_raw = "data.frame") {
@@ -174,6 +179,16 @@ hmatch_manual_ <- function(raw_join,
               call. = FALSE)
     }
   }
+
+  # ## if resolve-type join
+  # if (grepl("^resolve", type)) {
+  #   matches_out <- resolve_join(
+  #     matches_out,
+  #     by_ref = by_ref,
+  #     temp_col_id = temp_col_id,
+  #     consistent = "all"
+  #   )
+  # }
 
   ## execute match type and remove temporary columns
   prep_output(

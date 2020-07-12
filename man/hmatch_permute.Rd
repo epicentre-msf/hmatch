@@ -3,7 +3,7 @@
 \name{hmatch_permute}
 \alias{hmatch_permute}
 \title{Hierarchical matching with sequential column permutation to allow for values
-entered at wrong hierarchical level}
+entered at the wrong hierarchical level}
 \usage{
 hmatch_permute(
   raw,
@@ -22,14 +22,13 @@ hmatch_permute(
 )
 }
 \arguments{
-\item{raw}{\code{data.frame} containing hierarchical columns with raw, potentially
-messy data}
+\item{raw}{data frame containing hierarchical columns with raw data}
 
-\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+\item{ref}{data frame containing hierarchical columns with reference data}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either the \code{pattern} or \code{by} arguments, as
-described in \link{specifying_columns})}
+(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
+\link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
 (defaults to \code{pattern})}
@@ -39,14 +38,15 @@ described in \link{specifying_columns})}
 \item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
 (defaults to \code{by})}
 
-\item{type}{type of join ("left", "inner", "anti"). Defaults to "left". See
+\item{type}{type of join ("left", "inner", "anti", "resolve_left",
+"resolve_inner", or "resolve_anti"). Defaults to "left". See
 \link{join_types}.}
 
-\item{dict}{Optional dictionary for recoding values within the hierarchical
+\item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -54,11 +54,11 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
+\item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
-\item{...}{Additional arguments passed to \code{std_fn()}}
+\item{...}{additional arguments passed to \code{std_fn()}}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}
@@ -66,27 +66,36 @@ and \code{ref}, using the join type specified by argument \code{type} (see
 \link{join_types} for more details)
 }
 \description{
-Match a data.frame with raw, potentially messy hierarchical data (e.g.
+Match a data frame with raw, potentially messy hierarchical data (e.g.
 province, county, township) against a reference dataset, using sequential
 permutation of the hierarchical columns to allow for values entered at the
 wrong hierarchical level.
 
 The function calls \code{\link{hmatch_partial}} on each possible permutation
-of the hierarchical columns, and then resolves the returned match data to a
-maximum of one unique match per row of \code{raw}.
-
-If the various permutations of a given row of \code{raw} match multiple rows
-within \code{ref} that are hierarchically consistent, then the broadest-level
-match will be returned. E.g. a raw value "New York" could match at both the
-state and county-level. The matches are consistent because New York county is
-a child of New York state, and so the broader-level match (the state level)
-will be returned.
-
-Alternatively, if the permutations of a given row of \code{raw} match multiple
-conflicting rows within \code{ref}, then no match will be returned for that row.
-E.g. a raw value "Suffolk" could match multiple counties in different states,
-Suffolk NY, Suffolk MA, etc, which are not hierarchically consistent.
+of the hierarchical columns, and then combines the results. Rows of \code{raw}
+yielding multiple matches to \code{ref} can optionally be resolved using a
+resolve-type join (see section \strong{Resolve joins} below).
 }
+\section{Resolve joins}{
+
+In \code{hmatch_permute}, if argument \code{type} corresponds to a resolve join, rows
+of \code{raw} with multiple matches to \code{ref} are resolved to the highest
+hierarchical level that is common among all matches (or no match if there is
+a conflict at the very first level). E.g.
+
+\code{raw}: \cr
+\verb{1. | United States | <NA>     | New York |} \cr
+
+Relevant rows from \code{ref}: \cr
+\verb{1. | United States | New York | <NA>     |} \cr
+\verb{2. | United States | New York | New York |} \cr
+
+In a regular join with \code{hmatch_permute}, the single row from \code{raw} (above)
+will match both of the depicted rows from \code{ref}. However, in a resolve join
+the two matches will resolve to the first row from \code{ref}, because it reflects
+the highest hierarchical level that is common to all matches.
+}
+
 \examples{
 data(ne_raw)
 data(ne_ref)

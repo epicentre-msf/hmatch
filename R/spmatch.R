@@ -37,17 +37,17 @@
 #' data(ne_ref)
 #'
 #' # find all non-matches ("anti"-join) at each hierarchical level
-#' spmatch(ne_raw, ne_ref, type = "anti", fuzzy = TRUE)
+#' spmatch(ne_raw, ne_ref, type = "resolve_anti", fuzzy = TRUE)
 #'
 #' # find all matches ("inner"-join) at only the adm2 level
-#' spmatch(ne_raw, ne_ref, type = "inner", levels = "adm2")
+#' spmatch(ne_raw, ne_ref, type = "resolve_inner", levels = "adm2")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' spmatch(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
+#' spmatch(ne_raw, ne_ref, type = "resolve_inner", dict = ne_dict, levels = "adm2")
 #'
 #' @export spmatch
 spmatch <- function(raw,

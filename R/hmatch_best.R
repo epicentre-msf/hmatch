@@ -1,7 +1,7 @@
 #' Best-possible hierarchical matching
 #'
 #' @description
-#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
+#' Match a data frame with raw, potentially messy hierarchical data (e.g.
 #' province, county, township) against a reference dataset, using a rolling
 #' approach to identify the best-possible (i.e. highest-resolution) match for
 #' each row.
@@ -13,26 +13,52 @@
 #'
 #' @inheritParams hmatch_partial
 #'
-#' @param type type of join ("left", "inner", "anti", "inner_complete",
-#'   "inner_incomplete"). Defaults to "left". See \link{join_types}.
-#'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
 #'   \link{join_types} for more details)
 #'
-#' Column `match_type` indicates the type of match made:
-#' - NA: no match
-#' - "best": the level of the best match from `ref` matches the level of `raw`
-#' - "best_low": the level of the best match from `ref` is lower than the level
-#' of `raw`
-#' - "best_infer": multiple rows of `ref` match `raw`; the best match
-#' corresponds to the highest level common among all matches
+#' @section Resolve joins:
+#' In `hmatch_best`, if argument `type` corresponds to a resolve join, rows of
+#' `raw` with multiple matches to `ref` are resolved to the highest hierarchical
+#' level that is non-conflicting among all matches (or no match if there is a
+#' conflict at the very first level). E.g.
+#'
+#' `raw`: \cr
+#' `1. | United States | <NA>         | Jefferson |` \cr
+#'
+#' Relevant rows from `ref`: \cr
+#' `1. | United States | <NA>         | <NA>      |` \cr
+#' `2. | United States | New York     | Jefferson |` \cr
+#' `3. | United States | Pennsylvania | Jefferson |`
+#'
+#' In a regular join, the single row from `raw` (above) will match all three
+#' rows from `ref`. However, in a resolve join the multiple matches will be
+#' resolved to the first row from `ref`, because only the first hierarchical
+#' level ("United States") is non-conflicting among all possible matches.
+#'
+#' Note that there's a distinction between "common" values at a given
+#' hierarchical level (i.e. a single unique value in each row) and
+#' "non-conflicting" values (i.e. a single unique value *or* a missing value).
+#' E.g.
+#'
+#' `raw`: \cr
+#' `1. | United States | New York | New York |` \cr
+#'
+#' Relevant rows from `ref`: \cr
+#' `1. | United States | <NA>     | <NA>     |` \cr
+#' `2. | United States | New York | <NA>     |` \cr
+#' `3. | United States | New York | New York |`
+#'
+#' In the example above, only the 1st hierarchical level ("United States") is
+#' "common" to all matches, but all hierarchical levels are "non-conflicting"
+#' (i.e. because row 2 is a hierarchical child of row 1, and row 3 a child of
+#' row 2), and so a resolve-type match will be made to the 3rd row in `ref`.
 #'
 #' @examples
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE)
+#' hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE, type = "inner")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
@@ -57,6 +83,12 @@ hmatch_best <- function(raw,
                         std_fn = string_std,
                         ...) {
 
+
+  # raw <- ne_raw_upr
+  # ref <- ne_ref
+  # std_fn = NULL
+
+
   # # for testing purposes only
   # raw <- ne_raw
   # ref <- ne_ref
@@ -74,7 +106,7 @@ hmatch_best <- function(raw,
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "anti", "inner_complete", "inner_incomplete"))
+  type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(
@@ -139,21 +171,15 @@ hmatch_best_ <- function(raw_join,
                          by_ref,
                          by_raw_join,
                          by_ref_join,
-                         temp_col_code = NULL,
                          type = "left",
                          fuzzy = FALSE,
                          max_dist = 1L,
                          class_raw = "data.frame") {
 
-
   ## temporary columns to aid in matching
+  temp_col_match <- "TEMP_COL_MATCH_SETTLE"
   temp_col_id <- "TEMP_ROW_ID_SETTLE"
   raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
-
-  if (is.null(temp_col_code)) {
-    temp_col_code <- "TEMP_CODE_COL_SETTLE"
-    ref_join[[temp_col_code]] <- hcodes_str(ref_join, by = by_ref)
-  }
 
   ## re-derive initial column names
   names_raw_prep <- setdiff(names(raw_join), by_raw_join)
@@ -164,14 +190,10 @@ hmatch_best_ <- function(raw_join,
   temp_col_max_level <- "TEMP_MAX_LEVEL_SETTLE"
   ref_join[[temp_col_max_level]] <- max_levels(ref_join, by = by_ref)
 
-  ## initial df to store all temporary match columns
-  matches_full <- raw_join[, c(by_raw, temp_col_id), drop = FALSE]
+  matches_by_level <- list()
 
   ## find matches with hmatch_partial() at each match level...
   for (j in rev(seq_along(by_raw))) {
-
-    # temp name for code_col at focal level
-    temp_col_code_lev <- paste0(temp_col_code, j)
 
     # columns to exclude (> focal level)
     j_excl <- setdiff(seq_along(by_raw), seq_len(j))
@@ -186,102 +208,44 @@ hmatch_best_ <- function(raw_join,
     # filter ref to rows where max_level is <= the focal level
     ref_foc <- ref_foc[ref_foc[[temp_col_max_level]] <= j,]
 
-    # rename code_col to focal level
-    ref_foc <- rename_col(
-      ref_foc,
-      col_old = temp_col_code,
-      col_new = temp_col_code_lev
-    )
-
     # match raw to ref at given level
-    matches_level <-  hmatch_partial_(
+    matches_by_level[[j]] <-  hmatch_partial_(
       raw_join = raw_foc,
       ref_join = ref_foc,
       by_raw_join = by_raw_join[1:j],
       by_ref_join = by_ref_join[1:j],
-      type = "left",
+      type = "inner",
       class_raw = class_raw,
       fuzzy = fuzzy,
       max_dist = max_dist
     )
+  }
 
-    # compile matches at each level
-    # TODO: test whether this fails given two adm0 with e.g. identical adm1/adm2
-    #  combinations
-    matches_full <- dplyr::left_join(
-      matches_full,
-      matches_level[,c(temp_col_id, temp_col_code_lev)],
-      by = temp_col_id
+  ## prepare match data for join
+  matches_prep <- dplyr::bind_rows(matches_by_level)
+  matches_join_out <- unique(matches_prep[,c(temp_col_id, names_ref_prep), drop = FALSE])
+  matches_join_out[[temp_col_match]] <- rep(TRUE, nrow(matches_join_out))
+
+  ## if resolve-type join
+  if (grepl("^resolve", type)) {
+    matches_join_out <- resolve_join(
+      matches_join_out,
+      by_ref,
+      temp_col_id,
+      consistent = "max"
     )
   }
 
-  ## row ids from raw with >1 match in ref
-  ids_dup <- matches_full[[temp_col_id]][duplicated(matches_full[[temp_col_id]])]
-
-  ## best geocode for single-matches
-  matches_single <- matches_full[!matches_full[[temp_col_id]] %in% ids_dup,]
-  matches_single[[temp_col_code]] <- best_geocode(matches_single, pattern = temp_col_code)
-  matches_single <- matches_single[!is.na(matches_single[[temp_col_code]]), c(temp_col_id, temp_col_code)]
-  matches_single <- add_column(matches_single, "match_type", "best")
-
-  ## best geocode for multiple-matches
-  matches_multi_init <- matches_full[matches_full[[temp_col_id]] %in% ids_dup,]
-
-  if (nrow(matches_multi_init) > 0) {
-
-    matches_multi_split <- split(
-      matches_multi_init,
-      matches_multi_init[[temp_col_id]]
-    )
-
-    matches_multi_geocode <- lapply(
-      matches_multi_split,
-      best_geocode_helper,
-      pattern = temp_col_code,
-      code_col = temp_col_code,
-      id_col = temp_col_id
-    )
-
-    matches_multi <- do.call(rbind.data.frame, matches_multi_geocode)
-  } else {
-    matches_multi <- matches_multi_init
-  }
-
-  matches_multi <- matches_multi[!is.na(matches_multi[[temp_col_code]]),]
-  matches_multi <- add_column(matches_multi, "match_type", "best_infer")
-
-  ## combine single and multiple matches
-  matches_bind <- rbind_dfs(matches_single, matches_multi)
-
-  ## join to ref
-  matches_bind_ref <- dplyr::left_join(
-    matches_bind,
-    ref_join[,names_ref_prep, drop = FALSE],
-    by = temp_col_code
-  )
-  matches_bind_ref <- matches_bind_ref[,c(temp_col_id, names_ref_prep, "match_type")]
-
-  ## join to raw
-  out <- dplyr::left_join(
-    raw_join[,names_raw_prep, drop = FALSE],
-    matches_bind_ref,
-    by = temp_col_id
-  )
-
-  ## reclassify match_type (best, best_low, best_infer)
-  max_adm_raw <- max_levels(out, by = by_raw)
-  max_adm_ref <- max_levels(out, by = by_ref)
-
-  best_low <- out[["match_type"]] == "best" & max_adm_ref < max_adm_raw
-  best_low[is.na(best_low)] <- FALSE
-  out[["match_type"]][best_low] <- "best_low"
+  ## merge raw with final match data
+  raw_join_out <- raw_join[,names_raw_prep, drop = FALSE]
+  matches_out <- dplyr::left_join(raw_join_out, matches_join_out, by = temp_col_id)
 
   ## execute match type and remove temporary columns
   prep_output(
-    x = out,
-    type = type,
+    x = matches_out,
+    type = gsub("^resolve_", "", type),
     temp_col_id = temp_col_id,
-    temp_col_match = temp_col_code,
+    temp_col_match = temp_col_match,
     cols_raw_orig = names_raw_orig,
     class_raw = class_raw,
     by_raw = by_raw,

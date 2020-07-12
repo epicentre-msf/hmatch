@@ -1,6 +1,6 @@
 #' Partial hierarchical matching
 #'
-#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
+#' Match a data frame with raw, potentially messy hierarchical data (e.g.
 #' province, county, township) against a reference dataset, using partial
 #' matching. "Partial" here means that one or more hierarchical levels within
 #' the raw data may be missing (i.e. NA). More specifically, for a given row of
@@ -19,11 +19,29 @@
 #'   and `ref`, using the join type specified by argument `type` (see
 #'   \link{join_types} for more details)
 #'
+#' @section Resolve joins:
+#' In `hmatch_partial`, if argument `type` corresponds to a resolve join, rows
+#' of `raw` with multiple matches to `ref` are always resolved to 'no match'.
+#' This is because `hmatch_partial` does not accept matches below the highest
+#' non-missing level within a given row of `raw`. E.g.
+#'
+#' `raw`: \cr
+#' `1. | United States | <NA>         | Jefferson |` \cr
+#'
+#' Relevant rows from `ref`: \cr
+#' `1. | United States | New York     | Jefferson |` \cr
+#' `2. | United States | Pennsylvania | Jefferson |`
+#'
+#' In a regular join with `hmatch_partial`, the single row from `raw` (above)
+#' will match both rows of `ref`. However, in a resolve join the multiple
+#' conflicting matches (i.e. conflicting values at the 2nd hierarchical level)
+#' will result in the row from `raw` being treated as non-matching to `ref`.
+#'
 #' @examples
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_partial(ne_raw, ne_ref, pattern = "adm")
+#' hmatch_partial(ne_raw, ne_ref, pattern = "adm", type = "inner")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
@@ -48,10 +66,12 @@ hmatch_partial <- function(raw,
                            ...) {
 
   # # for testing
+  # # raw <- readRDS("~/desktop/drc_bench_raw.rds")[,1:4]
+  # # ref <- readRDS("~/desktop/drc_bench_ref.rds")
   # raw = ne_raw
   # ref = ne_ref
-  # raw$adm2[1] <- "Suffolk II"
-  # ref$adm2[10] <- "Suffolk 2"
+  # # raw$adm2[1] <- "Suffolk II"
+  # # ref$adm2[10] <- "Suffolk 2"
   # pattern = NULL
   # pattern_ref = pattern
   # by = NULL
@@ -65,7 +85,7 @@ hmatch_partial <- function(raw,
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
+  type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(
@@ -110,6 +130,8 @@ hmatch_partial <- function(raw,
   hmatch_partial_(
     raw_join = raw_join,
     ref_join = ref_join,
+    by_raw = prep$by_raw,
+    by_ref = prep$by_ref,
     by_raw_join = prep$by_raw_join,
     by_ref_join = prep$by_ref_join,
     type = type,
@@ -125,6 +147,8 @@ hmatch_partial <- function(raw,
 #' @importFrom dplyr left_join
 hmatch_partial_ <- function(raw_join,
                             ref_join,
+                            by_raw = NULL, # not used
+                            by_ref = NULL, # only used if type is resolve join
                             by_raw_join,
                             by_ref_join,
                             type = "left",
@@ -157,7 +181,6 @@ hmatch_partial_ <- function(raw_join,
 
   ## identify the maximum (highest-resolution) hierarchical level
   max_level <- length(by_raw_join)
-
   col_max_raw <- by_raw_join[max_level]
   col_max_ref <- by_ref_join[max_level]
 
@@ -215,8 +238,17 @@ hmatch_partial_ <- function(raw_join,
   }
 
   ## remove join columns and filter to unique rows
-  matches_join_out <- matches_remaining[,c(temp_col_id, names_ref_prep)]
-  matches_join_out <- unique(matches_join_out)
+  matches_join_out <- unique(matches_remaining[,c(temp_col_id, names_ref_prep)])
+
+  ## if resolve-type join
+  if (grepl("^resolve", type)) {
+    matches_join_out <- resolve_join(
+      matches_join_out,
+      by_ref = by_ref,
+      temp_col_id = temp_col_id,
+      consistent = "all"
+    )
+  }
 
   ## merge raw with final match data
   raw_join_out <- raw_join[,names_raw_prep, drop = FALSE]
@@ -225,7 +257,7 @@ hmatch_partial_ <- function(raw_join,
   ## execute match type and remove temporary columns
   prep_output(
     x = matches_out,
-    type = type,
+    type = gsub("^resolve_", "", type),
     temp_col_id = temp_col_id,
     temp_col_match = temp_col_match,
     cols_raw_orig = names_raw_orig,
@@ -254,5 +286,72 @@ filter_to_matches <- function(dat, col1, col2, fuzzy, max_dist, is_max_level) {
   keep[is.na(keep)] <- FALSE
 
   return(dat[keep,])
+}
+
+
+
+#' @noRd
+#' @importFrom dplyr bind_rows
+resolve_join <- function(x, by_ref, temp_col_id, consistent = c("min", "max", "all")) {
+  if (nrow(x) == 0L) {
+    out <- x
+  } else {
+    consistent <- match.arg(consistent)
+    x_split <- split(x, x[[temp_col_id]])
+    l_resolve <- lapply(x_split, resolve_join_, by_ref = by_ref, consistent = consistent)
+    out <- dplyr::bind_rows(l_resolve)
+  }
+  out
+}
+
+
+
+#' @noRd
+resolve_join_ <- function(x, by_ref, consistent) {
+
+  if (nrow(x) < 2L) {
+    out <- x
+  } else {
+
+    ## 2 or more matches...
+    ref_sub_ <- x[,by_ref, drop = FALSE]
+    matches_consistent <- vapply(ref_sub_, unique_excl_na, FALSE)
+    max_matches_consistent <- max_before_false(matches_consistent)
+
+    if (!matches_consistent[1L]) {
+      ## not consistent even to first level
+      out <- x[0, , drop = FALSE]
+    } else if (consistent == "all") {
+      ## if require ALL consistent
+      if (all(matches_consistent)) {
+        max_ref_levels <- max_levels(ref_sub_)
+        row <- which(max_ref_levels == max(max_ref_levels))[1L]
+        out <- x[row, , drop = FALSE]
+      } else {
+        out <- x[0, , drop = FALSE]
+      }
+    } else {
+      ## don't require ALL consistent and at least some are consistent
+
+      # replace inconsistent values with NA
+      by_i <- seq_along(by_ref)
+      by_ref_inconsistent <- by_ref[by_i > max_matches_consistent]
+
+      for (j in by_ref_inconsistent) {
+        x[[j]] <- NA_character_
+      }
+
+      max_ref_levels <- max_levels(x, by = by_ref)
+
+      if (consistent == "min") {
+        row <- which(max_ref_levels == min(max_ref_levels))[1L]
+      } else {
+        row <- which(max_ref_levels == max(max_ref_levels))[1L]
+      }
+
+      out <- x[row, , drop = FALSE]
+    }
+  }
+  out
 }
 

@@ -231,7 +231,8 @@ max_before_false <- function(x) {
 
 
 #' @importFrom dplyr arrange group_by_all ungroup
-split_raw <- function(raw, by, lev) {
+split_raw <- function(raw, by, lev, all_levels = TRUE) {
+
   out <- unique(raw[, by[1:lev], drop = FALSE])
 
   all_na <- apply(out, 1, function(x) all(is.na(x)))
@@ -239,15 +240,12 @@ split_raw <- function(raw, by, lev) {
 
   out <- out[!is.na(out[[by[lev]]]), , drop = FALSE]
 
-  out[,setdiff(by, names(out))] <- NA_character_ # test
+  if (all_levels) {
+    out[,setdiff(by, names(out))] <- NA_character_
+  }
 
-  # arrange by col
-  out_grp <- dplyr::group_by_all(out)
-  out_arn <- dplyr::arrange(out_grp, .by_group = TRUE)
-  out <- ungroup(out_arn)
-  class(out) <- class(raw)
-
-  out
+  out_order <- order(hcodes_int(out, by = by[1:lev]))
+  out[out_order, , drop = FALSE]
 }
 
 

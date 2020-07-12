@@ -1,32 +1,32 @@
 #' Complete hierarchical matching
 #'
-#' Match a data.frame with raw, potentially messy hierarchical data (e.g.
+#' Match a data frame with raw, potentially messy hierarchical data (e.g.
 #' province, county, township) against a reference dataset, using complete
 #' matching. "Complete" here means that every level must match in sequence. For
 #' example, given raw data with known levels of county and township, but missing
 #' the lower-resolution level province, a match will not be made.
 #'
-#' @param raw `data.frame` containing hierarchical columns with raw, potentially
-#'   messy data
-#' @param ref `data.frame` containing hierarchical columns with reference data
+#' @param raw data frame containing hierarchical columns with raw data
+#' @param ref data frame containing hierarchical columns with reference data
 #' @param pattern regex pattern to match the hierarchical columns in `raw`
-#'   (columns can be matched using either the `pattern` or `by` arguments, as
-#'   described in \link{specifying_columns})
+#'   (columns can be matched using either `pattern` *or* `by`, as described in
+#'   \link{specifying_columns})
 #' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
 #'   (defaults to `pattern`)
 #' @param by vector giving the names of the hierarchical columns in `raw`
 #' @param by_ref vector giving the names of the hierarchical columns in `ref`
 #'   (defaults to `by`)
-#' @param type type of join ("left", "inner", "inner_unique", "anti", or
-#'   "anti_unique"). Defaults to "left". See \link{join_types}.
-#' @param dict Optional dictionary for recoding values within the hierarchical
+#' @param type type of join ("left", "inner", "anti", "resolve_left",
+#'   "resolve_inner", or "resolve_anti"). Defaults to "left". See
+#'   \link{join_types}.
+#' @param dict optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param ref_prefix Prefix to add to hierarchical column names in `ref` if they
-#'   are otherwise identical to names in `raw`  (defaults to `ref_`)
-#' @param std_fn Function to standardize strings during matching. Defaults to
+#' @param ref_prefix prefix to add to hierarchical column names in `ref` if they
+#'   are otherwise identical to names in `raw`  (defaults to "ref_")
+#' @param std_fn function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
-#' @param ... Additional arguments passed to `std_fn()`
+#' @param ... additional arguments passed to `std_fn()`
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -36,14 +36,14 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_complete(ne_raw, ne_ref, pattern = "^adm")
+#' hmatch_complete(ne_raw, ne_ref, pattern = "^adm", type = "inner")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' hmatch_complete(ne_raw, ne_ref, pattern = "^adm", dict = ne_dict)
+#' hmatch_complete(ne_raw, ne_ref, pattern = "^adm", dict = ne_dict, type = "inner")
 #'
 #' @export hmatch_complete
 hmatch_complete <- function(raw,
@@ -67,7 +67,7 @@ hmatch_complete <- function(raw,
   # pattern_ref = pattern
   # by = NULL
   # by_ref = by
-  # dict <- ne_dict
+  # dict <- NULL
   # type = "inner"
   # ref_prefix = "ref_"
   # std_fn = string_std
@@ -75,7 +75,7 @@ hmatch_complete <- function(raw,
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "inner_unique", "anti", "anti_unique"))
+  type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(
@@ -120,7 +120,10 @@ hmatch_complete <- function(raw,
   hmatch_complete_(
     raw_join,
     ref_join,
+    by_raw = prep$by_raw,
+    by_ref = prep$by_ref,
     by_raw_join = prep$by_raw_join,
+    by_ref_join = prep$by_raw_join,
     type = type,
     class_raw = class(raw)
   )
@@ -133,6 +136,8 @@ hmatch_complete <- function(raw,
 #' @importFrom dplyr left_join
 hmatch_complete_ <- function(raw_join,
                              ref_join,
+                             by_raw = NULL, # not used
+                             by_ref = NULL, # only used if type is resolve join
                              by_raw_join,
                              by_ref_join = by_raw_join,
                              type = "left",
@@ -161,10 +166,20 @@ hmatch_complete_ <- function(raw_join,
   ## remove join cols
   matches_out <- matches_out[, !names(matches_out) %in% by_raw_join, drop = FALSE]
 
+  ## if resolve-type join
+  if (grepl("^resolve", type)) {
+    matches_out <- resolve_join(
+      matches_out,
+      by_ref = by_ref,
+      temp_col_id = temp_col_id,
+      consistent = "all"
+    )
+  }
+
   ## execute match type and remove temporary columns
   prep_output(
     x = matches_out,
-    type = type,
+    type = gsub("^resolve_", "", type),
     temp_col_id = temp_col_id,
     temp_col_match = temp_col_match,
     cols_raw_orig = names_raw_orig,

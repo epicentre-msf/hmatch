@@ -10,14 +10,14 @@ test_that("hmatch_complete works as expected", {
   m_inner <- hmatch_complete(raw_types, ne_ref, type = "inner")
   expect_equal(sort(m_inner$id), c(1, 2))
 
-  m_inner_unique <- hmatch_complete(raw_types, ne_ref, type = "inner_unique")
-  expect_equal(sort(m_inner_unique$id), c(1, 2))
-
   m_anti <- hmatch_complete(raw_types, ne_ref, type = "anti")
   expect_equal(sort(m_anti$id), c(3))
 
-  m_anti_unique <- hmatch_complete(raw_types, ne_ref, type = "anti_unique")
-  expect_equal(sort(m_anti_unique$id), c(3))
+  m_resolve_inner <- hmatch_complete(raw_types, ne_ref, type = "resolve_inner")
+  expect_equal(sort(m_resolve_inner$id), c(1, 2))
+
+  m_resolve_anti <- hmatch_complete(raw_types, ne_ref, type = "resolve_anti")
+  expect_equal(sort(m_resolve_anti$id), c(3))
 
   # test 1-column matching
   raw_onecol <- data.frame(x = c("x", "y", "z"), stringsAsFactors = FALSE)

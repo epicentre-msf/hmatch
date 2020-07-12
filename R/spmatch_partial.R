@@ -88,7 +88,8 @@ spmatch_partial <- function(raw,
     by = by,
     by_ref = by_ref,
     ref_prefix = ref_prefix,
-    levels = levels
+    levels = levels,
+    lower_levels = FALSE
   )
 
   out <- mapply(

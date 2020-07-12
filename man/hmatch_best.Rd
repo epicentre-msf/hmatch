@@ -21,14 +21,13 @@ hmatch_best(
 )
 }
 \arguments{
-\item{raw}{\code{data.frame} containing hierarchical columns with raw, potentially
-messy data}
+\item{raw}{data frame containing hierarchical columns with raw data}
 
-\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+\item{ref}{data frame containing hierarchical columns with reference data}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either the \code{pattern} or \code{by} arguments, as
-described in \link{specifying_columns})}
+(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
+\link{specifying_columns})}
 
 \item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
 (defaults to \code{pattern})}
@@ -38,14 +37,15 @@ described in \link{specifying_columns})}
 \item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
 (defaults to \code{by})}
 
-\item{type}{type of join ("left", "inner", "anti", "inner_complete",
-"inner_incomplete"). Defaults to "left". See \link{join_types}.}
+\item{type}{type of join ("left", "inner", "anti", "resolve_left",
+"resolve_inner", or "resolve_anti"). Defaults to "left". See
+\link{join_types}.}
 
-\item{dict}{Optional dictionary for recoding values within the hierarchical
+\item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{ref_prefix}{Prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to \code{ref_})}
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -53,29 +53,19 @@ FALSE)}
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
 
-\item{std_fn}{Function to standardize strings during matching. Defaults to
+\item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
 
-\item{...}{Additional arguments passed to \code{std_fn()}}
+\item{...}{additional arguments passed to \code{std_fn()}}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}
 and \code{ref}, using the join type specified by argument \code{type} (see
 \link{join_types} for more details)
-
-Column \code{match_type} indicates the type of match made:
-\itemize{
-\item NA: no match
-\item "best": the level of the best match from \code{ref} matches the level of \code{raw}
-\item "best_low": the level of the best match from \code{ref} is lower than the level
-of \code{raw}
-\item "best_infer": multiple rows of \code{ref} match \code{raw}; the best match
-corresponds to the highest level common among all matches
-}
 }
 \description{
-Match a data.frame with raw, potentially messy hierarchical data (e.g.
+Match a data frame with raw, potentially messy hierarchical data (e.g.
 province, county, township) against a reference dataset, using a rolling
 approach to identify the best-possible (i.e. highest-resolution) match for
 each row.
@@ -85,11 +75,50 @@ successive level, starting with only the first level, then the first and
 second level, etc. The 'best-possible' match reflects the highest-level that
 is consistent among all possible matches to the given row of raw data.
 }
+\section{Resolve joins}{
+
+In \code{hmatch_best}, if argument \code{type} corresponds to a resolve join, rows of
+\code{raw} with multiple matches to \code{ref} are resolved to the highest hierarchical
+level that is non-conflicting among all matches (or no match if there is a
+conflict at the very first level). E.g.
+
+\code{raw}: \cr
+\verb{1. | United States | <NA>         | Jefferson |} \cr
+
+Relevant rows from \code{ref}: \cr
+\verb{1. | United States | <NA>         | <NA>      |} \cr
+\verb{2. | United States | New York     | Jefferson |} \cr
+\verb{3. | United States | Pennsylvania | Jefferson |}
+
+In a regular join, the single row from \code{raw} (above) will match all three
+rows from \code{ref}. However, in a resolve join the multiple matches will be
+resolved to the first row from \code{ref}, because only the first hierarchical
+level ("United States") is non-conflicting among all possible matches.
+
+Note that there's a distinction between "common" values at a given
+hierarchical level (i.e. a single unique value in each row) and
+"non-conflicting" values (i.e. a single unique value \emph{or} a missing value).
+E.g.
+
+\code{raw}: \cr
+\verb{1. | United States | New York | New York |} \cr
+
+Relevant rows from \code{ref}: \cr
+\verb{1. | United States | <NA>     | <NA>     |} \cr
+\verb{2. | United States | New York | <NA>     |} \cr
+\verb{3. | United States | New York | New York |}
+
+In the example above, only the 1st hierarchical level ("United States") is
+"common" to all matches, but all hierarchical levels are "non-conflicting"
+(i.e. because row 2 is a hierarchical child of row 1, and row 3 a child of
+row 2), and so a resolve-type match will be made to the 3rd row in \code{ref}.
+}
+
 \examples{
 data(ne_raw)
 data(ne_ref)
 
-hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE)
+hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE, type = "inner")
 
 # with dictionary-based recoding
 ne_dict <- data.frame(value = "USA",
