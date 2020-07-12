@@ -38,34 +38,32 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch(ne_raw, ne_ref, fuzzy = TRUE, type = "resolve_inner")
+#' hmatch_composite(ne_raw, ne_ref, fuzzy = TRUE)
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' hmatch(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
+#' hmatch_composite(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 #'
 #' @importFrom dplyr left_join
-#' @export hmatch
-hmatch <- function(raw,
-                   ref,
-                   man = NULL,
-                   pattern = NULL,
-                   pattern_ref = pattern,
-                   by = NULL,
-                   by_ref = by,
-                   type = "resolve_left",
-                   dict = NULL,
-                   code_col = NULL,
-                   ref_prefix = "ref_",
-                   fuzzy = FALSE,
-                   max_dist = 1L,
-                   std_fn = string_std,
-                   ...
-                   ) {
-
+#' @export hmatch_composite
+hmatch_composite <- function(raw,
+                             ref,
+                             man = NULL,
+                             pattern = NULL,
+                             pattern_ref = pattern,
+                             by = NULL,
+                             by_ref = by,
+                             type = "resolve_left",
+                             dict = NULL,
+                             code_col = NULL,
+                             ref_prefix = "ref_",
+                             fuzzy = FALSE,
+                             max_dist = 1L,
+                             std_fn = string_std,
+                             ...) {
 
   # # for testing only
   # raw <- ne_raw

@@ -27,19 +27,19 @@ test_that("Basic functionality", {
   expect_gte(nrow(m_best_l), nrow(ne_raw))
 
   ## composite hmatch (no manual)
-  m_comp <- hmatch(ne_raw, ne_ref, fuzzy = TRUE)
+  m_comp <- hmatch_composite(ne_raw, ne_ref, fuzzy = TRUE)
   expect_is(m_comp, "data.frame")
   expect_equal(nrow(m_comp), nrow(ne_raw))
 
   ## composite hmatch (with manual)
-  m_comp_man <- hmatch(ne_raw, ne_ref_code, ne_man, code_col = "pcode", fuzzy = TRUE)
+  m_comp_man <- hmatch_composite(ne_raw, ne_ref_code, ne_man, code_col = "pcode", fuzzy = TRUE)
   expect_is(m_comp_man, "data.frame")
   expect_equal(nrow(m_comp_man), nrow(ne_raw))
 
   ## composite hmatch (all match exactly)
   ne_raw_test <- ne_ref_code[,grepl("adm", names(ne_ref_code))]
 
-  m_comp_exact <- hmatch(ne_raw_test, ne_ref_code, ne_man, pattern = "^adm", code_col = "pcode", fuzzy = TRUE)
+  m_comp_exact <- hmatch_composite(ne_raw_test, ne_ref_code, ne_man, pattern = "^adm", code_col = "pcode", fuzzy = TRUE)
   expect_equal(nrow(m_comp_exact), nrow(ne_ref))
   expect_true(all(m_comp_exact$match_type == "complete"))
 })

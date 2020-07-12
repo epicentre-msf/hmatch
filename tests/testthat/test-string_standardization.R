@@ -17,7 +17,7 @@ test_that("String standardization", {
   m_best_no_std <- hmatch_best(ne_raw_upr, ne_ref, std_fn = NULL)
   expect_true(all(is.na(m_best_no_std$match_type)))
 
-  m_comp_no_std <- hmatch(ne_raw_upr, ne_ref, std_fn = NULL)
+  m_comp_no_std <- hmatch_composite(ne_raw_upr, ne_ref, std_fn = NULL)
   expect_true(all(is.na(m_comp_no_std$match_type)))
 })
 
