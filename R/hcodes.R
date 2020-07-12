@@ -93,22 +93,24 @@ hcodes_int <- function(ref,
 
   level_cols <- paste0("LEVEL_ID_", seq_along(by))
 
-  for (i in 2:length(by)) {
+  if (length(level_cols) > 1) {
+    for (i in 2:length(by)) {
 
-    ii <- level_cols[1:(i-1)]
-    col_focal <- level_cols[i]
+      ii <- level_cols[1:(i-1)]
+      col_focal <- level_cols[i]
 
-    ref_split <- lapply(split(ref_, ref_[,ii]), function(df) {
-      x <- as.integer(as.factor(df[,i]))
-      x[is.na(x)] <- 0L
-      df[[col_focal]] <- x
-      df
-    })
+      ref_split <- lapply(split(ref_, ref_[,ii]), function(df) {
+        x <- as.integer(as.factor(df[,i]))
+        x[is.na(x)] <- 0L
+        df[[col_focal]] <- x
+        df
+      })
 
-    ref_ <- unsplit(ref_split, ref_[,ii])
+      ref_ <- unsplit(ref_split, ref_[,ii])
+    }
   }
 
-  levels_ <- ref_[,level_cols]
+  levels_ <- ref_[,level_cols, drop = FALSE]
 
   for(i in 1:ncol(levels_)) {
     n <- nchar(max(levels_[,i]))
