@@ -50,6 +50,6 @@ data(ne_ref)
 hcodes_str(ne_ref, pattern = "^adm")
 
 # integer-based codes
-hcodes_int(ne_ref, pattern = "^adm", prefix = "")
+hcodes_int(ne_ref, pattern = "^adm")
 
 }

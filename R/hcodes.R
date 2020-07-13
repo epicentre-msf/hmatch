@@ -33,7 +33,7 @@
 #' hcodes_str(ne_ref, pattern = "^adm")
 #'
 #' # integer-based codes
-#' hcodes_int(ne_ref, pattern = "^adm", prefix = "")
+#' hcodes_int(ne_ref, pattern = "^adm")
 #'
 #' @name hcodes
 NULL
@@ -48,6 +48,8 @@ hcodes_str <- function(ref,
                        sep = "__",
                        std_fn = string_std) {
 
+
+  ## identify hierarchical columns
   if (is.null(pattern) & is.null(by)) {
     stop("Must provide either argument 'pattern' or argument 'by'")
   } else if (!is.null(pattern) & !is.null(by)) {
@@ -57,16 +59,20 @@ hcodes_str <- function(ref,
     by <- grep(pattern, names(ref), value = TRUE)
   }
 
+  ## select hierarchical columns
   ref_ <- as.data.frame(ref)[, by, drop = FALSE]
 
+  ## standardize values at each hierarchical level
   if (!is.null(std_fn)) {
     for (i in seq_len(ncol(ref_))) {
       ref_[[i]] <- std_fn(ref_[[i]])
     }
   }
 
-  return(apply(ref_, 1, function(x) paste(x[!is.na(x)], collapse = sep)))
+  ## collapse standardize values from each level into hcode
+  apply(ref_, 1, function(x) paste(x[!is.na(x)], collapse = sep))
 }
+
 
 
 #' @rdname hcodes
@@ -76,6 +82,8 @@ hcodes_int <- function(ref,
                        by = NULL,
                        prefix = "") {
 
+
+  ## identify hierarchical columns
   if (is.null(pattern) & is.null(by)) {
     stop("Must provide either argument 'pattern' or argument 'by'")
   } else if (!is.null(pattern) & !is.null(by)) {
@@ -85,39 +93,44 @@ hcodes_int <- function(ref,
     by <- grep(pattern, names(ref), value = TRUE)
   }
 
+  ## select hierarchical columns and convert to character
   ref_ <- as.data.frame(ref)[, by, drop = FALSE]
   ref_ <- as.data.frame(lapply(ref_, as.character))
 
-  ref_$LEVEL_ID_1 <- as.integer(as.factor(ref_[,1]))
-  ref_$LEVEL_ID_1[is.na(ref_$LEVEL_ID_1)] <- 0L
+  ## integer ids for first column
+  int_id_cols <- paste0("LEVEL_ID_", seq_along(by))
+  ref_[[int_id_cols[1]]] <- integer_id(ref_[[1]])
 
-  level_cols <- paste0("LEVEL_ID_", seq_along(by))
-
-  if (length(level_cols) > 1) {
+  ## integer ids for all subsequent columns
+  if (length(int_id_cols) > 1) {
     for (i in 2:length(by)) {
-
-      ii <- level_cols[1:(i-1)]
-      col_focal <- level_cols[i]
-
-      ref_split <- lapply(split(ref_, ref_[,ii]), function(df) {
-        x <- as.integer(as.factor(df[,i]))
-        x[is.na(x)] <- 0L
-        df[[col_focal]] <- x
-        df
-      })
-
-      ref_ <- unsplit(ref_split, ref_[,ii])
+      col_focal <- int_id_cols[i]
+      cols_split <- int_id_cols[1:(i-1)]
+      col_focal_split <- split(ref_[[i]], ref_[cols_split])
+      ref_[[col_focal]] <- unsplit(lapply(col_focal_split, integer_id), ref_[cols_split])
     }
   }
 
-  levels_ <- ref_[,level_cols, drop = FALSE]
+  ## select integer id columns
+  int_ids <- ref_[,int_id_cols, drop = FALSE]
+  int_ids <- as.data.frame(lapply(int_ids, as.integer))
 
-  for(i in 1:ncol(levels_)) {
-    n <- nchar(max(levels_[,i]))
-    levels_[,i] <- formatC(levels_[,i], width = n, flag = "0")
+  ## ensure integer ids constant-width at each level (pad with "0" if necessary)
+  for(i in seq_along(int_id_cols)) {
+    ids_col <- int_ids[[i]]
+    n <- nchar(max(ids_col))
+    int_ids[[i]] <- formatC(ids_col, width = n, flag = "0")
   }
 
-  out <- apply(levels_, 1, function(x) paste0(prefix, paste0(x, collapse = "")))
-  as.character(out)
+  ## collapse integer ids from each level into hcode
+  apply(int_ids, 1, function(x) paste0(prefix, paste0(x, collapse = "")))
+}
+
+
+#' @noRd
+integer_id <- function(x) {
+  out <- as.integer(as.factor(x))
+  out[is.na(out)] <- 0L
+  out
 }
 
