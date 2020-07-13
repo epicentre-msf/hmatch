@@ -43,7 +43,8 @@ hmatch_best(
 \link{join_types}.}
 
 \item{allow_gaps}{logical indicating whether to allow missing values below
-the match level (defaults to \code{TRUE})}
+the 'match level', defined as the highest level with a non-missing value
+within a given row of \code{raw} (defaults to \code{TRUE})}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -74,10 +75,10 @@ province, county, township) against a reference dataset, using a rolling
 approach to identify the best-possible (i.e. highest-resolution) match for
 each row.
 
-The rolling approach implements \code{\link{hmatch_partial}} at each
-successive level, starting with only the first level, then the first and
-second level, etc. The 'best-possible' match reflects the highest-level that
-is consistent among all possible matches to the given row of raw data.
+The rolling approach implements \code{\link{hmatch}} at each successive
+level, starting with only the first level, then the first and second level,
+etc. The 'best-possible' match reflects the highest-level that is consistent
+among all possible matches to the given row of raw data.
 }
 \section{Resolve joins}{
 

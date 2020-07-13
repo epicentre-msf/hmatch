@@ -1,10 +1,10 @@
-#' Partial hierarchical matching, separately at each hierarchical level
+#' Hierarchical matching, separately at each hierarchical level
 #'
 #' @description
-#' Implements hierarchical matching with \code{\link{hmatch_partial}},
-#' separately at each hierarchical level within the data. For a given level, the
-#' raw data that is matched includes every unique combination of values at and
-#' below the level of interest. E.g.
+#' Implements hierarchical matching with \code{\link{hmatch}}, separately at
+#' each hierarchical level within the data. For a given level, the raw data that
+#' is matched includes every unique combination of values at and below the level
+#' of interest. E.g.
 #'
 #' L1: Canada \cr
 #' L1: United States \cr
@@ -18,7 +18,7 @@
 #' L3: United States | New York | New York \cr
 #' L3: United States | Pennsylvania | Philadelphia
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch
 #'
 #' @param levels a vector of names or integer indices corresponding to one or
 #'   more of the hierarchical columns in `raw` to match at. Defaults to `NULL`
@@ -27,7 +27,7 @@
 #'   when argument `levels` specifies a single match level (defaults to `FALSE`)
 #'
 #' @return
-#' A list of data frames, each returned by a call to `hmatch_partial` on the
+#' A list of data frames, each returned by a call to `hmatch` on the
 #' unique combination of hierarchical values at the given hierarchical level.
 #' The number of elements in the list corresponds to the number of hierarchical
 #' columns in `raw`, or, if specified, the number of elements in argument
@@ -41,34 +41,34 @@
 #' data(ne_ref)
 #'
 #' # find all non-matches ("anti"-join) at each hierarchical level
-#' spmatch_partial(ne_raw, ne_ref, type = "anti")
+#' spmatch(ne_raw, ne_ref, type = "anti")
 #'
 #' # find all matches ("inner"-join) at only the adm2 level
-#' spmatch_partial(ne_raw, ne_ref, type = "inner", levels = "adm2")
+#' spmatch(ne_raw, ne_ref, type = "inner", levels = "adm2")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' spmatch_partial(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
+#' spmatch(ne_raw, ne_ref, type = "inner", dict = ne_dict, levels = "adm2")
 #'
-#' @export spmatch_partial
-spmatch_partial <- function(raw,
-                            ref,
-                            pattern = NULL,
-                            pattern_ref = pattern,
-                            by = NULL,
-                            by_ref = by_ref,
-                            dict = NULL,
-                            type = "left",
-                            ref_prefix = "ref_",
-                            fuzzy = FALSE,
-                            max_dist = 1L,
-                            std_fn = string_std,
-                            ...,
-                            levels = NULL,
-                            always_list = FALSE) {
+#' @export spmatch
+spmatch <- function(raw,
+                    ref,
+                    pattern = NULL,
+                    pattern_ref = pattern,
+                    by = NULL,
+                    by_ref = by_ref,
+                    dict = NULL,
+                    type = "left",
+                    ref_prefix = "ref_",
+                    fuzzy = FALSE,
+                    max_dist = 1L,
+                    std_fn = string_std,
+                    ...,
+                    levels = NULL,
+                    always_list = FALSE) {
 
   # # for testing
   # raw = ne_raw
@@ -98,7 +98,7 @@ spmatch_partial <- function(raw,
   )
 
   out <- mapply(
-    hmatch_partial,
+    hmatch,
     raw = prep$raw_split,
     ref = prep$ref_split,
     MoreArgs = list(

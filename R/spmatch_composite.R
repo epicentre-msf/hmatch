@@ -20,7 +20,7 @@
 #' L3: United States | Pennsylvania | Philadelphia
 #'
 #' @inheritParams hmatch_composite
-#' @inheritParams spmatch_partial
+#' @inheritParams spmatch
 #'
 #' @return
 #' A list of data frames, each returned by a call to `hmatch_composite` on the

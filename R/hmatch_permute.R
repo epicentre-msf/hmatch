@@ -7,12 +7,12 @@
 #' permutation of the hierarchical columns to allow for values entered at the
 #' wrong hierarchical level.
 #'
-#' The function calls \code{\link{hmatch_partial}} on each possible permutation
-#' of the hierarchical columns, and then combines the results. Rows of `raw`
-#' yielding multiple matches to `ref` can optionally be resolved using a
-#' resolve-type join (see section **Resolve joins** below).
+#' The function calls \code{\link{hmatch}} on each possible permutation of the
+#' hierarchical columns, and then combines the results. Rows of `raw` yielding
+#' multiple matches to `ref` can optionally be resolved using a resolve-type
+#' join (see section **Resolve joins** below).
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -130,9 +130,9 @@ hmatch_permute <- function(raw,
   ## generate every possible permutation of join columns
   raw_join_permutations <- permute_columns(raw_join, prep$by_raw_join)
 
-  ## call hmatch_partial_ for every permutation
+  ## call hmatch_ for every permutation
   raw_perm_match <- mapply(
-    hmatch_partial_,
+    hmatch_,
     raw_join = raw_join_permutations,
     MoreArgs = list(
       ref_join = ref_join,

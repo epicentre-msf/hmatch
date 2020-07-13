@@ -13,7 +13,7 @@
 #' (i.e. admin2 values) across both datasets (e.g "Kings", "Queens", "New York",
 #' "Suffolk", "Bronx", etc.).
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch
 #'
 #' @param x a `data.frame` representing one or more rows from `raw`, and
 #'   optionally including matching columns from `ref` to help narrow down the

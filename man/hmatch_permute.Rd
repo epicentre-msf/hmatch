@@ -71,10 +71,10 @@ province, county, township) against a reference dataset, using sequential
 permutation of the hierarchical columns to allow for values entered at the
 wrong hierarchical level.
 
-The function calls \code{\link{hmatch_partial}} on each possible permutation
-of the hierarchical columns, and then combines the results. Rows of \code{raw}
-yielding multiple matches to \code{ref} can optionally be resolved using a
-resolve-type join (see section \strong{Resolve joins} below).
+The function calls \code{\link{hmatch}} on each possible permutation of the
+hierarchical columns, and then combines the results. Rows of \code{raw} yielding
+multiple matches to \code{ref} can optionally be resolved using a resolve-type
+join (see section \strong{Resolve joins} below).
 }
 \section{Resolve joins}{
 

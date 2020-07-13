@@ -8,9 +8,9 @@
 #'
 #' The sequence of matching strategies is:
 #' 1. (optional) manually-specified matching with \code{\link{hmatch_manual}}
-#' 2. complete matching with \code{\link{hmatch_partial}} (`allow_gaps = FALSE`)
-#' 3. partial matching with \code{\link{hmatch_partial}} (`allow_gaps = TRUE`)
-#' 4. fuzzy partial matching with \code{\link{hmatch_partial}} (`allow_gaps = TRUE`, `fuzzy = TRUE`)
+#' 2. complete matching with \code{\link{hmatch}} (`allow_gaps = FALSE`)
+#' 3. partial matching with \code{\link{hmatch}} (`allow_gaps = TRUE`)
+#' 4. fuzzy partial matching with \code{\link{hmatch}} (`allow_gaps = TRUE`, `fuzzy = TRUE`)
 #' 5. best-possible matching with \code{\link{hmatch_best}}
 #'
 #' Each approach is implement only on the rows of data for which a single match
@@ -187,7 +187,7 @@ hmatch_composite <- function(raw,
   ## complete non-fuzzy match
   if (nrow(raw_join_remaining) > 0) {
 
-    m_complete <- hmatch_partial_(
+    m_complete <- hmatch_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
       by_raw = prep$by_raw,
@@ -209,7 +209,7 @@ hmatch_composite <- function(raw,
   ## partial non-fuzzy match
   if (nrow(raw_join_remaining) > 0 & allow_gaps) {
 
-    m_partial <- hmatch_partial_(
+    m_partial <- hmatch_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
       by_raw = prep$by_raw,
@@ -231,7 +231,7 @@ hmatch_composite <- function(raw,
   ## partial fuzzy match
   if (nrow(raw_join_remaining) > 0) {
 
-    m_fuzzy <- hmatch_partial_(
+    m_fuzzy <- hmatch_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
       by_raw = prep$by_raw,

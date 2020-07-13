@@ -6,12 +6,12 @@
 #' approach to identify the best-possible (i.e. highest-resolution) match for
 #' each row.
 #'
-#' The rolling approach implements \code{\link{hmatch_partial}} at each
-#' successive level, starting with only the first level, then the first and
-#' second level, etc. The 'best-possible' match reflects the highest-level that
-#' is consistent among all possible matches to the given row of raw data.
+#' The rolling approach implements \code{\link{hmatch}} at each successive
+#' level, starting with only the first level, then the first and second level,
+#' etc. The 'best-possible' match reflects the highest-level that is consistent
+#' among all possible matches to the given row of raw data.
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -190,7 +190,7 @@ hmatch_best_ <- function(raw_join,
 
   matches_by_level <- list()
 
-  ## find matches with hmatch_partial() at each match level...
+  ## find matches with hmatch() at each match level...
   for (j in rev(seq_along(by_raw))) {
 
     # columns to exclude (> focal level)
@@ -207,7 +207,7 @@ hmatch_best_ <- function(raw_join,
     ref_foc <- ref_foc[ref_foc[[temp_col_max_level]] <= j,]
 
     # match raw to ref at given level
-    matches_by_level[[j]] <-  hmatch_partial_(
+    matches_by_level[[j]] <-  hmatch_(
       raw_join = raw_foc,
       ref_join = ref_foc,
       by_raw_join = by_raw_join[1:j],

@@ -16,7 +16,7 @@
 #' Philadelphia
 #'
 #' @inheritParams hmatch_best
-#' @inheritParams spmatch_partial
+#' @inheritParams spmatch
 #'
 #' @return A list of data frames, each returned by a call to `hmatch_best` on
 #' the unique combination of hierarchical values at the given hierarchical

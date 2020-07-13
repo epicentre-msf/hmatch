@@ -4,7 +4,7 @@
 #' province, county, township) against a reference dataset, using a dictionary
 #' of manually-specified matches.
 #'
-#' @inheritParams hmatch_partial
+#' @inheritParams hmatch
 #'
 #' @param man `data.frame` of manually-specified matches, relating a given set
 #'   of hierarchical values to the code within `ref` to which those values

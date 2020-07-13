@@ -51,7 +51,8 @@ and \code{man} (only required if argument \code{man} is given)}
 "resolve_anti"). Defaults to "left". See \link{join_types}.}
 
 \item{allow_gaps}{logical indicating whether to allow missing values below
-the match level (defaults to \code{TRUE})}
+the 'match level', defined as the highest level with a non-missing value
+within a given row of \code{raw} (defaults to \code{TRUE})}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
@@ -85,9 +86,9 @@ match (i.e. highest-resolution) for each row.
 The sequence of matching strategies is:
 \enumerate{
 \item (optional) manually-specified matching with \code{\link{hmatch_manual}}
-\item complete matching with \code{\link{hmatch_partial}} (\code{allow_gaps = FALSE})
-\item partial matching with \code{\link{hmatch_partial}} (\code{allow_gaps = TRUE})
-\item fuzzy partial matching with \code{\link{hmatch_partial}} (\code{allow_gaps = TRUE}, \code{fuzzy = TRUE})
+\item complete matching with \code{\link{hmatch}} (\code{allow_gaps = FALSE})
+\item partial matching with \code{\link{hmatch}} (\code{allow_gaps = TRUE})
+\item fuzzy partial matching with \code{\link{hmatch}} (\code{allow_gaps = TRUE}, \code{fuzzy = TRUE})
 \item best-possible matching with \code{\link{hmatch_best}}
 }
 

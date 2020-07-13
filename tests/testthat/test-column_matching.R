@@ -6,12 +6,12 @@ test_that("Column matching works", {
   by_ref <- c("geo0", "geo1", "geo2")
 
   ## complete join
-  m_complete_0 <- hmatch_partial(
+  m_complete_0 <- hmatch(
     ne_raw, ne_ref,
     type = "inner"
   )
 
-  m_complete_r1 <- hmatch_partial(
+  m_complete_r1 <- hmatch(
     ne_raw,
     ne_ref_r,
     pattern = "^adm",
@@ -19,7 +19,7 @@ test_that("Column matching works", {
     type = "inner"
   )
 
-  m_complete_r2 <- hmatch_partial(
+  m_complete_r2 <- hmatch(
     ne_raw,
     ne_ref_r,
     by = by_raw,

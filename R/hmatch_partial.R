@@ -1,12 +1,14 @@
-#' Partial hierarchical matching
+#' Match sets of hierarchical variables between a raw and reference dataset
 #'
-#' Match a data frame with raw, potentially messy hierarchical data (e.g.
-#' province, county, township) against a reference dataset, using partial
-#' matching. "Partial" here means that one or more hierarchical levels within
-#' the raw data may be missing (i.e. NA). More specifically, for a given row of
-#' raw data, matches can potentially be made to a high-resolution level (e.g.
-#' township) even if one or more lower-resolution levels (e.g. province) is
-#' missing.
+#' @description
+#' Match sets of hierarchical values (e.g. province, county, township) in a raw,
+#' messy dataset to corresponding values within a reference dataset, optionally
+#' accounting for discrepancies between the datasets such as:
+#'
+#' - variation in character case, use of accents, or spelling
+#' - variation in hierarchical resolution (e.g. some entries specified to
+#'   municipality but others only to region)
+#' - missing values at one or more hierarchical levels
 #'
 #' @param raw data frame containing hierarchical columns with raw data
 #' @param ref data frame containing hierarchical columns with reference data
@@ -22,7 +24,8 @@
 #'   "resolve_inner", or "resolve_anti"). Defaults to "left". See
 #'   \link{join_types}.
 #' @param allow_gaps logical indicating whether to allow missing values below
-#'   the match level (defaults to `TRUE`)
+#'   the 'match level', defined as the highest level with a non-missing value
+#'   within a given row of `raw` (defaults to `TRUE`)
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
@@ -41,9 +44,9 @@
 #'   \link{join_types} for more details)
 #'
 #' @section Resolve joins:
-#' In `hmatch_partial`, if argument `type` corresponds to a resolve join, rows
+#' In `hmatch`, if argument `type` corresponds to a resolve join, rows
 #' of `raw` with multiple matches to `ref` are always resolved to 'no match'.
-#' This is because `hmatch_partial` does not accept matches below the highest
+#' This is because `hmatch` does not accept matches below the highest
 #' non-missing level within a given row of `raw`. E.g.
 #'
 #' `raw`: \cr
@@ -53,7 +56,7 @@
 #' `1. | United States | New York     | Jefferson |` \cr
 #' `2. | United States | Pennsylvania | Jefferson |`
 #'
-#' In a regular join with `hmatch_partial`, the single row from `raw` (above)
+#' In a regular join with `hmatch`, the single row from `raw` (above)
 #' will match both rows of `ref`. However, in a resolve join the multiple
 #' conflicting matches (i.e. conflicting values at the 2nd hierarchical level)
 #' will result in the row from `raw` being treated as non-matching to `ref`.
@@ -62,30 +65,30 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_partial(ne_raw, ne_ref, pattern = "adm", type = "inner")
+#' hmatch(ne_raw, ne_ref, pattern = "adm", type = "inner")
 #'
 #' # with dictionary-based recoding
 #' ne_dict <- data.frame(value = "USA",
 #'                       replacement = "United States",
 #'                       variable = "adm0")
 #'
-#' hmatch_partial(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
+#' hmatch(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
 #'
-#' @export hmatch_partial
-hmatch_partial <- function(raw,
-                           ref,
-                           pattern = NULL,
-                           pattern_ref = pattern,
-                           by = NULL,
-                           by_ref = by,
-                           type = "left",
-                           allow_gaps = TRUE,
-                           fuzzy = FALSE,
-                           max_dist = 1L,
-                           dict = NULL,
-                           ref_prefix = "ref_",
-                           std_fn = string_std,
-                           ...) {
+#' @export hmatch
+hmatch <- function(raw,
+                   ref,
+                   pattern = NULL,
+                   pattern_ref = pattern,
+                   by = NULL,
+                   by_ref = by,
+                   type = "left",
+                   allow_gaps = TRUE,
+                   fuzzy = FALSE,
+                   max_dist = 1L,
+                   dict = NULL,
+                   ref_prefix = "ref_",
+                   std_fn = string_std,
+                   ...) {
 
   # # # for testing
   # # raw <- readRDS("~/desktop/drc_bench_raw.rds")[,1:4]
@@ -151,7 +154,7 @@ hmatch_partial <- function(raw,
   }
 
   ## run main matching routine
-  hmatch_partial_(
+  hmatch_(
     raw_join = raw_join,
     ref_join = ref_join,
     by_raw = prep$by_raw,
@@ -168,26 +171,26 @@ hmatch_partial <- function(raw,
 
 
 
-#' Wrapper for lower level matching functions hmatch_partial__ and
+#' Wrapper for lower level matching functions hmatch__ and
 #' hmatch_complete__
 #'
 #' Used because hmatch_complete__ (doesn't allow for gaps or fuzzy matching) is
-#' much faster than hmatch_partial__, so only use hmatch_partial__ for fuzzy
+#' much faster than hmatch__, so only use hmatch__ for fuzzy
 #' matching and/or matching rows of raw with gaps
 #'
 #' @noRd
 #' @importFrom dplyr bind_rows
-hmatch_partial_ <- function(raw_join,
-                            ref_join,
-                            by_raw = NULL,
-                            by_ref = NULL,
-                            by_raw_join,
-                            by_ref_join,
-                            type = "left",
-                            allow_gaps = TRUE,
-                            fuzzy = FALSE,
-                            max_dist = 1L,
-                            class_raw = "data.frame") {
+hmatch_ <- function(raw_join,
+                    ref_join,
+                    by_raw = NULL,
+                    by_ref = NULL,
+                    by_raw_join,
+                    by_ref_join,
+                    type = "left",
+                    allow_gaps = TRUE,
+                    fuzzy = FALSE,
+                    max_dist = 1L,
+                    class_raw = "data.frame") {
 
 
   temp_col_id <- "TEMP_ROW_ID_PART_WRAPPER"
@@ -226,7 +229,7 @@ hmatch_partial_ <- function(raw_join,
       class_raw = class_raw
     )
 
-    out_partial <- hmatch_partial__(
+    out_partial <- hmatch__(
       raw_join_partial,
       ref_join,
       by_raw = by_raw,
@@ -242,7 +245,7 @@ hmatch_partial_ <- function(raw_join,
   } else {
     ## else if fuzzy, use partial match for all rows
 
-    out <- hmatch_partial__(
+    out <- hmatch__(
       raw_join = raw_join,
       ref_join = ref_join,
       by_raw = by_raw,
@@ -267,17 +270,17 @@ hmatch_partial_ <- function(raw_join,
 #' Low level matching function that allows for gaps and fuzzy matching
 #' @noRd
 #' @importFrom dplyr left_join
-hmatch_partial__ <- function(raw_join,
-                             ref_join,
-                             by_raw = NULL, # not used
-                             by_ref = NULL, # only used if type is resolve join
-                             by_raw_join,
-                             by_ref_join,
-                             allow_gaps = TRUE,
-                             type = "left",
-                             fuzzy = FALSE,
-                             max_dist = 1L,
-                             class_raw = "data.frame") {
+hmatch__ <- function(raw_join,
+                     ref_join,
+                     by_raw = NULL, # not used
+                     by_ref = NULL, # only used if type is resolve join
+                     by_raw_join,
+                     by_ref_join,
+                     allow_gaps = TRUE,
+                     type = "left",
+                     fuzzy = FALSE,
+                     max_dist = 1L,
+                     class_raw = "data.frame") {
 
 
   ## add temporary row-id column to aid in matching
