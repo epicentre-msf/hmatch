@@ -12,10 +12,11 @@ hmatch_partial(
   by = NULL,
   by_ref = by,
   type = "left",
-  dict = NULL,
-  ref_prefix = "ref_",
+  allow_gaps = TRUE,
   fuzzy = FALSE,
   max_dist = 1L,
+  dict = NULL,
+  ref_prefix = "ref_",
   std_fn = string_std,
   ...
 )
@@ -41,17 +42,20 @@ hmatch_partial(
 "resolve_inner", or "resolve_anti"). Defaults to "left". See
 \link{join_types}.}
 
-\item{dict}{optional dictionary for recoding values within the hierarchical
-columns of \code{raw} (see \link{dictionary_recoding})}
-
-\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to "ref_")}
+\item{allow_gaps}{logical indicating whether to allow missing values below
+the match level (defaults to \code{TRUE})}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
 FALSE)}
 
 \item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
 fuzzy-matching (defaults to \code{1L})}
+
+\item{dict}{optional dictionary for recoding values within the hierarchical
+columns of \code{raw} (see \link{dictionary_recoding})}
+
+\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
+are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
 \item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

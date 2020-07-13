@@ -76,17 +76,13 @@ hmatch_best <- function(raw,
                         by = NULL,
                         by_ref = by,
                         type = "left",
-                        dict = NULL,
-                        ref_prefix = "ref_",
+                        allow_gaps = TRUE,
                         fuzzy = FALSE,
                         max_dist = 1L,
+                        dict = NULL,
+                        ref_prefix = "ref_",
                         std_fn = string_std,
                         ...) {
-
-
-  # raw <- ne_raw_upr
-  # ref <- ne_ref
-  # std_fn = NULL
 
 
   # # for testing purposes only
@@ -156,6 +152,7 @@ hmatch_best <- function(raw,
     by_raw_join = prep$by_raw_join,
     by_ref_join = prep$by_ref_join,
     type = type,
+    allow_gaps = allow_gaps,
     fuzzy = fuzzy,
     max_dist = max_dist,
     class_raw = class(raw)
@@ -172,6 +169,7 @@ hmatch_best_ <- function(raw_join,
                          by_raw_join,
                          by_ref_join,
                          type = "left",
+                         allow_gaps = TRUE,
                          fuzzy = FALSE,
                          max_dist = 1L,
                          class_raw = "data.frame") {
@@ -215,9 +213,10 @@ hmatch_best_ <- function(raw_join,
       by_raw_join = by_raw_join[1:j],
       by_ref_join = by_ref_join[1:j],
       type = "inner",
-      class_raw = class_raw,
+      allow_gaps = allow_gaps,
       fuzzy = fuzzy,
-      max_dist = max_dist
+      max_dist = max_dist,
+      class_raw = class_raw
     )
   }
 

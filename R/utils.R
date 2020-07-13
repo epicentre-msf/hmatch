@@ -28,6 +28,13 @@ n_levels <- function(x,
 
 
 #' @noRd
+complete_sequence <- function(x, by) {
+  n_levels(x, by = by) == max_levels(x, by = by)
+}
+
+
+
+#' @noRd
 unique_excl_na <- function(x) {
   all(is.na(x)) | length(unique(x[!is.na(x)])) == 1L
 }
@@ -84,13 +91,6 @@ rbind_dfs <- function(x, y) {
 
 
 #' @noRd
-rename_col <- function(dat, col_old, col_new) {
-  names(dat)[names(dat) == col_old] <- col_new
-  dat
-}
-
-
-#' @noRd
 add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
 
   bind_ <- dat[, by, drop = FALSE]
@@ -122,13 +122,6 @@ corresponding_levels <- function(dat, by_raw, by_ref) {
 #' @noRd
 max_not_na_value <- function(x) {
   ifelse(any(!is.na(x)), x[max(which(!is.na(x)))], NA_character_)
-}
-
-
-#' @noRd
-best_geocode <- function(dat, pattern) {
-  cols <- grep(pattern, names(dat), value = TRUE)
-  apply(dat[, sort(cols), drop = FALSE], 1, max_not_na_value)
 }
 
 
@@ -179,34 +172,7 @@ prep_match_columns <- function(raw,
 }
 
 
-#' @noRd
-best_geocode_helper <- function(dat, pattern, code_col, id_col, split = "__") {
 
-  # TODO: make this code less awful
-  cols <- grep(pattern, names(dat), value = TRUE)
-  dat_ <- dat[, sort(cols), drop = FALSE]
-  id <- unique(dat[[id_col]])
-
-  n_levels <- ncol(dat_)
-
-  geocodes <- unlist(dat_, use.names = FALSE)
-  geocodes <- unique(geocodes[!is.na(geocodes)])
-
-  zz <- lapply(geocodes, function(x) fill_vec_na(strsplit(x, split)[[1]], N = n_levels))
-  yy <- do.call(rbind, zz)
-  xx <- apply(yy, 2, function(x) length(unique(x[!is.na(x)])) == 1L)
-  uu <- max_before_false(xx)
-
-  if (!is.na(uu)) {
-    tt <- 1:uu
-    yy <- if (length(tt) == 1) cbind(yy[,1:uu, drop = FALSE]) else yy[, 1:uu, drop = FALSE]
-    ss <- apply(yy, 2, function(x) unique(x[!is.na(x)]))
-    code <- paste(ss, collapse = split)
-  } else {
-    code <- NA_character_
-  }
-  return(setNames(data.frame(id, code, stringsAsFactors = FALSE), c(id_col, code_col)))
-}
 
 
 

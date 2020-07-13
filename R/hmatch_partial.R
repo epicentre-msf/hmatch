@@ -8,12 +8,33 @@
 #' township) even if one or more lower-resolution levels (e.g. province) is
 #' missing.
 #'
-#' @inheritParams hmatch_complete
-#'
+#' @param raw data frame containing hierarchical columns with raw data
+#' @param ref data frame containing hierarchical columns with reference data
+#' @param pattern regex pattern to match the hierarchical columns in `raw`
+#'   (columns can be matched using either `pattern` *or* `by`, as described in
+#'   \link{specifying_columns})
+#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
+#'   (defaults to `pattern`)
+#' @param by vector giving the names of the hierarchical columns in `raw`
+#' @param by_ref vector giving the names of the hierarchical columns in `ref`
+#'   (defaults to `by`)
+#' @param type type of join ("left", "inner", "anti", "resolve_left",
+#'   "resolve_inner", or "resolve_anti"). Defaults to "left". See
+#'   \link{join_types}.
+#' @param allow_gaps logical indicating whether to allow missing values below
+#'   the match level (defaults to `TRUE`)
 #' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
 #'   FALSE)
 #' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
 #'   fuzzy-matching (defaults to `1L`)
+#' @param dict optional dictionary for recoding values within the hierarchical
+#'   columns of `raw` (see \link{dictionary_recoding})
+#' @param ref_prefix prefix to add to hierarchical column names in `ref` if they
+#'   are otherwise identical to names in `raw`  (defaults to "ref_")
+#' @param std_fn function to standardize strings during matching. Defaults to
+#'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
+#'   also \link{string_standardization}.
+#' @param ... additional arguments passed to `std_fn()`
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
 #'   and `ref`, using the join type specified by argument `type` (see
@@ -58,14 +79,15 @@ hmatch_partial <- function(raw,
                            by = NULL,
                            by_ref = by,
                            type = "left",
-                           dict = NULL,
-                           ref_prefix = "ref_",
+                           allow_gaps = TRUE,
                            fuzzy = FALSE,
                            max_dist = 1L,
+                           dict = NULL,
+                           ref_prefix = "ref_",
                            std_fn = string_std,
                            ...) {
 
-  # # for testing
+  # # # for testing
   # # raw <- readRDS("~/desktop/drc_bench_raw.rds")[,1:4]
   # # ref <- readRDS("~/desktop/drc_bench_ref.rds")
   # raw = ne_raw
@@ -75,6 +97,8 @@ hmatch_partial <- function(raw,
   # pattern = NULL
   # pattern_ref = pattern
   # by = NULL
+  # by_ref = by
+  # allow_gaps = TRUE
   # dict <- NULL
   # type = "inner"
   # ref_prefix = "ref_"
@@ -134,6 +158,7 @@ hmatch_partial <- function(raw,
     by_ref = prep$by_ref,
     by_raw_join = prep$by_raw_join,
     by_ref_join = prep$by_ref_join,
+    allow_gaps = allow_gaps,
     type = type,
     fuzzy = fuzzy,
     max_dist = max_dist,
@@ -143,18 +168,117 @@ hmatch_partial <- function(raw,
 
 
 
+#' Wrapper for lower level matching functions hmatch_partial__ and
+#' hmatch_complete__
+#'
+#' Used because hmatch_complete__ (doesn't allow for gaps or fuzzy matching) is
+#' much faster than hmatch_partial__, so only use hmatch_partial__ for fuzzy
+#' matching and/or matching rows of raw with gaps
+#'
 #' @noRd
-#' @importFrom dplyr left_join
+#' @importFrom dplyr bind_rows
 hmatch_partial_ <- function(raw_join,
                             ref_join,
-                            by_raw = NULL, # not used
-                            by_ref = NULL, # only used if type is resolve join
+                            by_raw = NULL,
+                            by_ref = NULL,
                             by_raw_join,
                             by_ref_join,
                             type = "left",
+                            allow_gaps = TRUE,
                             fuzzy = FALSE,
                             max_dist = 1L,
                             class_raw = "data.frame") {
+
+
+  temp_col_id <- "TEMP_ROW_ID_PART_WRAPPER"
+  raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
+
+  if (!fuzzy & !allow_gaps) {
+    ## if not fuzzy and gaps not allowed, use complete match for all rows
+
+    out <- hmatch_complete__(
+      raw_join,
+      ref_join,
+      by_raw = by_raw,
+      by_ref = by_ref,
+      by_raw_join = by_raw_join,
+      by_ref_join = by_ref_join,
+      type = type,
+      class_raw = class_raw
+    )
+
+  } else if (!fuzzy & allow_gaps) {
+    ## else if not fuzzy and allow gaps, use complete match for complete rows
+    # and partial for rest
+
+    no_gaps_raw_join <- complete_sequence(raw_join, by = by_raw_join)
+    raw_join_complete <- raw_join[no_gaps_raw_join, , drop = FALSE]
+    raw_join_partial <- raw_join[!no_gaps_raw_join, , drop = FALSE]
+
+    out_complete <- hmatch_complete__(
+      raw_join_complete,
+      ref_join,
+      by_raw = by_raw,
+      by_ref = by_ref,
+      by_raw_join = by_raw_join,
+      by_ref_join = by_ref_join,
+      type = type,
+      class_raw = class_raw
+    )
+
+    out_partial <- hmatch_partial__(
+      raw_join_partial,
+      ref_join,
+      by_raw = by_raw,
+      by_ref = by_ref,
+      by_raw_join = by_raw_join,
+      by_ref_join = by_ref_join,
+      type = type,
+      class_raw = class_raw
+    )
+
+    out <- dplyr::bind_rows(out_complete, out_partial)
+
+  } else {
+    ## else if fuzzy, use partial match for all rows
+
+    out <- hmatch_partial__(
+      raw_join = raw_join,
+      ref_join = ref_join,
+      by_raw = by_raw,
+      by_ref = by_ref,
+      by_raw_join = by_raw_join,
+      by_ref_join = by_ref_join,
+      allow_gaps = allow_gaps,
+      type = type,
+      fuzzy = fuzzy,
+      max_dist = max_dist,
+      class_raw = class_raw
+    )
+  }
+
+  ## reorder rows and remove temp column
+  out <- out[order(out[[temp_col_id]]),]
+  out[,!names(out) %in% temp_col_id, drop = FALSE]
+}
+
+
+
+#' Low level matching function that allows for gaps and fuzzy matching
+#' @noRd
+#' @importFrom dplyr left_join
+hmatch_partial__ <- function(raw_join,
+                             ref_join,
+                             by_raw = NULL, # not used
+                             by_ref = NULL, # only used if type is resolve join
+                             by_raw_join,
+                             by_ref_join,
+                             allow_gaps = TRUE,
+                             type = "left",
+                             fuzzy = FALSE,
+                             max_dist = 1L,
+                             class_raw = "data.frame") {
+
 
   ## add temporary row-id column to aid in matching
   temp_col_id <- "TEMP_ROW_ID_PART"
@@ -174,6 +298,14 @@ hmatch_partial_ <- function(raw_join,
   temp_col_max_ref <- "MAX_ADM_REF_"
   raw_join[[temp_col_max_raw]] <- max_levels(raw_join, by = by_raw_join)
   ref_join[[temp_col_max_ref]] <- max_levels(ref_join, by = by_ref_join)
+
+  ## if !allow_gaps, filter now to complete sequences for efficiency
+  raw_join_orig <- raw_join
+
+  if (!allow_gaps) {
+    rows_no_gaps <- complete_sequence(raw_join, by_raw_join)
+    raw_join <- raw_join[rows_no_gaps, , drop = FALSE]
+  }
 
   ## extract only the join columns
   raw_ <- raw_join[,by_raw_join, drop = FALSE]
@@ -251,7 +383,7 @@ hmatch_partial_ <- function(raw_join,
   }
 
   ## merge raw with final match data
-  raw_join_out <- raw_join[,names_raw_prep, drop = FALSE]
+  raw_join_out <- raw_join_orig[,names_raw_prep, drop = FALSE]
   matches_out <- dplyr::left_join(raw_join_out, matches_join_out, by = temp_col_id)
 
   ## execute match type and remove temporary columns
@@ -290,68 +422,58 @@ filter_to_matches <- function(dat, col1, col2, fuzzy, max_dist, is_max_level) {
 
 
 
+#' Low level matching function that doesn't allow for gaps or fuzzy matching
 #' @noRd
-#' @importFrom dplyr bind_rows
-resolve_join <- function(x, by_ref, temp_col_id, consistent = c("min", "max", "all")) {
-  if (nrow(x) == 0L) {
-    out <- x
-  } else {
-    consistent <- match.arg(consistent)
-    x_split <- split(x, x[[temp_col_id]])
-    l_resolve <- lapply(x_split, resolve_join_, by_ref = by_ref, consistent = consistent)
-    out <- dplyr::bind_rows(l_resolve)
+#' @importFrom dplyr left_join
+hmatch_complete__ <- function(raw_join,
+                              ref_join,
+                              by_raw = NULL, # not used
+                              by_ref = NULL, # only used if type is resolve join
+                              by_raw_join,
+                              by_ref_join = by_raw_join,
+                              type = "left",
+                              class_raw = "data.frame") {
+
+  ## add temporary row-id column to aid in matching
+  temp_col_id <- "TEMP_ROW_ID_COMPLETE"
+  raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
+
+  ## add temporary match column to ref_join
+  temp_col_match <- "TEMP_MATCH_COMPLETE"
+  ref_join[[temp_col_match]] <- TRUE
+
+  ## re-derive initial (pre-join) column names
+  names_raw_prep <- setdiff(names(raw_join), by_raw_join)
+  names_raw_orig <- setdiff(names_raw_prep, temp_col_id)
+
+  ## complete join
+  matches_out <- dplyr::left_join(
+    raw_join,
+    ref_join,
+    by = set_names(by_ref_join, by_raw_join)
+  )
+
+  ## remove join cols
+  matches_out <- matches_out[, !names(matches_out) %in% by_raw_join, drop = FALSE]
+
+  ## if resolve-type join
+  if (grepl("^resolve", type)) {
+    matches_out <- resolve_join(
+      matches_out,
+      by_ref = by_ref,
+      temp_col_id = temp_col_id,
+      consistent = "all"
+    )
   }
-  out
-}
 
-
-
-#' @noRd
-resolve_join_ <- function(x, by_ref, consistent) {
-
-  if (nrow(x) < 2L) {
-    out <- x
-  } else {
-
-    ## 2 or more matches...
-    ref_sub_ <- x[,by_ref, drop = FALSE]
-    matches_consistent <- vapply(ref_sub_, unique_excl_na, FALSE)
-    max_matches_consistent <- max_before_false(matches_consistent)
-
-    if (!matches_consistent[1L]) {
-      ## not consistent even to first level
-      out <- x[0, , drop = FALSE]
-    } else if (consistent == "all") {
-      ## if require ALL consistent
-      if (all(matches_consistent)) {
-        max_ref_levels <- max_levels(ref_sub_)
-        row <- which(max_ref_levels == max(max_ref_levels))[1L]
-        out <- x[row, , drop = FALSE]
-      } else {
-        out <- x[0, , drop = FALSE]
-      }
-    } else {
-      ## don't require ALL consistent and at least some are consistent
-
-      # replace inconsistent values with NA
-      by_i <- seq_along(by_ref)
-      by_ref_inconsistent <- by_ref[by_i > max_matches_consistent]
-
-      for (j in by_ref_inconsistent) {
-        x[[j]] <- NA_character_
-      }
-
-      max_ref_levels <- max_levels(x, by = by_ref)
-
-      if (consistent == "min") {
-        row <- which(max_ref_levels == min(max_ref_levels))[1L]
-      } else {
-        row <- which(max_ref_levels == max(max_ref_levels))[1L]
-      }
-
-      out <- x[row, , drop = FALSE]
-    }
-  }
-  out
+  ## execute match type and remove temporary columns
+  prep_output(
+    x = matches_out,
+    type = gsub("^resolve_", "", type),
+    temp_col_id = temp_col_id,
+    temp_col_match = temp_col_match,
+    cols_raw_orig = names_raw_orig,
+    class_raw = class_raw
+  )
 }
 

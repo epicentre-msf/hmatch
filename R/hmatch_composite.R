@@ -56,12 +56,13 @@ hmatch_composite <- function(raw,
                              pattern_ref = pattern,
                              by = NULL,
                              by_ref = by,
-                             type = "resolve_left",
-                             dict = NULL,
                              code_col = NULL,
-                             ref_prefix = "ref_",
+                             type = "resolve_left",
+                             allow_gaps = TRUE,
                              fuzzy = FALSE,
                              max_dist = 1L,
+                             dict = NULL,
+                             ref_prefix = "ref_",
                              std_fn = string_std,
                              ...) {
 
@@ -183,17 +184,19 @@ hmatch_composite <- function(raw,
     raw_join_remaining <- raw_join_remaining[unmatched,]
   }
 
-  ## complete match
+  ## complete non-fuzzy match
   if (nrow(raw_join_remaining) > 0) {
 
-    m_complete <- hmatch_complete_(
-      raw_join_remaining,
-      ref_join,
+    m_complete <- hmatch_partial_(
+      raw_join = raw_join_remaining,
+      ref_join = ref_join,
       by_raw = prep$by_raw,
       by_ref = prep$by_ref,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
-      type = "resolve_inner"
+      type = "resolve_inner",
+      allow_gaps = FALSE,
+      fuzzy = FALSE
     )
 
     m_complete <- m_complete[,c(temp_col_id, temp_col_code)]
@@ -203,8 +206,8 @@ hmatch_composite <- function(raw,
     raw_join_remaining <- raw_join_remaining[unmatched,]
   }
 
-  ## partial join
-  if (nrow(raw_join_remaining) > 0) {
+  ## partial non-fuzzy match
+  if (nrow(raw_join_remaining) > 0 & allow_gaps) {
 
     m_partial <- hmatch_partial_(
       raw_join = raw_join_remaining,
@@ -214,6 +217,7 @@ hmatch_composite <- function(raw,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
       type = "resolve_inner",
+      allow_gaps = TRUE,
       fuzzy = FALSE
     )
 
@@ -224,7 +228,7 @@ hmatch_composite <- function(raw,
     raw_join_remaining <- raw_join_remaining[unmatched,]
   }
 
-  ## partial fuzzy join
+  ## partial fuzzy match
   if (nrow(raw_join_remaining) > 0) {
 
     m_fuzzy <- hmatch_partial_(
@@ -235,6 +239,7 @@ hmatch_composite <- function(raw,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
       type = "resolve_inner",
+      allow_gaps = allow_gaps,
       fuzzy = TRUE,
       max_dist = max_dist
     )
@@ -256,6 +261,7 @@ hmatch_composite <- function(raw,
       by_ref = prep$by_ref,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
+      allow_gaps = allow_gaps,
       type = "resolve_inner",
       fuzzy = fuzzy,
       max_dist = max_dist
