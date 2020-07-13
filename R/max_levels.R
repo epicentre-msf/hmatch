@@ -46,15 +46,26 @@ max_levels <- function(x,
 
   if (sort) by <- sort(by)
 
-  m <- !is.na(x[, by, drop = FALSE])
-  m <- cbind(rep(TRUE, nrow(m)), m)
-  j <- apply(m, 1, function(x) max(which(x))) - 1L
+  if (nrow(x) == 0) {
 
-  if (type == "name") {
-    names_out <- c(NA_character_, by)
-    out <- names_out[j + 1L]
+    if (type == "name") {
+      out <- character(0)
+    } else {
+      out <- integer(0)
+    }
+
   } else {
-    out <- j
+
+    m <- !is.na(x[, by, drop = FALSE])
+    m <- cbind(rep(TRUE, nrow(m)), m)
+    j <- apply(m, 1, function(x) max(which(x))) - 1L
+
+    if (type == "name") {
+      names_out <- c(NA_character_, by)
+      out <- names_out[j + 1L]
+    } else {
+      out <- j
+    }
   }
 
   out
