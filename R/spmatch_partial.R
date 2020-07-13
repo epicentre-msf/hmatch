@@ -19,7 +19,12 @@
 #' L3: United States | Pennsylvania | Philadelphia
 #'
 #' @inheritParams hmatch_partial
-#' @inheritParams spmatch_complete
+#'
+#' @param levels a vector of names or integer indices corresponding to one or
+#'   more of the hierarchical columns in `raw` to match at. Defaults to `NULL`
+#'   in which case matches are made at each hierarchical level.
+#' @param always_list logical indicating whether to always return a list, even
+#'   when argument `levels` specifies a single match level (defaults to `FALSE`)
 #'
 #' @return
 #' A list of data frames, each returned by a call to `hmatch_partial` on the

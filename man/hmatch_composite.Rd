@@ -85,9 +85,9 @@ match (i.e. highest-resolution) for each row.
 The sequence of matching strategies is:
 \enumerate{
 \item (optional) manually-specified matching with \code{\link{hmatch_manual}}
-\item complete matching with \code{\link{hmatch_complete}}
-\item partial matching with \code{\link{hmatch_partial}}
-\item fuzzy partial matching with \code{\link{hmatch_partial}}
+\item complete matching with \code{\link{hmatch_partial}} (\code{allow_gaps = FALSE})
+\item partial matching with \code{\link{hmatch_partial}} (\code{allow_gaps = TRUE})
+\item fuzzy partial matching with \code{\link{hmatch_partial}} (\code{allow_gaps = TRUE}, \code{fuzzy = TRUE})
 \item best-possible matching with \code{\link{hmatch_best}}
 }
 

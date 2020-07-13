@@ -8,7 +8,7 @@ test_that("String standardization", {
 
   # test that no-standardization works (std_fn = NULL)
   # expect no matches if raw date all-uppercase
-  m_complete_no_std <- hmatch_complete(ne_raw_upr, ne_ref, type = "inner", std_fn = NULL)
+  m_complete_no_std <- hmatch_partial(ne_raw_upr, ne_ref, type = "inner", std_fn = NULL)
   expect_equal(nrow(m_complete_no_std), 0L)
 
   m_partial_no_std <- hmatch_partial(ne_raw_upr, ne_ref, type = "inner", std_fn = NULL)

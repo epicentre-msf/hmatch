@@ -8,9 +8,9 @@
 #'
 #' The sequence of matching strategies is:
 #' 1. (optional) manually-specified matching with \code{\link{hmatch_manual}}
-#' 2. complete matching with \code{\link{hmatch_complete}}
-#' 3. partial matching with \code{\link{hmatch_partial}}
-#' 4. fuzzy partial matching with \code{\link{hmatch_partial}}
+#' 2. complete matching with \code{\link{hmatch_partial}} (`allow_gaps = FALSE`)
+#' 3. partial matching with \code{\link{hmatch_partial}} (`allow_gaps = TRUE`)
+#' 4. fuzzy partial matching with \code{\link{hmatch_partial}} (`allow_gaps = TRUE`, `fuzzy = TRUE`)
 #' 5. best-possible matching with \code{\link{hmatch_best}}
 #'
 #' Each approach is implement only on the rows of data for which a single match
