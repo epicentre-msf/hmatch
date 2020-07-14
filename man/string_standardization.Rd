@@ -16,9 +16,7 @@ By default, this standardization is performed with function
 \item replace remaining sequences of non-alphanumeric characters with "_"
 \item remove diacritics (\code{stringi::stri_trans_general})
 \item (optional) convert roman numerals (I, II, ..., XLIX) to arabic (1, 2, ...,
-}
-\enumerate{
-\item 
+49)
 }
 
 Alternatively, the user may provide any function that takes a vector of

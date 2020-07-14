@@ -14,7 +14,7 @@
 #' 3. replace remaining sequences of non-alphanumeric characters with "_"
 #' 4. remove diacritics (`stringi::stri_trans_general`)
 #' 5. (optional) convert roman numerals (I, II, ..., XLIX) to arabic (1, 2, ...,
-#' 49)
+#'    49)
 #'
 #' Alternatively, the user may provide any function that takes a vector of
 #' strings and returns a vector of transformed strings. To omit any

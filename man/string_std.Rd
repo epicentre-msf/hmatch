@@ -16,16 +16,15 @@ string_std(x, convert_roman = FALSE)
 The standardized version of \code{x}
 }
 \description{
-Standardizes strings prior to performing a match, using four transformations:
+Standardizes strings prior to performing a match, using the following
+transformations:
 \enumerate{
 \item standardize case (\code{base::tolower})
 \item remove sequences of non-alphanumeric characters at start or end of string
 \item replace remaining sequences of non-alphanumeric characters with "_"
 \item remove diacritics (\code{stringi::stri_trans_general})
 \item (optional) convert roman numerals (I, II, ..., XLIX) to arabic (1, 2, ...,
-}
-\enumerate{
-\item 
+49)
 }
 }
 \examples{

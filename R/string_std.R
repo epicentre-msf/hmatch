@@ -1,12 +1,13 @@
 #' String standardization prior to matching
 #'
-#' Standardizes strings prior to performing a match, using four transformations:
+#' Standardizes strings prior to performing a match, using the following
+#' transformations:
 #' 1. standardize case (`base::tolower`)
 #' 2. remove sequences of non-alphanumeric characters at start or end of string
 #' 3. replace remaining sequences of non-alphanumeric characters with "_"
 #' 4. remove diacritics (`stringi::stri_trans_general`)
 #' 5. (optional) convert roman numerals (I, II, ..., XLIX) to arabic (1, 2, ...,
-#' 49)
+#'    49)
 #'
 #' @param x a string
 #' @param convert_roman logical indiciating whether to convert roman numerals
