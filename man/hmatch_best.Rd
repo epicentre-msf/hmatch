@@ -14,7 +14,8 @@ hmatch_best(
   type = "left",
   allow_gaps = TRUE,
   fuzzy = FALSE,
-  max_dist = 1L,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
   dict = NULL,
   ref_prefix = "ref_",
   std_fn = string_std,
@@ -46,11 +47,15 @@ hmatch_best(
 the 'match level', defined as the highest level with a non-missing value
 within a given row of \code{raw} (defaults to \code{TRUE})}
 
-\item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
-FALSE)}
+\item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
+\code{\link{stringdist}} package). Defaults to FALSE.}
 
-\item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
-fuzzy-matching (defaults to \code{1L})}
+\item{fuzzy_method}{if \code{fuzzy = TRUE}, the method to use for string distance
+calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".}
+
+\item{fuzzy_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use to
+classify matches (i.e. a string distance ≤ \code{fuzzy_dist} will be considered
+matching). Defaults to \code{1L}.}
 
 \item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}

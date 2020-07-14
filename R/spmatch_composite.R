@@ -60,7 +60,8 @@ spmatch_composite <- function(raw,
                               type = "left",
                               ref_prefix = "ref_",
                               fuzzy = FALSE,
-                              max_dist = 1L,
+                              fuzzy_method = "osa",
+                              fuzzy_dist = 1L,
                               std_fn = string_std,
                               ...,
                               levels = NULL,
@@ -76,7 +77,7 @@ spmatch_composite <- function(raw,
   # type = "anti"
   # ref_prefix = "ref_"
   # fuzzy = TRUE
-  # max_dist = 1L
+  # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
   # levels <- NULL
@@ -104,7 +105,8 @@ spmatch_composite <- function(raw,
       dict = dict,
       ref_prefix = ref_prefix,
       fuzzy = fuzzy,
-      max_dist = max_dist,
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist,
       # concise = concise,
       std_fn = std_fn,
       ...

@@ -54,7 +54,8 @@ hmatch_permute <- function(raw,
                            dict = NULL,
                            ref_prefix = "ref_",
                            fuzzy = FALSE,
-                           max_dist = 1L,
+                           fuzzy_method = "osa",
+                           fuzzy_dist = 1L,
                            std_fn = string_std,
                            ...) {
 
@@ -71,7 +72,7 @@ hmatch_permute <- function(raw,
   # type = "left"
   # ref_prefix = "ref_"
   # fuzzy = FALSE
-  # max_dist = 1L
+  # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
 
@@ -139,7 +140,8 @@ hmatch_permute <- function(raw,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
       fuzzy = fuzzy,
-      max_dist = max_dist,
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist,
       type = "inner"
     ),
     SIMPLIFY = FALSE

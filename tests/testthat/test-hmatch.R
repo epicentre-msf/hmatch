@@ -27,17 +27,17 @@ test_that("hmatch works as expected", {
   expect_named(m_onecol, c("x", "ref_x"))
   expect_equal(m_onecol$x, m_onecol$ref_x)
 
-  # test max_dist in maxdist matching
-  raw_maxdist <- data.frame(x = c("Patrick12", "Patrick123"), stringsAsFactors = FALSE)
-  ref_maxdist <- data.frame(x = "Patrick", stringsAsFactors = FALSE)
+  # test fuzzy_dist argument in fuzzy matching
+  raw_fuzzy_dist <- data.frame(x = c("Patrick12", "Patrick123"), stringsAsFactors = FALSE)
+  ref_fuzzy_dist <- data.frame(x = "Patrick", stringsAsFactors = FALSE)
 
-  m_maxdist1 <- hmatch(raw_maxdist, ref_maxdist, fuzzy = TRUE, max_dist = 1, type = "inner")
-  m_maxdist2 <- hmatch(raw_maxdist, ref_maxdist, fuzzy = TRUE, max_dist = 2, type = "inner")
-  m_maxdist3 <- hmatch(raw_maxdist, ref_maxdist, fuzzy = TRUE, max_dist = 3, type = "inner")
+  m_fuzzy_dist1 <- hmatch(raw_fuzzy_dist, ref_fuzzy_dist, fuzzy = TRUE, fuzzy_dist = 1, type = "inner")
+  m_fuzzy_dist2 <- hmatch(raw_fuzzy_dist, ref_fuzzy_dist, fuzzy = TRUE, fuzzy_dist = 2, type = "inner")
+  m_fuzzy_dist3 <- hmatch(raw_fuzzy_dist, ref_fuzzy_dist, fuzzy = TRUE, fuzzy_dist = 3, type = "inner")
 
-  expect_equal(nrow(m_maxdist1), 0L)
-  expect_equal(nrow(m_maxdist2), 1L)
-  expect_equal(nrow(m_maxdist3), 2L)
+  expect_equal(nrow(m_fuzzy_dist1), 0L)
+  expect_equal(nrow(m_fuzzy_dist2), 1L)
+  expect_equal(nrow(m_fuzzy_dist3), 2L)
 
   # test dictionary-based recoding
   ne_dict <- data.frame(

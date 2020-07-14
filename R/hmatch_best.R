@@ -78,7 +78,8 @@ hmatch_best <- function(raw,
                         type = "left",
                         allow_gaps = TRUE,
                         fuzzy = FALSE,
-                        max_dist = 1L,
+                        fuzzy_method = "osa",
+                        fuzzy_dist = 1L,
                         dict = NULL,
                         ref_prefix = "ref_",
                         std_fn = string_std,
@@ -96,7 +97,7 @@ hmatch_best <- function(raw,
   # type = "left"
   # ref_prefix = "ref_"
   # fuzzy = TRUE
-  # max_dist = 1L
+  # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
 
@@ -154,7 +155,8 @@ hmatch_best <- function(raw,
     type = type,
     allow_gaps = allow_gaps,
     fuzzy = fuzzy,
-    max_dist = max_dist,
+    fuzzy_method = fuzzy_method,
+    fuzzy_dist = fuzzy_dist,
     class_raw = class(raw)
   )
 }
@@ -171,7 +173,8 @@ hmatch_best_ <- function(raw_join,
                          type = "left",
                          allow_gaps = TRUE,
                          fuzzy = FALSE,
-                         max_dist = 1L,
+                         fuzzy_method = "osa",
+                         fuzzy_dist = 1L,
                          class_raw = "data.frame") {
 
   ## temporary columns to aid in matching
@@ -215,7 +218,8 @@ hmatch_best_ <- function(raw_join,
       type = "inner",
       allow_gaps = allow_gaps,
       fuzzy = fuzzy,
-      max_dist = max_dist,
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist,
       class_raw = class_raw
     )
   }

@@ -26,10 +26,13 @@
 #' @param allow_gaps logical indicating whether to allow missing values below
 #'   the 'match level', defined as the highest level with a non-missing value
 #'   within a given row of `raw` (defaults to `TRUE`)
-#' @param fuzzy logical indicating whether to use fuzzy-matching (defaults to
-#'   FALSE)
-#' @param max_dist if `fuzzy = TRUE`, the maximum string distance to use when
-#'   fuzzy-matching (defaults to `1L`)
+#' @param fuzzy logical indicating whether to use fuzzy-matching (based on the
+#'   \code{\link{stringdist}} package). Defaults to FALSE.
+#' @param fuzzy_method if `fuzzy = TRUE`, the method to use for string distance
+#'   calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".
+#' @param fuzzy_dist if `fuzzy = TRUE`, the maximum string distance to use to
+#'   classify matches (i.e. a string distance ≤ `fuzzy_dist` will be considered
+#'   matching). Defaults to `1L`.
 #' @param dict optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
 #' @param ref_prefix prefix to add to hierarchical column names in `ref` if they
@@ -84,11 +87,13 @@ hmatch <- function(raw,
                    type = "left",
                    allow_gaps = TRUE,
                    fuzzy = FALSE,
-                   max_dist = 1L,
+                   fuzzy_method = "osa",
+                   fuzzy_dist = 1L,
                    dict = NULL,
                    ref_prefix = "ref_",
                    std_fn = string_std,
                    ...) {
+
 
   # # # for testing
   # # raw <- readRDS("~/desktop/drc_bench_raw.rds")[,1:4]
@@ -106,7 +111,7 @@ hmatch <- function(raw,
   # type = "inner"
   # ref_prefix = "ref_"
   # fuzzy = TRUE
-  # max_dist = 1L
+  # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
 
@@ -164,19 +169,18 @@ hmatch <- function(raw,
     allow_gaps = allow_gaps,
     type = type,
     fuzzy = fuzzy,
-    max_dist = max_dist,
+    fuzzy_dist = fuzzy_dist,
     class_raw = class(raw)
   )
 }
 
 
 
-#' Wrapper for lower level matching functions hmatch__ and
-#' hmatch_complete__
+#' Wrapper for lower level matching functions hmatch__ and hmatch_complete__
 #'
 #' Used because hmatch_complete__ (doesn't allow for gaps or fuzzy matching) is
-#' much faster than hmatch__, so only use hmatch__ for fuzzy
-#' matching and/or matching rows of raw with gaps
+#' much faster than hmatch__, so only use hmatch__ for fuzzy matching and/or
+#' matching rows of raw with gaps
 #'
 #' @noRd
 #' @importFrom dplyr bind_rows
@@ -189,7 +193,8 @@ hmatch_ <- function(raw_join,
                     type = "left",
                     allow_gaps = TRUE,
                     fuzzy = FALSE,
-                    max_dist = 1L,
+                    fuzzy_method = "osa",
+                    fuzzy_dist = 1L,
                     class_raw = "data.frame") {
 
 
@@ -236,6 +241,10 @@ hmatch_ <- function(raw_join,
       by_ref = by_ref,
       by_raw_join = by_raw_join,
       by_ref_join = by_ref_join,
+      allow_gaps = allow_gaps,    # always TRUE in this block
+      fuzzy = fuzzy,              # always FALSE in this block
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist,
       type = type,
       class_raw = class_raw
     )
@@ -254,8 +263,9 @@ hmatch_ <- function(raw_join,
       by_ref_join = by_ref_join,
       allow_gaps = allow_gaps,
       type = type,
-      fuzzy = fuzzy,
-      max_dist = max_dist,
+      fuzzy = fuzzy,     # always TRUE in this block
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist,
       class_raw = class_raw
     )
   }
@@ -279,7 +289,8 @@ hmatch__ <- function(raw_join,
                      allow_gaps = TRUE,
                      type = "left",
                      fuzzy = FALSE,
-                     max_dist = 1L,
+                     fuzzy_method = "osa",
+                     fuzzy_dist = 1L,
                      class_raw = "data.frame") {
 
 
@@ -334,7 +345,8 @@ hmatch__ <- function(raw_join,
     col1 = col_max_raw,
     col2 = col_max_ref,
     fuzzy = fuzzy,
-    max_dist = max_dist,
+    fuzzy_method = fuzzy_method,
+    fuzzy_dist = fuzzy_dist,
     is_max_level = TRUE
   )
 
@@ -366,7 +378,8 @@ hmatch__ <- function(raw_join,
         col1 = col_focal_raw,
         col2 = col_focal_ref,
         fuzzy = fuzzy,
-        max_dist = max_dist,
+        fuzzy_method = fuzzy_method,
+        fuzzy_dist = fuzzy_dist,
         is_max_level = FALSE
       )
     }
@@ -404,10 +417,16 @@ hmatch__ <- function(raw_join,
 
 #' @noRd
 #' @importFrom stringdist stringdist
-filter_to_matches <- function(dat, col1, col2, fuzzy, max_dist, is_max_level) {
+filter_to_matches <- function(dat,
+                              col1,
+                              col2,
+                              fuzzy,
+                              fuzzy_method,
+                              fuzzy_dist,
+                              is_max_level) {
 
   match <- if (fuzzy) {
-    stringdist::stringdist(dat[[col1]], dat[[col2]]) <= max_dist
+    stringdist::stringdist(dat[[col1]], dat[[col2]], method = fuzzy_method) <= fuzzy_dist
   } else {
     dat[[col1]] == dat[[col2]]
   }

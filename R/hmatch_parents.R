@@ -65,7 +65,8 @@ hmatch_parents <- function(x,
                            type = "left",
                            ref_prefix = "ref_",
                            fuzzy = FALSE,
-                           max_dist = 1L,
+                           fuzzy_method = "osa",
+                           fuzzy_dist = 1L,
                            std_fn = string_std,
                            ...) {
 
@@ -82,7 +83,7 @@ hmatch_parents <- function(x,
   # type = "left"
   # ref_prefix = "ref_"
   # std_fn = string_std
-  # max_dist <- 1
+  # fuzzy_dist <- 1
   # mmin = 2
   # pmin = 0.5
   # ... <- NULL
@@ -145,7 +146,8 @@ hmatch_parents <- function(x,
                     child_raw = child_raw,
                     child_ref = child_ref,
                     MoreArgs = list(group_vars = group_vars,
-                                    max_dist = max_dist,
+                                    fuzzy_method = fuzzy_method,
+                                    fuzzy_dist = fuzzy_dist,
                                     mmin = mmin,
                                     pmin = pmin),
                     SIMPLIFY = FALSE)
@@ -182,16 +184,18 @@ match_parents <- function(xraw_i,
                           child_raw,
                           child_ref,
                           group_vars,
-                          max_dist,
+                          fuzzy_method,
+                          fuzzy_dist,
                           mmin,
                           pmin) {
 
   dmat <- stringdist::stringdistmatrix(
     xraw_i[[child_raw]],
-    xref_i[[child_ref]]
+    xref_i[[child_ref]],
+    method = fuzzy_method
   )
 
-  xref_i$match <- apply(dmat <= max_dist, 2, any)
+  xref_i$match <- apply(dmat <= fuzzy_dist, 2, any)
 
   out_orig <- stats::aggregate(
     list(m = xref_i$match),

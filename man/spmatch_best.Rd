@@ -15,7 +15,8 @@ spmatch_best(
   type = "left",
   ref_prefix = "ref_",
   fuzzy = FALSE,
-  max_dist = 1L,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
   std_fn = string_std,
   ...,
   levels = NULL,
@@ -49,11 +50,15 @@ columns of \code{raw} (see \link{dictionary_recoding})}
 \item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
 are otherwise identical to names in \code{raw}  (defaults to "ref_")}
 
-\item{fuzzy}{logical indicating whether to use fuzzy-matching (defaults to
-FALSE)}
+\item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
+\code{\link{stringdist}} package). Defaults to FALSE.}
 
-\item{max_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use when
-fuzzy-matching (defaults to \code{1L})}
+\item{fuzzy_method}{if \code{fuzzy = TRUE}, the method to use for string distance
+calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".}
+
+\item{fuzzy_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use to
+classify matches (i.e. a string distance ≤ \code{fuzzy_dist} will be considered
+matching). Defaults to \code{1L}.}
 
 \item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

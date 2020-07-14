@@ -60,7 +60,8 @@ hmatch_composite <- function(raw,
                              type = "resolve_left",
                              allow_gaps = TRUE,
                              fuzzy = FALSE,
-                             max_dist = 1L,
+                             fuzzy_method = "osa",
+                             fuzzy_dist = 1L,
                              dict = NULL,
                              ref_prefix = "ref_",
                              std_fn = string_std,
@@ -84,7 +85,7 @@ hmatch_composite <- function(raw,
   # code_col <- "hcode"
   # ref_prefix = "ref_"
   # fuzzy = FALSE
-  # max_dist = 1L
+  # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
 
@@ -241,7 +242,8 @@ hmatch_composite <- function(raw,
       type = "resolve_inner",
       allow_gaps = allow_gaps,
       fuzzy = TRUE,
-      max_dist = max_dist
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist
     )
 
     m_fuzzy <- m_fuzzy[,c(temp_col_id, temp_col_code)]
@@ -264,7 +266,8 @@ hmatch_composite <- function(raw,
       allow_gaps = allow_gaps,
       type = "resolve_inner",
       fuzzy = fuzzy,
-      max_dist = max_dist
+      fuzzy_method = fuzzy_method,
+      fuzzy_dist = fuzzy_dist
     )
 
     m_settle <- m_settle[,c(temp_col_id, temp_col_code)]
