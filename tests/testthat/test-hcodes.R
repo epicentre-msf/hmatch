@@ -30,7 +30,7 @@ test_that("hcodes_ functions work as expected", {
 
   ### large random ref
   set.seed(40692875)
-  ref_large_compress2 <- data.frame(
+  ref_large_compress <- data.frame(
     x1 = replicate(10, paste(sample(letters, 5), collapse = "")),
     x2 = replicate(100, paste(sample(letters, 5), collapse = "")),
     x3 = replicate(1000, paste(sample(letters, 5), collapse = "")),
