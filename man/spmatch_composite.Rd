@@ -8,9 +8,9 @@ separately at each hierarchical level}
 spmatch_composite(
   raw,
   ref,
-  pattern = NULL,
+  pattern,
   pattern_ref = pattern,
-  by = NULL,
+  by,
   by_ref = by_ref,
   dict = NULL,
   type = "left",
@@ -32,14 +32,16 @@ spmatch_composite(
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
 (and \code{man} if given) (see also \link{specifying_columns})}
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(defaults to \code{pattern})}
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}.
+Defaults to \code{pattern}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{by}{vector giving the names of the hierarchical columns in \code{raw} (and
 \code{man} if given)}
 
-\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
-(defaults to \code{by})}
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}.
+Defaults to \code{by}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
@@ -47,8 +49,9 @@ columns of \code{raw} (see \link{dictionary_recoding})}
 \item{type}{type of join ("resolve_left", "resolve_inner", or
 "resolve_anti"). Defaults to "left". See \link{join_types}.}
 
-\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to "ref_")}
+\item{ref_prefix}{prefix to add to returned hierarchical column names in
+\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
+"ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
 \code{\link{stringdist}} package). Defaults to FALSE.}

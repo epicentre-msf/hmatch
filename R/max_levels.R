@@ -11,8 +11,6 @@
 #' @param type type of return, either "index" to return integer indices
 #'   (starting at 1) or "name" to return column names (as matched by `pattern`
 #'   or `by`)
-#' @param sort logical indicating whether to alphanumerically sort hierarchical
-#'   columns matched by arguments `pattern` or `by` (defaults to `FALSE`)
 #'
 #' @return
 #' Vector of indices or names corresponding to the maximum non-missing
@@ -29,22 +27,13 @@
 #'
 #' @export max_levels
 max_levels <- function(x,
-                       pattern = NULL,
-                       by = NULL,
-                       type = c("index", "name"),
-                       sort = FALSE) {
+                       pattern,
+                       by,
+                       type = c("index", "name")) {
 
+  ## validate arguments
   type <- match.arg(type)
-
-  if (!is.null(pattern) & !is.null(by)) {
-    stop("only one of `pattern` or `by` should be provided")
-  } else if (is.null(by) & is.null(pattern)) {
-    by <- names(x)
-  } else if (!is.null(pattern)) {
-    by <- grep(pattern, names(x), value = TRUE)
-  }
-
-  if (sort) by <- sort(by)
+  by <- select_columns(x, pattern, by)
 
   if (nrow(x) == 0) {
 

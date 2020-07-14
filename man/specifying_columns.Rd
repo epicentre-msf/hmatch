@@ -2,59 +2,69 @@
 % Please edit documentation in R/doc_specifying_columns.R
 \name{specifying_columns}
 \alias{specifying_columns}
-\title{Specifying which columns to match}
+\title{Specifying hierarchical columns with arguments \code{pattern} or \code{by}}
 \description{
 Within the \code{hmatch_} group of functions, there are three ways to specify the
 hierarchical columns to be matched.
 
-In all cases, the order of the matched columns must be from the broadest
-level (lowest-resolution, e.g. country) to the finest level
-(highest-resolution, e.g. township).
+In all cases, it is assumed that matched columns are already correctly
+ordered, with the first matched column reflecting the broadest hierarchical
+level (lowest-resolution, e.g. country) and the last column reflecting the
+finest level (highest-resolution, e.g. township).
+}
+\section{(1) All column names common to \code{raw} and \code{ref}}{
 
-\strong{1. Regex pattern} (arguments \code{pattern_raw} and \code{pattern_ref})
 
-Arguments \code{pattern_raw} and \code{pattern_ref} take regex patterns to match the
-hierarchical columns in \code{raw} and \code{ref}, respectively.
+If neither \code{pattern} nor \code{by} are specified (the default), then the
+hierarchical columns are assumed to be all column names that are common to
+both \code{raw} and \code{ref}.
+}
 
-For example, if the hierarchical columns in \code{raw} are \emph{ADM_1}, \emph{ADM_2}, and
-\emph{ADM_3}, which correspond respectively to columns within \code{ref} named
-\emph{REF_ADM_1}, \emph{REF_ADM_2}, and \emph{REF_ADM_3}, then the pattern arguments can be
+\section{(2) Regex pattern}{
+
+
+Arguments \code{pattern} and \code{pattern_ref} take regex patterns to match the
+hierarchical columns in \code{raw} and \code{ref}, respectively. Argument \code{pattern_ref}
+only needs to be specified if it's different from \code{pattern} (i.e. if the
+hierarchical columns have different names in \code{raw} vs. \code{ref}).
+
+For example, if the hierarchical columns in \code{raw} are "ADM_1", "ADM_2", and
+"ADM_3", which correspond respectively to columns within \code{ref} named
+"REF_ADM_1", "REF_ADM_2", and "REF_ADM_3", then the pattern arguments can be
 specified as:
 \itemize{
-\item \code{pattern_raw = "^ADM_[[:digit:]]"}
+\item \code{pattern = "^ADM_[[:digit:]]"}
 \item \code{pattern_ref = "^REF_ADM_[[:digit:]]"}
 }
 
 Alternatively, because \code{pattern_ref} defaults to the same value as
-\code{pattern_raw} (unless otherwise specified), one could match the columns in
-both \code{raw} and \code{ref} using simply:
+\code{pattern} (unless otherwise specified), one could specify a single regex pattern
+that matches the hierarchical columns in both \code{raw} and \code{ref}, e.g.
 \itemize{
-\item \code{pattern_raw = "ADM_[[:digit:]]"}
+\item \code{pattern = "ADM_[[:digit:]]"}
 }
 
-However, the user should excercise care to ensure that there are no
+However, the user should exercise care to ensure that there are no
 non-hierarchical columns within \code{raw} or \code{ref} that may inadvertently be
 matched by the given pattern.
-
-\strong{2. Vector of column names} (arguments \code{by} and \code{by_ref})
-
-Alternatively, argument \code{by} takes a named vector whose elements are the
-names of the hierarchical columns in \code{ref} and whose names are the names of
-the corresponding columns in \code{raw}.
-
-For example, if the hierarchical columns in \code{raw} are \emph{STATE}, \emph{COUNTY}, and
-\emph{TOWNSHIP}, which correspond respectively to columns within \code{ref} named
-\emph{ADM1}, \emph{ADM2}, and \emph{ADM3}, then argument \code{by} can be specified as:
-
-\code{by = setNames(c("ADM1", "ADM2", "ADM3"), c("STATE", "COUNTY", "TOWNSHIP"))}
-
-\strong{3. (Default) All columns common to \code{raw} and \code{ref}}
-
-If neither \code{pattern_} nor \code{by} are specified (the default), then the
-hierarchical columns are assumed to be all columns that are common to both
-\code{raw} and \code{ref}.
-
-In this case, the user should ensure that the hierarchical columns are
-already appropriatetly ordered (from broadest to finest) in both the \code{raw}
-and \code{ref} datasets.
 }
+
+\section{(3) Vector of column names}{
+
+
+If the hierarchical columns cannot easily be matched with a regex pattern,
+one can specify the relevant column names in vector form using arguments \code{by}
+and \code{by_ref}. As with \code{pattern_ref}, argument \code{by_ref} only needs to be
+specified if it's different from \code{by} (i.e. if the hierarchical columns have
+different names in \code{raw} vs. \code{ref}).
+
+For example, if the hierarchical columns in \code{raw} are "state", "county", and
+"township", which correspond respectively to columns within \code{ref} named
+"admin1", "admin2", and "admin3", then the\code{by} arguments can be specified
+with:
+\itemize{
+\item \code{by = c("state", "county", "township")}
+\item \code{by_ref = c("admin1", "admin2", "admin3")}
+}
+}
+

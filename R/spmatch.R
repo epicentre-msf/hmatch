@@ -56,9 +56,9 @@
 #' @export spmatch
 spmatch <- function(raw,
                     ref,
-                    pattern = NULL,
+                    pattern,
                     pattern_ref = pattern,
-                    by = NULL,
+                    by,
                     by_ref = by_ref,
                     dict = NULL,
                     type = "left",

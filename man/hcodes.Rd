@@ -7,9 +7,9 @@
 \title{Create codes to identify each unique combination of hierarchical levels in
 a reference dataset}
 \usage{
-hcodes_str(ref, pattern = NULL, by = NULL, sep = "__", std_fn = string_std)
+hcodes_str(ref, pattern, by, sep = "__", std_fn = string_std)
 
-hcodes_int(ref, pattern = NULL, by = NULL, prefix = "")
+hcodes_int(ref, pattern, by, prefix = "")
 }
 \arguments{
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}

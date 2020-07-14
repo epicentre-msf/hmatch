@@ -42,9 +42,9 @@
 hmatch_manual <- function(raw,
                           ref,
                           man,
-                          pattern = NULL,
+                          pattern,
                           pattern_ref = pattern,
-                          by = NULL,
+                          by,
                           by_ref = by,
                           code_col,
                           type = "left",
@@ -179,16 +179,6 @@ hmatch_manual_ <- function(raw_join,
               call. = FALSE)
     }
   }
-
-  # ## if resolve-type join
-  # if (grepl("^resolve", type)) {
-  #   matches_out <- resolve_join(
-  #     matches_out,
-  #     by_ref = by_ref,
-  #     temp_col_id = temp_col_id,
-  #     consistent = "all"
-  #   )
-  # }
 
   ## execute match type and remove temporary columns
   prep_output(

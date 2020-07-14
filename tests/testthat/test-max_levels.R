@@ -21,19 +21,19 @@ test_that("max_levels works as expected", {
   expect_equal(ml3, c("col2", "col3", "col3", "col1", NA))
 
 
-  # test sort
-  xrev <- x[,5:1]
+  # # test sort
+  # xrev <- x[,5:1]
+  #
+  # ml4 <- max_levels(xrev, pattern = "^col")
+  # expect_equal(ml4, c(3, 3, 2, 3, 0))
+  #
+  # ml5 <- max_levels(xrev, pattern = "^col", sort = TRUE)
+  # expect_equal(ml5, c(2, 3, 3, 1, 0))
 
-  ml4 <- max_levels(xrev, pattern = "^col")
-  expect_equal(ml4, c(3, 3, 2, 3, 0))
 
-  ml5 <- max_levels(xrev, pattern = "^col", sort = TRUE)
-  expect_equal(ml5, c(2, 3, 3, 1, 0))
-
-
-  # test match all columns
-  ml6 <- max_levels(x)
-  expect_equal(ml6, c(5, 5, 5, 5, 5))
+  # # test match all columns
+  # ml6 <- max_levels(x)
+  # expect_equal(ml6, c(5, 5, 5, 5, 5))
 
 })
 

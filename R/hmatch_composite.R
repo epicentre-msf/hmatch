@@ -51,12 +51,12 @@
 #' @export hmatch_composite
 hmatch_composite <- function(raw,
                              ref,
-                             man = NULL,
-                             pattern = NULL,
+                             man,
+                             pattern,
                              pattern_ref = pattern,
-                             by = NULL,
+                             by,
                              by_ref = by,
-                             code_col = NULL,
+                             code_col,
                              type = "resolve_left",
                              allow_gaps = TRUE,
                              fuzzy = FALSE,
@@ -150,7 +150,7 @@ hmatch_composite <- function(raw,
   raw_join_remaining <- raw_join
 
   ## manual match
-  if (!is.null(man)) {
+  if (!missing(man)) {
 
     ## join ref to man by code_col
     man_ref <- dplyr::inner_join(

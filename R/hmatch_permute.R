@@ -46,9 +46,9 @@
 #' @export hmatch_permute
 hmatch_permute <- function(raw,
                            ref,
-                           pattern = NULL,
+                           pattern,
                            pattern_ref = pattern,
-                           by = NULL,
+                           by,
                            by_ref = by,
                            type = "left",
                            dict = NULL,

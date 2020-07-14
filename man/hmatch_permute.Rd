@@ -8,9 +8,9 @@ entered at the wrong hierarchical level}
 hmatch_permute(
   raw,
   ref,
-  pattern = NULL,
+  pattern,
   pattern_ref = pattern,
-  by = NULL,
+  by,
   by_ref = by,
   type = "left",
   dict = NULL,
@@ -27,17 +27,22 @@ hmatch_permute(
 
 \item{ref}{data frame containing hierarchical columns with reference data}
 
-\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
-\link{specifying_columns})}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}\cr
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(defaults to \code{pattern})}
+\strong{Note:} hierarchical column names can be matched using either the \code{pattern}
+\emph{or} \code{by} arguments. Or, if neither \code{pattern} or \code{by} are specified, the
+hierarchical columns are assumed to be all column names that are common to
+both \code{raw} and \code{ref}. See \link{specifying_columns}.}
+
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}.
+Defaults to \code{pattern}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{by}{vector giving the names of the hierarchical columns in \code{raw}}
 
-\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
-(defaults to \code{by})}
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}.
+Defaults to \code{by}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{type}{type of join ("left", "inner", "anti", "resolve_left",
 "resolve_inner", or "resolve_anti"). Defaults to "left". See
@@ -46,8 +51,9 @@ hmatch_permute(
 \item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to "ref_")}
+\item{ref_prefix}{prefix to add to returned hierarchical column names in
+\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
+"ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
 \code{\link{stringdist}} package). Defaults to FALSE.}

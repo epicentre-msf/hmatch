@@ -32,33 +32,25 @@
 #' ref_expand(ne_ref_adm2, pattern = "adm", lowest_level = 0)
 #'
 #' @export ref_expand
-ref_expand <- function(ref, pattern = NULL, by = NULL, lowest_level = 1L) {
+ref_expand <- function(ref, pattern, by, lowest_level = 1L) {
 
-  # ref <- ne_ref[!is.na(ne_ref$adm2),]
-  # pattern <- "adm"
-  # by <- NULL
-  # lowest_level <- 0L
 
-  if (is.null(pattern) & is.null(by)) {
-    stop("Must provide either argument 'pattern' or argument 'by'")
-  } else if (!is.null(pattern) & !is.null(by)) {
-    warning("Arguments 'pattern' and 'by' are both non-NULL. ",
-            "Ignoring 'pattern' and only using 'by'.")
-  } else if (!is.null(pattern)) {
-    by <- grep(pattern, names(ref), value = TRUE)
-  }
+  ## match hierarchical columns
+  by <- select_columns(ref, pattern, by)
 
+  ## subset to hierarchical columns
   ref_ <- ref[, by, drop = FALSE]
-
   ref_bind <- NULL
 
-  # for each hierarchical level...
+  ## for each hierarchical level...
   for (i in seq_along(by)) {
     cols_focal <- by[1:i]
 
-    rows_keep <- apply(ref_[,cols_focal, drop = FALSE],
-                       MARGIN = 1,
-                       FUN = function(x) !any(is.na(x)))
+    rows_keep <- apply(
+      ref_[,cols_focal, drop = FALSE],
+      MARGIN = 1,
+      FUN = function(x) !any(is.na(x))
+    )
 
     ref_focal <- ref_[rows_keep, , drop = FALSE]
     ref_focal[setdiff(by, cols_focal)] <- NA_character_
@@ -69,7 +61,7 @@ ref_expand <- function(ref, pattern = NULL, by = NULL, lowest_level = 1L) {
   }
 
   ## remove rownames
-  rownames(ref_bind) <- NULL
+  row.names(ref_bind) <- NULL
 
   ## return
   return(ref_bind)

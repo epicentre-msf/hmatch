@@ -71,9 +71,9 @@
 #' @export hmatch_best
 hmatch_best <- function(raw,
                         ref,
-                        pattern = NULL,
+                        pattern,
                         pattern_ref = pattern,
-                        by = NULL,
+                        by,
                         by_ref = by,
                         type = "left",
                         allow_gaps = TRUE,

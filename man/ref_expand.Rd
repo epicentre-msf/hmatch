@@ -5,7 +5,7 @@
 \title{Expand a reference data.frame containing N hierarchical columns to an N-level
 reference data.frame}
 \usage{
-ref_expand(ref, pattern = NULL, by = NULL, lowest_level = 1L)
+ref_expand(ref, pattern, by, lowest_level = 1L)
 }
 \arguments{
 \item{ref}{\code{data.frame} containing hierarchical columns with reference data}

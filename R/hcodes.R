@@ -43,21 +43,14 @@ NULL
 #' @rdname hcodes
 #' @export hcodes_str
 hcodes_str <- function(ref,
-                       pattern = NULL,
-                       by = NULL,
+                       pattern,
+                       by,
                        sep = "__",
                        std_fn = string_std) {
 
 
   ## identify hierarchical columns
-  if (is.null(pattern) & is.null(by)) {
-    stop("Must provide either argument 'pattern' or argument 'by'")
-  } else if (!is.null(pattern) & !is.null(by)) {
-    warning("Arguments 'pattern' and 'by' are both non-NULL. ",
-            "Ignoring 'pattern' and only using 'by'.")
-  } else if (!is.null(pattern)) {
-    by <- grep(pattern, names(ref), value = TRUE)
-  }
+  by <- select_columns(ref, pattern, by, allow_both_null = FALSE)
 
   ## select hierarchical columns
   ref_ <- as.data.frame(ref)[, by, drop = FALSE]
@@ -78,20 +71,13 @@ hcodes_str <- function(ref,
 #' @rdname hcodes
 #' @export hcodes_int
 hcodes_int <- function(ref,
-                       pattern = NULL,
-                       by = NULL,
+                       pattern,
+                       by,
                        prefix = "") {
 
 
   ## identify hierarchical columns
-  if (is.null(pattern) & is.null(by)) {
-    stop("Must provide either argument 'pattern' or argument 'by'")
-  } else if (!is.null(pattern) & !is.null(by)) {
-    warning("Arguments 'pattern' and 'by' are both non-NULL. ",
-            "Ignoring 'pattern' and only using 'by'.")
-  } else if (!is.null(pattern)) {
-    by <- grep(pattern, names(ref), value = TRUE)
-  }
+  by <- select_columns(ref, pattern, by, allow_both_null = FALSE)
 
   ## select hierarchical columns and convert to character
   ref_ <- as.data.frame(ref)[, by, drop = FALSE]

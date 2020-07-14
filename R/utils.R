@@ -1,4 +1,25 @@
 
+
+#' @noRd
+backtick <- function(x) {
+  paste0("`", x, "`")
+}
+
+
+
+#' Turn vector into dput-like output, for use in warnings and errors
+#' @noRd
+vec_paste_c <- function(x) {
+  len_x <- length(x)
+  x[!is.na(x)] <- dQuote(x[!is.na(x)], q = FALSE)
+  x <- paste(x, collapse = ", ")
+  if (len_x > 1) {
+    x <- paste0("c(", x, ")")
+  }
+  x
+}
+
+
 #' @noRd
 set_names <- function(object = nm, nm) {
   names(object) <- nm
@@ -7,21 +28,8 @@ set_names <- function(object = nm, nm) {
 
 
 #' @noRd
-n_levels <- function(x,
-                     pattern = NULL,
-                     by = NULL,
-                     sort = FALSE) {
-
-  if (!is.null(pattern) & !is.null(by)) {
-    stop("only one of `pattern` or `by` should be provided")
-  } else if (is.null(by) & is.null(pattern)) {
-    by <- names(x)
-  } else if (!is.null(pattern)) {
-    by <- grep(pattern, names(x), value = TRUE)
-  }
-
-  if (sort) by <- sort(by)
-
+n_levels <- function(x, pattern = NULL, by = NULL) {
+  by <- select_columns(x, pattern, by)
   m <- !is.na(x[, by, drop = FALSE])
   apply(m, 1, sum)
 }
@@ -112,75 +120,6 @@ corresponding_levels <- function(dat, by_raw, by_ref) {
   dat[max_level_raw >= max_level_ref & max_level_ref > 0,]
 }
 
-
-#' #' @noRd
-#' max_not_na <- function(x, no_na = 0L, value = FALSE) {
-#'   ifelse(any(!is.na(x)), max(which(!is.na(x))), no_na)
-#' }
-
-
-#' @noRd
-max_not_na_value <- function(x) {
-  ifelse(any(!is.na(x)), x[max(which(!is.na(x)))], NA_character_)
-}
-
-
-#' @noRd
-prep_match_columns <- function(raw,
-                               ref,
-                               pattern,
-                               pattern_ref,
-                               by,
-                               by_ref,
-                               ref_prefix = "ref_",
-                               join_suffix = "___JOIN_",
-                               code_col = NULL) {
-
-
-  if (!is.null(pattern)) {
-    by_raw <- grep(pattern, names(raw), value = TRUE)
-    by_ref <- grep(pattern_ref, names(ref), value = TRUE)
-  } else if (!is.null(by)) {
-    by_raw <- by
-    by_ref <- by_ref
-  } else {
-    by_raw <- intersect(names(ref), names(raw))
-    by_ref <- intersect(names(ref), names(raw))
-  }
-
-  by_ref_orig <- by_ref
-
-  # rename cols of ref if necessary
-  if (all(by_raw == by_ref)) {
-    by_ref <- paste0(ref_prefix, by_ref)
-    names(ref)[match(by_raw, names(ref))] <- by_ref
-  }
-
-  by_raw_join <- paste0(by_raw, join_suffix)
-  by_ref_join <- paste0(by_ref, join_suffix)
-
-  if (!is.null(code_col)) {
-    ref[[code_col]] <- hcodes_str(ref, by = by_ref)
-  }
-
-  return(list(ref = ref,
-              by_raw = by_raw,
-              by_ref = by_ref,
-              by_ref_orig = by_ref_orig,
-              by_raw_join = by_raw_join,
-              by_ref_join = by_ref_join))
-}
-
-
-
-
-
-
-#' @noRd
-fill_vec_na <- function(x, N) {
-  d <- N - length(x)
-  if (d > 0) c(x, rep(NA_character_, d)) else x
-}
 
 
 #' @noRd
@@ -310,62 +249,3 @@ spmatch_prep <- function(raw,
               by_ref_split = prep$by_ref_orig,
               names = prep$by_raw[levels]))
 }
-
-
-
-
-#' @noRd
-prep_output <- function(x,
-                        type,
-                        temp_col_id,
-                        temp_col_match,
-                        cols_raw_orig,
-                        class_raw,
-                        by_raw, # only used in hmatch_settle
-                        by_ref, # only used in hmatch_settle
-                        exclude_cols_temp = TRUE) {
-
-  x_id <- x[[temp_col_id]]
-  x_match <- x[[temp_col_match]]
-
-  ## arrange rows
-  # x <- x[order(x_id), , drop = FALSE]
-
-  ## execute merge type
-  if (type == "left") {
-    out <- x
-  } else if (type == "inner") {
-    keep <- !is.na(x_match)
-    out <- x[keep, , drop = FALSE]
-  } else if (type == "inner_unique") {
-    ids_duplicated <- x_id[duplicated(x_id)]
-    keep <- !is.na(x_match) & !x_id %in% ids_duplicated
-    out <- x[keep, , drop = FALSE]
-  } else if (type == "anti") {
-    keep <- is.na(x_match)
-    out <- x[keep, cols_raw_orig, drop = FALSE]
-  } else if (type == "anti_unique") {
-    ids_duplicated <- x_id[duplicated(x_id)]
-    keep <- is.na(x_match) | x_id %in% ids_duplicated
-    out <- unique(x[keep, cols_raw_orig, drop = FALSE])
-  } else if (type == "inner_complete") {
-    max_adm_raw <- max_levels(x, by = by_raw)
-    max_adm_ref <- max_levels(x, by = by_ref)
-    out <- x[max_adm_ref == max_adm_raw,]
-  } else if (type == "inner_incomplete") {
-    max_adm_raw <- max_levels(x, by = by_raw)
-    max_adm_ref <- max_levels(x, by = by_ref)
-    out <- x[max_adm_ref < max_adm_raw,]
-  }
-
-  ## remove temporary and excluded names
-  if (exclude_cols_temp) {
-    out <- out[,!names(out) %in% c(temp_col_id, temp_col_match), drop = FALSE]
-  }
-
-  ## reclass
-  class(out) <- class_raw
-
-  return(out)
-}
-

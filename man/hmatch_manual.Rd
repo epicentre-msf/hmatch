@@ -8,9 +8,9 @@ hmatch_manual(
   raw,
   ref,
   man,
-  pattern = NULL,
+  pattern,
   pattern_ref = pattern,
-  by = NULL,
+  by,
   by_ref = by,
   code_col,
   type = "left",
@@ -31,14 +31,16 @@ correspond}
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
 and \code{man} (see also \link{specifying_columns})}
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(defaults to \code{pattern})}
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}.
+Defaults to \code{pattern}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{by}{vector giving the names of the hierarchical columns in \code{raw} and
 \code{man}}
 
-\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
-(defaults to \code{by})}
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}.
+Defaults to \code{by}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{code_col}{name of the code column containing codes for matching \code{ref}
 and \code{man}}
@@ -47,8 +49,9 @@ and \code{man}}
 See \link{join_types}. Note that this function does not allow 'resolve
 joins', unlike most other \code{hmatch_} functions.}
 
-\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to "ref_")}
+\item{ref_prefix}{prefix to add to returned hierarchical column names in
+\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
+"ref_")}
 
 \item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

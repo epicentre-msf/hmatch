@@ -11,9 +11,9 @@ hmatch_parents(
   level,
   mmin,
   pmin,
-  pattern = NULL,
+  pattern,
   pattern_ref = pattern,
-  by = NULL,
+  by,
   by_ref = by,
   type = "left",
   ref_prefix = "ref_",
@@ -42,22 +42,28 @@ considered a match}
 be considered a match (i.e. the proportion of offspring in \code{raw} with match
 in \code{ref})}
 
-\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}
-(columns can be matched using either \code{pattern} \emph{or} \code{by}, as described in
-\link{specifying_columns})}
+\item{pattern}{regex pattern to match the hierarchical columns in \code{raw}\cr
 
-\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}
-(defaults to \code{pattern})}
+\strong{Note:} hierarchical column names can be matched using either the \code{pattern}
+\emph{or} \code{by} arguments. Or, if neither \code{pattern} or \code{by} are specified, the
+hierarchical columns are assumed to be all column names that are common to
+both \code{raw} and \code{ref}. See \link{specifying_columns}.}
+
+\item{pattern_ref}{regex pattern to match the hierarchical columns in \code{ref}.
+Defaults to \code{pattern}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{by}{vector giving the names of the hierarchical columns in \code{raw}}
 
-\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}
-(defaults to \code{by})}
+\item{by_ref}{vector giving the names of the hierarchical columns in \code{ref}.
+Defaults to \code{by}, so only need to specify if the hierarchical columns
+have different names in \code{raw} and \code{ref}.}
 
 \item{type}{type of join ("inner" or "left") (defaults to "left")}
 
-\item{ref_prefix}{prefix to add to hierarchical column names in \code{ref} if they
-are otherwise identical to names in \code{raw}  (defaults to "ref_")}
+\item{ref_prefix}{prefix to add to returned hierarchical column names in
+\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
+"ref_")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
 \code{\link{stringdist}} package). Defaults to FALSE.}

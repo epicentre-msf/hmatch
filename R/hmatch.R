@@ -12,20 +12,25 @@
 #'
 #' @param raw data frame containing hierarchical columns with raw data
 #' @param ref data frame containing hierarchical columns with reference data
-#' @param pattern regex pattern to match the hierarchical columns in `raw`
-#'   (columns can be matched using either `pattern` *or* `by`, as described in
-#'   \link{specifying_columns})
-#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`
-#'   (defaults to `pattern`)
+#' @param pattern regex pattern to match the hierarchical columns in `raw`\cr
+#'
+#' **Note:** hierarchical column names can be matched using either the `pattern`
+#' *or* `by` arguments. Or, if neither `pattern` or `by` are specified, the
+#' hierarchical columns are assumed to be all column names that are common to
+#' both `raw` and `ref`. See \link{specifying_columns}.
+#' @param pattern_ref regex pattern to match the hierarchical columns in `ref`.
+#'   Defaults to `pattern`, so only need to specify if the hierarchical columns
+#'   have different names in `raw` and `ref`.
 #' @param by vector giving the names of the hierarchical columns in `raw`
-#' @param by_ref vector giving the names of the hierarchical columns in `ref`
-#'   (defaults to `by`)
+#' @param by_ref vector giving the names of the hierarchical columns in `ref`.
+#'   Defaults to `by`, so only need to specify if the hierarchical columns
+#'   have different names in `raw` and `ref`.
 #' @param type type of join ("left", "inner", "anti", "resolve_left",
 #'   "resolve_inner", or "resolve_anti"). Defaults to "left". See
 #'   \link{join_types}.
 #' @param allow_gaps logical indicating whether to allow missing values below
-#'   the 'match level', defined as the highest level with a non-missing value
-#'   within a given row of `raw` (defaults to `TRUE`)
+#'   the match level, where 'match level' is the highest level with a
+#'   non-missing value within a given row of `raw`. Defaults to `TRUE`.
 #' @param fuzzy logical indicating whether to use fuzzy-matching (based on the
 #'   \code{\link{stringdist}} package). Defaults to FALSE.
 #' @param fuzzy_method if `fuzzy = TRUE`, the method to use for string distance
@@ -35,8 +40,9 @@
 #'   matching). Defaults to `1L`.
 #' @param dict optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param ref_prefix prefix to add to hierarchical column names in `ref` if they
-#'   are otherwise identical to names in `raw`  (defaults to "ref_")
+#' @param ref_prefix prefix to add to returned hierarchical column names in
+#'   `ref` if they are otherwise identical to names in `raw`  (defaults to
+#'   "ref_")
 #' @param std_fn function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
@@ -80,9 +86,9 @@
 #' @export hmatch
 hmatch <- function(raw,
                    ref,
-                   pattern = NULL,
+                   pattern,
                    pattern_ref = pattern,
-                   by = NULL,
+                   by,
                    by_ref = by,
                    type = "left",
                    allow_gaps = TRUE,
@@ -270,8 +276,9 @@ hmatch_ <- function(raw_join,
     )
   }
 
-  ## reorder rows and remove temp column
+  ## reorder rows, and remove temp column and rownames
   out <- out[order(out[[temp_col_id]]),]
+  row.names(out) <- NULL
   out[,!names(out) %in% temp_col_id, drop = FALSE]
 }
 

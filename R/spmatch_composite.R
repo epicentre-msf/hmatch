@@ -52,9 +52,9 @@
 #' @export spmatch_composite
 spmatch_composite <- function(raw,
                               ref,
-                              pattern = NULL,
+                              pattern,
                               pattern_ref = pattern,
-                              by = NULL,
+                              by,
                               by_ref = by_ref,
                               dict = NULL,
                               type = "left",

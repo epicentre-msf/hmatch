@@ -4,13 +4,7 @@
 \alias{max_levels}
 \title{Maximum hierarchical levels}
 \usage{
-max_levels(
-  x,
-  pattern = NULL,
-  by = NULL,
-  type = c("index", "name"),
-  sort = FALSE
-)
+max_levels(x, pattern, by, type = c("index", "name"))
 }
 \arguments{
 \item{x}{a data frame containing hierarchical columns}
@@ -24,9 +18,6 @@ in \code{ref} (supply either \code{pattern} \emph{or} \code{by})}
 \item{type}{type of return, either "index" to return integer indices
 (starting at 1) or "name" to return column names (as matched by \code{pattern}
 or \code{by})}
-
-\item{sort}{logical indicating whether to alphanumerically sort hierarchical
-columns matched by arguments \code{pattern} or \code{by} (defaults to \code{FALSE})}
 }
 \value{
 Vector of indices or names corresponding to the maximum non-missing
