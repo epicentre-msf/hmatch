@@ -49,7 +49,8 @@ prep_output <- function(x,
     out <- out[,!names(out) %in% c(temp_col_id, temp_col_match), drop = FALSE]
   }
 
-  ## reclass
+  ## reclass and remove rownames
+  row.names(out) <- NULL
   class(out) <- class_raw
 
   return(out)
