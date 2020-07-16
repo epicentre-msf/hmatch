@@ -70,6 +70,7 @@ hmatch_manual <- function(raw,
   # std_fn = string_std
   # ... <- NULL
 
+
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
   type <- match.arg(type, c("left", "inner", "anti"))
@@ -145,7 +146,7 @@ hmatch_manual_ <- function(raw_join,
 
   ## add temporary match column to ref_join
   temp_col_match <- "TEMP_MATCH_MANUAL"
-  man_join[[temp_col_match]] <- TRUE
+  man_join[[temp_col_match]] <- rep(TRUE, nrow(man_join))
 
   ## re-derive initial (pre-join) column names
   names_raw_prep <- setdiff(names(raw_join), by_join)

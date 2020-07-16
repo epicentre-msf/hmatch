@@ -1,22 +1,35 @@
 test_that("hmatch_manual works correctly", {
 
 
-  ne_ref_code <- ne_ref
-  ne_ref_code$pcode <- hcodes_str(ne_ref_code, "adm")
-
   ne_man <- data.frame(
     adm0 = NA_character_,
     adm1 = NA_character_,
     adm2 = "NJ_Bergen",
-    pcode = "united_states__new_jersey__bergen",
+    hcode = "211",
     stringsAsFactors = FALSE
   )
 
-  m_manual_i <- hmatch_manual(ne_raw, ne_ref_code, ne_man, code_col = "pcode", type = "inner")
-  expect_is(m_manual_i, "data.frame")
-  expect_lte(nrow(m_manual_i), nrow(ne_raw))
+  ## test join types
+  mi <- hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode", type = "inner")
+  expect_equal(nrow(mi), 1L)
 
-  m_manual_l <- hmatch_manual(ne_raw, ne_ref_code, ne_man, code_col = "pcode", type = "left")
-  expect_equal(nrow(m_manual_l), nrow(ne_raw))
+  ml <- hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode", type = "left")
+  expect_equal(nrow(ml), nrow(ne_raw))
+
+
+  ## check works with 0 rows
+  m0 <- hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
+
+  m1 <- hmatch_manual(ne_raw[0,], ne_ref, ne_man, code_col = "hcode")
+  expect_equal(nrow(m1), 0L)
+  expect_equal(names(m1), names(m0))
+
+  m2 <- hmatch_manual(ne_raw, ne_ref[0,], ne_man, code_col = "hcode")
+  expect_equal(nrow(m2), nrow(m0))
+  expect_equal(names(m2), names(m0))
+
+  m3 <- hmatch_manual(ne_raw, ne_ref, ne_man[0,], code_col = "hcode")
+  expect_equal(nrow(m3), nrow(m0))
+  expect_equal(names(m3), names(m0))
 })
 

@@ -101,13 +101,11 @@ hmatch <- function(raw,
                    ...) {
 
 
-  # # # for testing
-  # # raw <- readRDS("~/desktop/drc_bench_raw.rds")[,1:4]
-  # # ref <- readRDS("~/desktop/drc_bench_ref.rds")
+  # # for testing purposed only
   # raw = ne_raw
   # ref = ne_ref
-  # # raw$adm2[1] <- "Suffolk II"
-  # # ref$adm2[10] <- "Suffolk 2"
+  # raw$adm2[1] <- "Suffolk II"
+  # ref$adm2[10] <- "Suffolk 2"
   # pattern = NULL
   # pattern_ref = pattern
   # by = NULL
@@ -117,6 +115,7 @@ hmatch <- function(raw,
   # type = "inner"
   # ref_prefix = "ref_"
   # fuzzy = TRUE
+  # fuzzy_method = "osa"
   # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
@@ -307,7 +306,7 @@ hmatch__ <- function(raw_join,
 
   ## add temporary match column to ref_join
   temp_col_match <- "TEMP_MATCH_PART"
-  ref_join[[temp_col_match]] <- TRUE
+  ref_join[[temp_col_match]] <- rep(TRUE, nrow(ref_join))
 
   ## re-derive initial (pre-join) column names
   names_raw_prep <- setdiff(names(raw_join), by_raw_join)
@@ -354,7 +353,7 @@ hmatch__ <- function(raw_join,
     fuzzy = fuzzy,
     fuzzy_method = fuzzy_method,
     fuzzy_dist = fuzzy_dist,
-    is_max_level = TRUE
+    is_max_level = length(by_raw_join) > 1
   )
 
   ## rejoin raw and ref
@@ -469,7 +468,7 @@ hmatch_complete__ <- function(raw_join,
 
   ## add temporary match column to ref_join
   temp_col_match <- "TEMP_MATCH_COMPLETE"
-  ref_join[[temp_col_match]] <- TRUE
+  ref_join[[temp_col_match]] <- rep(TRUE, nrow(ref_join))
 
   ## re-derive initial (pre-join) column names
   names_raw_prep <- setdiff(names(raw_join), by_raw_join)

@@ -20,12 +20,23 @@ test_that("hmatch works as expected", {
   expect_equal(sort(m_resolve_anti$id), c(2, 3))
 
   # test 1-column matching
-  raw_onecol <- data.frame(x = c("x", "y", "z"), stringsAsFactors = FALSE)
+  raw_onecol <- data.frame(x = c("x", "y", "z", NA), stringsAsFactors = FALSE)
   ref_onecol <- raw_onecol
 
   m_onecol <- hmatch(raw_onecol, ref_onecol)
   expect_named(m_onecol, c("x", "ref_x"))
   expect_equal(m_onecol$x, m_onecol$ref_x)
+
+  # test 0 rows
+  m_regular <- hmatch(ne_raw, ne_ref, type = "resolve_left")
+
+  m_norows_raw <- hmatch(ne_raw[0,], ne_ref)
+  expect_equal(names(m_norows_raw), names(m_regular))
+  expect_equal(nrow(m_norows_raw), 0L)
+
+  m_norows_ref <- hmatch(ne_raw, ne_ref[0,])
+  expect_equal(names(m_norows_ref), names(m_regular))
+  expect_equal(nrow(m_norows_ref), nrow(m_regular))
 
   # test fuzzy_dist argument in fuzzy matching
   raw_fuzzy_dist <- data.frame(x = c("Patrick12", "Patrick123"), stringsAsFactors = FALSE)
