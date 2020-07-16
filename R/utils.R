@@ -31,7 +31,7 @@ set_names <- function(object = nm, nm) {
 n_levels <- function(x, pattern = NULL, by = NULL) {
   by <- select_columns(x, pattern, by)
   m <- !is.na(x[, by, drop = FALSE])
-  apply(m, 1, sum)
+  as.integer(apply(m, 1, sum))
 }
 
 
