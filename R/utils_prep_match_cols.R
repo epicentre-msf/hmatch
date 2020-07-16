@@ -37,10 +37,18 @@ prep_match_columns <- function(raw,
 
   by_ref_orig <- by_ref
 
-  # rename cols of ref if necessary
+  # rename hierarchical cols of ref if necessary
   if (all(by_raw == by_ref)) {
     by_ref <- paste0(ref_prefix, by_ref)
     names(ref)[match(by_raw, names(ref))] <- by_ref
+  }
+
+  # rename columns in ref that match raw (including hierarchical columns)
+  names_intersect <- intersect(names(ref), names(raw))
+
+  if (length(names_intersect) > 0) {
+    names_intersect_prefix <- paste0(ref_prefix, names_intersect)
+    names(ref)[match(names_intersect, names(ref))] <- names_intersect_prefix
   }
 
   by_raw_join <- paste0(by_raw, join_suffix)

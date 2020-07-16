@@ -52,9 +52,8 @@ columns of \code{raw} (see \link{dictionary_recoding})}
 "resolve_inner", or "resolve_anti"). Defaults to "left". See
 \link{join_types}.}
 
-\item{ref_prefix}{prefix to add to returned hierarchical column names in
-\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
-"ref_")}
+\item{ref_prefix}{prefix to add to names of returned columns from \code{ref} if
+they are otherwise identical to names within \code{raw}. Defaults to "ref_".}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
 \code{\link{stringdist}} package). Defaults to FALSE.}

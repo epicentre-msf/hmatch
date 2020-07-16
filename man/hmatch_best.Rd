@@ -65,9 +65,8 @@ matching). Defaults to \code{1L}.}
 \item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}
 
-\item{ref_prefix}{prefix to add to returned hierarchical column names in
-\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
-"ref_")}
+\item{ref_prefix}{prefix to add to names of returned columns from \code{ref} if
+they are otherwise identical to names within \code{raw}. Defaults to "ref_".}
 
 \item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

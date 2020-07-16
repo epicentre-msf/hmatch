@@ -40,9 +40,8 @@
 #'   matching). Defaults to `1L`.
 #' @param dict optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
-#' @param ref_prefix prefix to add to returned hierarchical column names in
-#'   `ref` if they are otherwise identical to names in `raw`  (defaults to
-#'   "ref_")
+#' @param ref_prefix prefix to add to names of returned columns from `ref` if
+#'   they are otherwise identical to names within `raw`. Defaults to "ref_".
 #' @param std_fn function to standardize strings during matching. Defaults to
 #'   \code{\link{string_std}}. Set to `NULL` to omit standardization. See
 #'   also \link{string_standardization}.
