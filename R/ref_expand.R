@@ -6,7 +6,7 @@
 #' hierarchical columns — country, state, and municipality — but nonetheless
 #' only reflect the municipality level in that all rows represent a unique
 #' municipality. The lower-resolution levels (state, country) are implied but
-#' not explicity represented as unique rows. If we wish to allow matches to the
+#' not explicitly represented as unique rows. If we wish to allow matches to the
 #' lower-resolution levels, we need additional rows specific to these levels.
 #'
 #' This function takes a reference data.frame with N hierarchical columns, and
