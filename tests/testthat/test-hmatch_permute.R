@@ -45,8 +45,7 @@ test_that("hmatch_permute works as expected", {
   expect_equal(m_perm$ref_id, c(3, 1, 4))
 
   # test retains class
-  ne_raw_tibble <- dplyr::as_tibble(ne_raw)
-  m_tibble <- hmatch_permute(ne_raw_tibble, ne_ref)
-  expect_is(ne_raw_tibble, "tbl_df")
+  m_tibble <- hmatch_permute(dplyr::as_tibble(ne_raw), ne_ref)
+  expect_is(m_tibble, "tbl_df")
 })
 

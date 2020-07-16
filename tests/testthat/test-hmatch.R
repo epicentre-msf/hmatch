@@ -68,8 +68,7 @@ test_that("hmatch works as expected", {
   expect_equal(m_dict2$id, c(1, 2))
 
   # test retains class
-  ne_raw_tibble <- dplyr::as_tibble(ne_raw)
-  m_tibble <- hmatch(ne_raw_tibble, ne_ref)
-  expect_is(ne_raw_tibble, "tbl_df")
+  m_tibble <- hmatch(dplyr::as_tibble(ne_raw), ne_ref)
+  expect_is(m_tibble, "tbl_df")
 })
 

@@ -82,9 +82,11 @@ hmatch_composite <- function(raw,
   # by = NULL
   # dict <- NULL
   # type <- "resolve_left"
+  # allow_gaps = TRUE
   # code_col <- "hcode"
   # ref_prefix = "ref_"
   # fuzzy = FALSE
+  # fuzzy_method = "osa"
   # fuzzy_dist = 1L
   # std_fn = string_std
   # ... <- NULL
@@ -186,26 +188,24 @@ hmatch_composite <- function(raw,
   }
 
   ## complete non-fuzzy match
-  if (nrow(raw_join_remaining) > 0) {
+  # (run even if no rows remaining to get column template for later join)
+  m_complete <- hmatch_(
+    raw_join = raw_join_remaining,
+    ref_join = ref_join,
+    by_raw = prep$by_raw,
+    by_ref = prep$by_ref,
+    by_raw_join = prep$by_raw_join,
+    by_ref_join = prep$by_ref_join,
+    type = "resolve_inner",
+    allow_gaps = FALSE,
+    fuzzy = FALSE
+  )
 
-    m_complete <- hmatch_(
-      raw_join = raw_join_remaining,
-      ref_join = ref_join,
-      by_raw = prep$by_raw,
-      by_ref = prep$by_ref,
-      by_raw_join = prep$by_raw_join,
-      by_ref_join = prep$by_ref_join,
-      type = "resolve_inner",
-      allow_gaps = FALSE,
-      fuzzy = FALSE
-    )
+  m_complete <- m_complete[,c(temp_col_id, temp_col_code)]
+  m_complete$match_type <- rep("complete", nrow(m_complete))
 
-    m_complete <- m_complete[,c(temp_col_id, temp_col_code)]
-    m_complete$match_type <- rep("complete", nrow(m_complete))
-
-    unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_complete[[temp_col_id]]
-    raw_join_remaining <- raw_join_remaining[unmatched,]
-  }
+  unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_complete[[temp_col_id]]
+  raw_join_remaining <- raw_join_remaining[unmatched,]
 
   ## partial non-fuzzy match
   if (nrow(raw_join_remaining) > 0 & allow_gaps) {
