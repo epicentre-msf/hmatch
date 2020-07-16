@@ -5,42 +5,27 @@
 \title{Hierarchical matching of parents based on sets of common offspring}
 \usage{
 hmatch_parents(
-  x,
   raw,
   ref,
-  level,
-  mmin,
-  pmin,
   pattern,
   pattern_ref = pattern,
   by,
   by_ref = by,
+  level,
+  min_matches = 1L,
   type = "left",
-  ref_prefix = "ref_",
   fuzzy = FALSE,
   fuzzy_method = "osa",
   fuzzy_dist = 1L,
+  ref_prefix = "ref_",
   std_fn = string_std,
   ...
 )
 }
 \arguments{
-\item{x}{a \code{data.frame} representing one or more rows from \code{raw}, and
-optionally including matching columns from \code{ref} to help narrow down the
-set of possible offspring to try matching}
-
 \item{raw}{data frame containing hierarchical columns with raw data}
 
 \item{ref}{data frame containing hierarchical columns with reference data}
-
-\item{level}{integer index of the hierarchical level to match at}
-
-\item{mmin}{minimum number of matching offspring required for parents to be
-considered a match}
-
-\item{pmin}{minimum proportion of matching offspring required for parents to
-be considered a match (i.e. the proportion of offspring in \code{raw} with match
-in \code{ref})}
 
 \item{pattern}{regex pattern to match the hierarchical columns in \code{raw}\cr
 
@@ -59,11 +44,16 @@ have different names in \code{raw} and \code{ref}.}
 Defaults to \code{by}, so only need to specify if the hierarchical columns
 have different names in \code{raw} and \code{ref}.}
 
-\item{type}{type of join ("inner" or "left") (defaults to "left")}
+\item{level}{name or integer index of the hierarchical level to match at
+(i.e. the 'parent' level). If a name, must correspond to a hierarchical
+column within \code{raw}, not including the very last hierarchical column (which
+has no hierarchical children). If an integer, must be between 1 and k-1,
+where k is the number of hierarchical columns.}
 
-\item{ref_prefix}{prefix to add to returned hierarchical column names in
-\code{ref} if they are otherwise identical to names in \code{raw}  (defaults to
-"ref_")}
+\item{min_matches}{minimum number of matching offspring required for parents
+to be considered a match. Defaults to \code{1}.}
+
+\item{type}{type of join ("left", "inner" or "anti") (defaults to "left")}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
 \code{\link{stringdist}} package). Defaults to FALSE.}
@@ -75,6 +65,9 @@ calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".}
 classify matches (i.e. a string distance ≤ \code{fuzzy_dist} will be considered
 matching). Defaults to \code{1L}.}
 
+\item{ref_prefix}{prefix to add to names of returned columns from \code{ref} if
+they are otherwise identical to names within \code{raw}. Defaults to "ref_".}
+
 \item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See
 also \link{string_standardization}.}
@@ -83,8 +76,18 @@ also \link{string_standardization}.}
 }
 \value{
 a data frame obtained by matching the hierarchical columns in \code{raw}
-and \code{ref}, using the join type specified by argument \code{type} (see
-\link{join_types} for more details)
+and \code{ref} (at the parent level and above), using the join type specified by
+argument \code{type} (see \link{join_types} for more details). Note that unlike
+other \code{hmatch_} functions, hmatch_parents returns only unique rows and
+relevant hierarchical columns (i.e. the parent level and above), along with
+additional columns describing the number of matching children and total
+number of children for a given parent.
+
+\item{...}{hierarchical columns from \code{raw}, parent level and above}
+\item{...}{hierarchical columns from \code{ref}, parent level and above}
+\item{n_child_raw}{total number of unique children belonging to the parent within \code{raw}}
+\item{n_child_ref}{total number of unique children belonging to the parent within \code{ref}}
+\item{n_child_match}{number of children in \code{raw} with match in \code{ref}}
 }
 \description{
 Match a hierarchical column (e.g. region, province, or county) within a raw,
@@ -98,25 +101,28 @@ values using only fuzzy-matching. However, we might nonetheless be able to
 match "NY" to "New York" if they share a common and unique set of 'offspring'
 (i.e. admin2 values) across both datasets (e.g "Kings", "Queens", "New York",
 "Suffolk", "Bronx", etc.).
+
+Unlike other \code{hmatch} functions, the data frame returned by \code{hmatch_parents}
+only includes \emph{unique} hierarchical combinations and only relevant
+hierarchical levels (i.e. the parent level and above), along with additional
+columns giving the number of matching children and total number of children
+for a given parent.
 }
 \examples{
-# prepare example data
+# e.g. match abbreviated adm1 names to full names based on common offspring
 raw <- ne_ref
 raw$adm1[raw$adm1 == "Ontario"] <- "ON"
 raw$adm1[raw$adm1 == "New York"] <- "NY"
 raw$adm1[raw$adm1 == "New Jersey"] <- "NJ"
 raw$adm1[raw$adm1 == "Pennsylvania"] <- "PA"
-x <- raw[raw$level == 1,]
 
 hmatch_parents(
-  x,
   raw,
   ne_ref,
   pattern = "adm",
-  level = 2,
-  mmin = 2,
-  pmin = 0.5,
-  type = "inner"
+  level = "adm1",
+  min_matches = 2,
+  type = "left"
 )
 
 }

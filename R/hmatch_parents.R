@@ -13,89 +13,76 @@
 #' (i.e. admin2 values) across both datasets (e.g "Kings", "Queens", "New York",
 #' "Suffolk", "Bronx", etc.).
 #'
+#' Unlike other `hmatch` functions, the data frame returned by `hmatch_parents`
+#' only includes *unique* hierarchical combinations and only relevant
+#' hierarchical levels (i.e. the parent level and above), along with additional
+#' columns giving the number of matching children and total number of children
+#' for a given parent.
+#'
 #' @inheritParams hmatch
 #'
-#' @param x a `data.frame` representing one or more rows from `raw`, and
-#'   optionally including matching columns from `ref` to help narrow down the
-#'   set of possible offspring to try matching
-#' @param level integer index of the hierarchical level to match at
-#' @param mmin minimum number of matching offspring required for parents to be
-#'   considered a match
-#' @param pmin minimum proportion of matching offspring required for parents to
-#'   be considered a match (i.e. the proportion of offspring in `raw` with match
-#'   in `ref`)
-#' @param type type of join ("inner" or "left") (defaults to "left")
+#' @param level name or integer index of the hierarchical level to match at
+#'   (i.e. the 'parent' level). If a name, must correspond to a hierarchical
+#'   column within `raw`, not including the very last hierarchical column (which
+#'   has no hierarchical children). If an integer, must be between 1 and k-1,
+#'   where k is the number of hierarchical columns.
+#' @param min_matches minimum number of matching offspring required for parents
+#'   to be considered a match. Defaults to `1`.
+#' @param type type of join ("left", "inner" or "anti") (defaults to "left")
 #'
 #' @return a data frame obtained by matching the hierarchical columns in `raw`
-#'   and `ref`, using the join type specified by argument `type` (see
-#'   \link{join_types} for more details)
+#'   and `ref` (at the parent level and above), using the join type specified by
+#'   argument `type` (see \link{join_types} for more details). Note that unlike
+#'   other `hmatch_` functions, hmatch_parents returns only unique rows and
+#'   relevant hierarchical columns (i.e. the parent level and above), along with
+#'   additional columns describing the number of matching children and total
+#'   number of children for a given parent.
+#'
+#'   \item{...}{hierarchical columns from `raw`, parent level and above}
+#'   \item{...}{hierarchical columns from `ref`, parent level and above}
+#'   \item{n_child_raw}{total number of unique children belonging to the parent within `raw`}
+#'   \item{n_child_ref}{total number of unique children belonging to the parent within `ref`}
+#'   \item{n_child_match}{number of children in `raw` with match in `ref`}
 #'
 #' @examples
-#' # prepare example data
+#' # e.g. match abbreviated adm1 names to full names based on common offspring
 #' raw <- ne_ref
 #' raw$adm1[raw$adm1 == "Ontario"] <- "ON"
 #' raw$adm1[raw$adm1 == "New York"] <- "NY"
 #' raw$adm1[raw$adm1 == "New Jersey"] <- "NJ"
 #' raw$adm1[raw$adm1 == "Pennsylvania"] <- "PA"
-#' x <- raw[raw$level == 1,]
 #'
 #' hmatch_parents(
-#'   x,
 #'   raw,
 #'   ne_ref,
 #'   pattern = "adm",
-#'   level = 2,
-#'   mmin = 2,
-#'   pmin = 0.5,
-#'   type = "inner"
+#'   level = "adm1",
+#'   min_matches = 2,
+#'   type = "left"
 #' )
 #'
-#' @importFrom dplyr left_join bind_rows
+#' @importFrom stats aggregate
+#' @importFrom dplyr left_join
 #' @export hmatch_parents
-hmatch_parents <- function(x,
-                           raw,
+hmatch_parents <- function(raw,
                            ref,
-                           level,
-                           mmin,
-                           pmin,
                            pattern,
                            pattern_ref = pattern,
                            by,
                            by_ref = by,
+                           level,
+                           min_matches = 1L,
                            type = "left",
-                           ref_prefix = "ref_",
                            fuzzy = FALSE,
                            fuzzy_method = "osa",
                            fuzzy_dist = 1L,
+                           ref_prefix = "ref_",
                            std_fn = string_std,
                            ...) {
 
-  # # for testing purposes only
-  # raw <- ne_ref
-  # raw$adm1[raw$adm1 == "New York"] <- "NY"
-  # x <- raw[raw$level == 1,]
-  # ref <- ne_ref
-  # pattern = "adm"
-  # pattern_ref = pattern
-  # level <- 2
-  # by = NULL
-  # dict <- NULL
-  # type = "left"
-  # ref_prefix = "ref_"
-  # std_fn = string_std
-  # fuzzy_dist <- 1
-  # mmin = 2
-  # pmin = 0.5
-  # ... <- NULL
 
   ## match args
-  type <- match.arg(type, c("left", "inner"))
-
-  ## temp cols
-  temp_col_id <- "TEMP_ROW_ID"
-  temp_col_match <- "TEMP_MATCH"
-
-  x[[temp_col_id]] <- seq_len(nrow(x))
+  type <- match.arg(type, c("left", "inner", "anti"))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(
@@ -108,131 +95,112 @@ hmatch_parents <- function(x,
     ref_prefix = ref_prefix
   )
 
-  # add any missing `ref` names to x
-  ref_names_missing <- setdiff(prep$by_ref, names(x))
-  x[ref_names_missing] <- NA_character_
+  ## validate argument level
+  if (is.character(level)) {
+    level <- match(level, prep$by_raw)
+    if (is.na(level)) {
+      stop("Argument `level` does not match the name of a hierarchical column ",
+           "within `raw", call. = FALSE)
+    }
+  }
 
-  raw_ <- unique(raw[,prep$by_raw])
-  ref_ <- prep$ref[,prep$by_ref]
+  k <- length(prep$by_raw) # number of hierarchical columns
 
-  raw_lev <- max_levels(raw_, by = prep$by_raw)
-  ref_lev <- max_levels(ref_, by = prep$by_ref)
+  if (!level %in% seq_len(k-1)) {
+    stop("Argument `level` not in range seq_len(k-1), where k is the number ",
+         "of hierarchical columns", call. = FALSE)
+  }
 
-  raw_split <- ordered_split(raw_, raw_lev, N = length(prep$by_raw))
-  ref_split <- ordered_split(ref_, ref_lev, N = length(prep$by_raw))
+  ## temp columns
+  temp_col_id_raw <- "TEMP_COL_ID_RAW"
+  temp_col_id_ref <- "TEMP_COL_ID_REF"
+  temp_col_match <- "TEMP_MATCH_COLUMN_PARENTS"
 
-  ref_prep_split <- split(prep$ref, ref_lev)
+  ## identify parent, offspring, and ancestor columns
+  by_raw_parent <- prep$by_raw[level]
+  by_ref_parent <- prep$by_ref[level]
 
-  xraw <- x[,c("TEMP_ROW_ID", prep$by_raw[1:level])]
-  xref <- x[,c("TEMP_ROW_ID", prep$by_ref[1:(level-1)])]
+  by_raw_child <- prep$by_raw[level + 1L]
+  by_ref_child <- prep$by_ref[level + 1L]
 
-  child_raw <- prep$by_raw[level+1]
-  child_ref <- prep$by_ref[level+1]
+  by_raw_ancestors <- prep$by_raw[seq_len(level)]
+  by_ref_ancestors <- prep$by_ref[seq_len(level)]
 
-  xraw_join <- dplyr::left_join(xraw, raw_split[[level+1]], by = prep$by_raw[1:level])
-  xref_join <- prep_xref(xref, ref_split[[level+1]], by = prep$by_ref[1:(level-1)])
+  ## select only the hierarchical columns
+  raw_ <- unique(raw[,prep$by_raw, drop = FALSE])
+  ref_ <- prep$ref[,prep$by_ref, drop = FALSE]
 
-  xraw_join[[child_raw]] <- std_fn(xraw_join[[child_raw]], ...)
-  xref_join[[child_ref]] <- std_fn(xref_join[[child_ref]], ...)
+  ## subset raw and ref to non-missing values at parent and offspring level
+  missing_parent_raw <- is.na(raw_[[by_raw_parent]])
+  raw_sub <- raw_[!missing_parent_raw, , drop = FALSE]
+  raw_sub[[temp_col_id_raw]] <- hcodes_int(raw_sub, by = by_raw_ancestors)
 
-  xraw_split <- split(xraw_join, xraw_join$TEMP_ROW_ID)
-  xref_split <- split(xref_join, xref_join$TEMP_ROW_ID)
+  missing_parent_ref <- is.na(ref_[[by_ref_parent]])
+  missing_child_ref <- is.na(ref_[[by_ref_child]])
+  ref_sub <- ref_[!missing_parent_ref & !missing_child_ref, , drop = FALSE]
+  ref_sub[[temp_col_id_ref]] <- hcodes_int(ref_sub, by = by_ref_ancestors)
 
-  group_vars <- c("TEMP_ROW_ID", prep$by_ref[1:level])
-
-  match_l <- mapply(match_parents,
-                    xraw_i = xraw_split,
-                    xref_i = xref_split,
-                    child_raw = child_raw,
-                    child_ref = child_ref,
-                    MoreArgs = list(group_vars = group_vars,
-                                    fuzzy_method = fuzzy_method,
-                                    fuzzy_dist = fuzzy_dist,
-                                    mmin = mmin,
-                                    pmin = pmin),
-                    SIMPLIFY = FALSE)
-
-  match_join <- dplyr::bind_rows(match_l)
-  match_join[[temp_col_match]] <- TRUE
-
-  match_join_ref <- left_join(match_join, ref_prep_split[[level]], by = prep$by_ref[1:level])
-  match_join_ref <- match_join_ref[,c(temp_col_id, temp_col_match, names(prep$ref), "m", "nraw", "nref")]
-
-  xjoin <- x[,setdiff(names(x), names(prep$ref))]
-  matches_out <- dplyr::left_join(xjoin, match_join_ref, by = temp_col_id)
-
-  ## execute match type and remove temporary columns
-  prep_output(
-    x = matches_out,
-    type = type,
-    temp_col_id = temp_col_id,
-    temp_col_match = temp_col_match,
-    cols_raw_orig = names(raw),
-    class_raw = class(x)
-  )
-}
-
-
-
-
-#' @noRd
-#' @importFrom dplyr left_join
-#' @importFrom stats aggregate
-#' @importFrom stringdist stringdistmatrix
-match_parents <- function(xraw_i,
-                          xref_i,
-                          child_raw,
-                          child_ref,
-                          group_vars,
-                          fuzzy_method,
-                          fuzzy_dist,
-                          mmin,
-                          pmin) {
-
-  dmat <- stringdist::stringdistmatrix(
-    xraw_i[[child_raw]],
-    xref_i[[child_ref]],
-    method = fuzzy_method
+  ## main matching routine a child level
+  matches_out <- hmatch(
+    raw = raw_sub,
+    ref = ref_sub,
+    by = by_raw_child,
+    by_ref = by_ref_child,
+    type = "left"
   )
 
-  xref_i$match <- apply(dmat <= fuzzy_dist, 2, any)
-
-  out_orig <- stats::aggregate(
-    list(m = xref_i$match),
-    by = as.list(xref_i[group_vars]),
-    sum
+  ## count n_matches, and n_children in both raw and ref, by parent
+  n_child_raw <- stats::aggregate(
+    list(n_child_raw = raw_sub[[by_raw_child]]),
+    raw_sub[,temp_col_id_raw, drop = FALSE],
+    function(x) length(unique(x[!is.na(x)]))
   )
 
-  out_orig$nraw <- length(xraw_i[[child_raw]])
+  n_child_ref <- stats::aggregate(
+    list(n_child_ref = ref_sub[[by_ref_child]]),
+    ref_sub[,temp_col_id_ref, drop = FALSE],
+    function(x) length(unique(x[!is.na(x)]))
+  )
 
-  out_nref <- stats::aggregate(
-    list(nref = xref_i$match),
-    by = as.list(xref_i[group_vars]),
+  n_child_match <- stats::aggregate(
+    list(n_child_match = matches_out[[1]]),
+    matches_out[,c(temp_col_id_raw, temp_col_id_ref), drop = FALSE],
     length
   )
 
-  out <- dplyr::left_join(out_orig, out_nref, by = group_vars)
+  ## filter to rows with >= min_matches and add temp match col
+  n_child_match <- n_child_match[n_child_match$n_child_match >= min_matches,]
+  n_child_match[[temp_col_match]] <- rep(TRUE, nrow(n_child_match))
 
-  out[out$m >= mmin & out$m / out$nraw >= pmin,]
-}
+  ## prep raw and ref for join
+  raw_join <- unique(raw_sub[, c(by_raw_ancestors, temp_col_id_raw), drop = FALSE])
+  ref_join <- unique(ref_sub[, c(by_ref_ancestors, temp_col_id_ref), drop = FALSE])
 
+  ## join raw to all relevant match data
+  matches_join_out <- dplyr::left_join(raw_join, n_child_match, by = temp_col_id_raw)
+  matches_join_out <- dplyr::left_join(matches_join_out, n_child_raw, by = temp_col_id_raw)
+  matches_join_out <- dplyr::left_join(matches_join_out, n_child_ref, by = temp_col_id_ref)
+  matches_join_out <- dplyr::left_join(matches_join_out, ref_join, by = temp_col_id_ref)
 
-#' @noRd
-#' @importFrom dplyr bind_rows
-prep_xref <- function(x, y, by) {
-  xs <- split(x, x$TEMP_ROW_ID)
-  dplyr::bind_rows(lapply(xs, prep_xref_join, y = y, by = by))
-}
+  ## column order for output
+  column_order <- c(
+    by_raw_ancestors,
+    by_ref_ancestors,
+    "n_child_raw",
+    "n_child_ref",
+    "n_child_match",
+    temp_col_id_raw,
+    temp_col_match
+  )
 
-
-#' @noRd
-#' @importFrom dplyr bind_cols left_join
-prep_xref_join <- function(x, y, by) {
-  if (all(is.na(x[,by]))) {
-    out <- dplyr::bind_cols(TEMP_ROW_ID = rep(unique(x$TEMP_ROW_ID), nrow(y)), y)
-  } else {
-    out <- dplyr::left_join(x, y, by = by)
-  }
-  return(out)
+  ## execute match type and remove temporary columns
+  prep_output(
+    x = matches_join_out[,column_order],
+    type = type,
+    temp_col_id = temp_col_id_raw,
+    temp_col_match = temp_col_match,
+    cols_raw_orig = by_raw_ancestors,
+    class_raw = class(raw)
+  )
 }
 
