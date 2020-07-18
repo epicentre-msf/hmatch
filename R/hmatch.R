@@ -335,6 +335,9 @@ hmatch__ <- function(raw_join,
   col_max_raw <- by_raw_join[max_level]
   col_max_ref <- by_ref_join[max_level]
 
+  # col_min_raw <- by_raw_join[1]
+  # col_min_ref <- by_ref_join[1]
+
   ## generate all possible match combinations at max hierarchical level
   initial_combinations <- expand.grid(
     x = unique(raw_[[col_max_raw]]),
@@ -342,10 +345,16 @@ hmatch__ <- function(raw_join,
     stringsAsFactors = FALSE
   )
 
+  # initial_combinations <- expand.grid(
+  #   x = unique(raw_[[col_min_raw]]),
+  #   y = unique(ref_[[col_min_ref]]),
+  #   stringsAsFactors = FALSE
+  # )
+
   names(initial_combinations) <- c(col_max_raw, col_max_ref)
 
   ## filter to actual matches at max hierarchical level
-  initial_matches <- filter_to_matches(
+  matches_remaining <- filter_to_matches(
     dat = initial_combinations,
     col1 = col_max_raw,
     col2 = col_max_ref,
@@ -355,29 +364,38 @@ hmatch__ <- function(raw_join,
     is_max_level = length(by_raw_join) > 1
   )
 
-  ## rejoin raw and ref
-  initial_matches_join <- dplyr::left_join(
-    initial_matches,
-    raw_join,
-    by = col_max_raw
-  )
-
-  initial_matches_join <- dplyr::left_join(
-    initial_matches_join,
-    ref_join,
-    by = col_max_ref
-  )
-
-  ## filter to matches where the max ref level is <= the max raw level
-  i <- initial_matches_join[[temp_col_max_ref]] <= initial_matches_join[[temp_col_max_raw]]
-  matches_remaining <- initial_matches_join[i,]
-
   ## for each lower hierarchical level...
   if (max_level > 1) {
     for (j in (max_level - 1):1) {
-      col_focal_raw <- names(raw_)[j]
-      col_focal_ref <- names(ref_)[j]
 
+      ## identify relevant columns
+      col_focal_raw <- by_raw_join[j]
+      col_focal_ref <- by_ref_join[j]
+
+      col_prev_raw <- by_raw_join[j + 1]
+      col_prev_ref <- by_ref_join[j + 1]
+
+      cols_focal_and_prev_raw <- by_raw_join[c(j, j + 1)]
+      cols_focal_and_prev_ref <- by_ref_join[c(j, j + 1)]
+
+      ## prepare dfs for joining next hierarchical level in raw and ref
+      next_join_raw <- unique(raw_[,cols_focal_and_prev_raw, drop = FALSE])
+      next_join_ref <- unique(ref_[,cols_focal_and_prev_ref, drop = FALSE])
+
+      ## join next levels of raw and ref
+      matches_remaining <- dplyr::left_join(
+        matches_remaining,
+        next_join_raw,
+        by = col_prev_raw
+      )
+
+      matches_remaining <- dplyr::left_join(
+        matches_remaining,
+        next_join_ref,
+        by = col_prev_ref
+      )
+
+      ## filter to matches at current hierarchical level
       matches_remaining <- filter_to_matches(
         dat = matches_remaining,
         col1 = col_focal_raw,
@@ -390,8 +408,25 @@ hmatch__ <- function(raw_join,
     }
   }
 
+  ## match bare join columns back to raw_join and ref_join
+  matches_join_out <- dplyr::inner_join(
+    raw_join[, c(temp_col_id, temp_col_max_raw, by_raw_join)],
+    matches_remaining,
+    by = by_raw_join
+  )
+
+  matches_join_out <- dplyr::inner_join(
+    matches_join_out,
+    ref_join,
+    by = by_ref_join
+  )
+
+  ## filter to matches where the max ref level is <= the max raw level
+  keep <- matches_join_out[[temp_col_max_ref]] <= matches_join_out[[temp_col_max_raw]]
+  matches_join_out <- matches_join_out[keep, , drop = FALSE]
+
   ## remove join columns and filter to unique rows
-  matches_join_out <- unique(matches_remaining[,c(temp_col_id, names_ref_prep)])
+  matches_join_out <- unique(matches_join_out[,c(temp_col_id, names_ref_prep)])
 
   ## if resolve-type join
   if (grepl("^resolve", type)) {
