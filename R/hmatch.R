@@ -349,7 +349,7 @@ hmatch__ <- function(raw_join,
 
   names(initial_combinations) <- c(col_min_raw, col_min_ref)
 
-  ## filter to actual matches at max hierarchical level
+  ## filter to actual matches at first hierarchical level
   matches_remaining <- filter_to_matches(
     x = initial_combinations,
     col1 = col_min_raw,
@@ -357,10 +357,10 @@ hmatch__ <- function(raw_join,
     fuzzy = fuzzy,
     fuzzy_method = fuzzy_method,
     fuzzy_dist = fuzzy_dist,
-    is_max_level = FALSE
+    is_max_level = max_level == 1L
   )
 
-  ## for each lower hierarchical level...
+  ## for each subsequent hierarchical level...
   if (max_level > 1) {
     for (j in 2:max_level) {
 
@@ -459,7 +459,8 @@ filter_to_matches <- function(x,
                               fuzzy,
                               fuzzy_method,
                               fuzzy_dist,
-                              is_max_level) {
+                              is_max_level,
+                              return_x = TRUE) {
 
   match <- if (fuzzy) {
     stringdist::stringdist(x[[col1]], x[[col2]], method = fuzzy_method) <= fuzzy_dist
@@ -473,9 +474,15 @@ filter_to_matches <- function(x,
     match | is.na(x[[col1]])
   }
 
-  ## convert NA to FALSE and return matching rows of dat
   keep[is.na(keep)] <- FALSE
-  x[keep, , drop = FALSE]
+
+  if (return_x) {
+    out <- x[keep, , drop = FALSE]
+  } else {
+   out <- keep
+  }
+
+  out
 }
 
 

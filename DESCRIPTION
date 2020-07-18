@@ -18,6 +18,7 @@ Imports:
     stringi,
     stringdist,
     dplyr,
+    tidyr,
     rlang
 Suggests: 
     testthat (>= 2.1.0),

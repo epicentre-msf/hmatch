@@ -1,5 +1,47 @@
 
 
+order_within <- function(x, col, col_split) {
+  split_factor <- factor(x[[col_split]], levels = unique(x[[col_split]]))
+  x_split <- split(x, split_factor)
+  x_split_order <- lapply(x_split, function(d) d[order(d[[col]]), , drop = FALSE])
+  dplyr::bind_rows(x_split_order)
+}
+
+
+# pull_els <- function(x) {
+#   lapply(x, function(x) x[[1]])
+# }
+
+# unnest_tokens <- function(x, col_id) {
+#   x_split <- split(x, x[[col_id]])
+#   x_unnest <- lapply(x_split, function(x) expand.grid(pull_els(x)))
+#   dplyr::bind_rows(x_unnest)
+# }
+
+
+#' @importFrom tidyr unnest
+#' @importFrom dplyr all_of
+unnest_tokens <- function(x, by) {
+  for (j in by) { x <- tidyr::unnest(x, all_of(j)) }
+  x
+}
+
+
+tokenize <- function(x, split = "[-_[:space:]]+") {
+  strsplit(x, split)
+}
+
+
+tokenize_cols <- function(x, by, split, prefix = "token_") {
+  x <- dplyr::as_tibble(x)
+  bind_ <- x[, by, drop = FALSE]
+  for (j in by) { bind_[[j]] <- tokenize(bind_[[j]], split = split) }
+  names(bind_) <- paste0(prefix, by)
+  dplyr::bind_cols(x, bind_)
+}
+
+
+
 #' @noRd
 backtick <- function(x) {
   paste0("`", x, "`")
