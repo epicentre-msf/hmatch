@@ -202,6 +202,7 @@ hmatch_ <- function(raw_join,
                     class_raw = "data.frame") {
 
 
+  ## temp row id
   temp_col_id <- "TEMP_ROW_ID_PART_WRAPPER"
   raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
 
@@ -330,80 +331,75 @@ hmatch__ <- function(raw_join,
   raw_ <- raw_join[,by_raw_join, drop = FALSE]
   ref_ <- ref_join[,by_ref_join, drop = FALSE]
 
-  ## identify the maximum (highest-resolution) hierarchical level
+  ## identify the min and maximum hierarchical levels
   max_level <- length(by_raw_join)
+
   col_max_raw <- by_raw_join[max_level]
   col_max_ref <- by_ref_join[max_level]
 
-  # col_min_raw <- by_raw_join[1]
-  # col_min_ref <- by_ref_join[1]
+  col_min_raw <- by_raw_join[1]
+  col_min_ref <- by_ref_join[1]
 
-  ## generate all possible match combinations at max hierarchical level
+  ## raw/ref combinations at first hierarchical level
   initial_combinations <- expand.grid(
-    x = unique(raw_[[col_max_raw]]),
-    y = unique(ref_[[col_max_ref]]),
+    x = unique(raw_[[col_min_raw]]),
+    y = unique(ref_[[col_min_ref]]),
     stringsAsFactors = FALSE
   )
 
-  # initial_combinations <- expand.grid(
-  #   x = unique(raw_[[col_min_raw]]),
-  #   y = unique(ref_[[col_min_ref]]),
-  #   stringsAsFactors = FALSE
-  # )
-
-  names(initial_combinations) <- c(col_max_raw, col_max_ref)
+  names(initial_combinations) <- c(col_min_raw, col_min_ref)
 
   ## filter to actual matches at max hierarchical level
   matches_remaining <- filter_to_matches(
-    dat = initial_combinations,
-    col1 = col_max_raw,
-    col2 = col_max_ref,
+    x = initial_combinations,
+    col1 = col_min_raw,
+    col2 = col_min_ref,
     fuzzy = fuzzy,
     fuzzy_method = fuzzy_method,
     fuzzy_dist = fuzzy_dist,
-    is_max_level = length(by_raw_join) > 1
+    is_max_level = FALSE
   )
 
   ## for each lower hierarchical level...
   if (max_level > 1) {
-    for (j in (max_level - 1):1) {
+    for (j in 2:max_level) {
 
       ## identify relevant columns
       col_focal_raw <- by_raw_join[j]
       col_focal_ref <- by_ref_join[j]
 
-      col_prev_raw <- by_raw_join[j + 1]
-      col_prev_ref <- by_ref_join[j + 1]
+      cols_prev_raw <- by_raw_join[1:(j - 1)]
+      cols_prev_ref <- by_ref_join[1:(j - 1)]
 
-      cols_focal_and_prev_raw <- by_raw_join[c(j, j + 1)]
-      cols_focal_and_prev_ref <- by_ref_join[c(j, j + 1)]
+      col_up_to_focal_raw <- by_raw_join[1:j]
+      col_up_to_focal_ref <- by_ref_join[1:j]
 
       ## prepare dfs for joining next hierarchical level in raw and ref
-      next_join_raw <- unique(raw_[,cols_focal_and_prev_raw, drop = FALSE])
-      next_join_ref <- unique(ref_[,cols_focal_and_prev_ref, drop = FALSE])
+      next_join_raw <- unique(raw_[,col_up_to_focal_raw, drop = FALSE])
+      next_join_ref <- unique(ref_[,col_up_to_focal_ref, drop = FALSE])
 
       ## join next levels of raw and ref
-      matches_remaining <- dplyr::left_join(
+      matches_remaining <- dplyr::inner_join(
         matches_remaining,
         next_join_raw,
-        by = col_prev_raw
+        by = cols_prev_raw
       )
 
-      matches_remaining <- dplyr::left_join(
+      matches_remaining <- dplyr::inner_join(
         matches_remaining,
         next_join_ref,
-        by = col_prev_ref
+        by = cols_prev_ref
       )
 
       ## filter to matches at current hierarchical level
       matches_remaining <- filter_to_matches(
-        dat = matches_remaining,
+        x = matches_remaining,
         col1 = col_focal_raw,
         col2 = col_focal_ref,
         fuzzy = fuzzy,
         fuzzy_method = fuzzy_method,
         fuzzy_dist = fuzzy_dist,
-        is_max_level = FALSE
+        is_max_level = col_focal_raw == col_max_raw
       )
     }
   }
@@ -457,7 +453,7 @@ hmatch__ <- function(raw_join,
 
 #' @noRd
 #' @importFrom stringdist stringdist
-filter_to_matches <- function(dat,
+filter_to_matches <- function(x,
                               col1,
                               col2,
                               fuzzy,
@@ -466,21 +462,22 @@ filter_to_matches <- function(dat,
                               is_max_level) {
 
   match <- if (fuzzy) {
-    stringdist::stringdist(dat[[col1]], dat[[col2]], method = fuzzy_method) <= fuzzy_dist
+    stringdist::stringdist(x[[col1]], x[[col2]], method = fuzzy_method) <= fuzzy_dist
   } else {
-    dat[[col1]] == dat[[col2]]
+    x[[col1]] == x[[col2]]
   }
 
   keep <- if (is_max_level) {
-    match | is.na(dat[[col1]]) & is.na(dat[[col2]])
+    match | is.na(x[[col1]]) & is.na(x[[col2]])
   } else {
-    match | is.na(dat[[col1]])
+    match | is.na(x[[col1]])
   }
 
+  ## convert NA to FALSE and return matching rows of dat
   keep[is.na(keep)] <- FALSE
-
-  return(dat[keep,])
+  x[keep, , drop = FALSE]
 }
+
 
 
 

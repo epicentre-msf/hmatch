@@ -67,6 +67,10 @@ test_that("hmatch works as expected", {
   expect_equal(m_dict1$id, c(1))
   expect_equal(m_dict2$id, c(1, 2))
 
+  # test allow_gaps FALSE with fuzzy TRUE
+  m_gaps <- hmatch(ne_raw, ne_ref, type = "inner", allow_gaps = FALSE, fuzzy = TRUE)
+  expect_true(all(complete_sequence(m_gaps, c("adm0", "adm1", "adm2"))))
+
   # test retains class
   m_tibble <- hmatch(dplyr::as_tibble(ne_raw), ne_ref)
   expect_is(m_tibble, "tbl_df")
