@@ -51,11 +51,12 @@ hmatch_permute <- function(raw,
                            by,
                            by_ref = by,
                            type = "left",
-                           dict = NULL,
-                           ref_prefix = "ref_",
+                           allow_gaps = TRUE,
                            fuzzy = FALSE,
                            fuzzy_method = "osa",
                            fuzzy_dist = 1L,
+                           dict = NULL,
+                           ref_prefix = "ref_",
                            std_fn = string_std,
                            ...) {
 
@@ -139,10 +140,11 @@ hmatch_permute <- function(raw,
       ref_join = ref_join,
       by_raw_join = prep$by_raw_join,
       by_ref_join = prep$by_ref_join,
+      type = "inner",
+      allow_gaps = allow_gaps,
       fuzzy = fuzzy,
       fuzzy_method = fuzzy_method,
-      fuzzy_dist = fuzzy_dist,
-      type = "inner"
+      fuzzy_dist = fuzzy_dist
     ),
     SIMPLIFY = FALSE
   )
@@ -179,6 +181,7 @@ hmatch_permute <- function(raw,
 #' @noRd
 permute_columns <- function(x, by_x) {
   # TODO: could make this more efficient by permuting based on n_levels
+  # could also limit permutations based on arg allow_gaps
   len_x <- length(by_x)
   xx <- replicate(len_x, by_x, simplify = FALSE)
   xx <- expand.grid(xx)
