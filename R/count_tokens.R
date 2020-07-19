@@ -70,20 +70,30 @@ count_tokens <- function(x,
   )
 
   ## count n unique standardized values per token
-  token_std_counts <- stats::aggregate(
-    list(n_value_std = token_df$value_std),
-    list(token_std = token_df$token_std),
-    length
-  )
+  if (nrow(token_df) > 0) {
+    token_std_counts <- stats::aggregate(
+      list(n_value_std = token_df$value_std),
+      list(token_std = token_df$token_std),
+      length
+    )
 
-  ## prepare output
-  df_tokens_out <- dplyr::left_join(token_df, token_std_counts, by = "token_std")
-  df_tokens_out <- df_tokens_out[order(df_tokens_out$n_value_std, decreasing = TRUE),]
-  df_tokens_out <- order_within(df_tokens_out, "token_std", "n_value_std")
+    ## prepare output
+    df_tokens_out <- dplyr::left_join(token_df, token_std_counts, by = "token_std")
+    df_tokens_out <- df_tokens_out[order(df_tokens_out$n_value_std, decreasing = TRUE),]
+    df_tokens_out <- order_within(df_tokens_out, "token_std", "n_value_std")
 
-  ## filter
-  df_tokens_out <- df_tokens_out[df_tokens_out$n_value_std >= min_freq,]
-  df_tokens_out <- df_tokens_out[nchar(df_tokens_out$token_std) >= min_nchar,]
+    ## filter
+    df_tokens_out <- df_tokens_out[df_tokens_out$n_value_std >= min_freq,]
+    df_tokens_out <- df_tokens_out[nchar(df_tokens_out$token_std) >= min_nchar,]
+
+  } else {
+    df_tokens_out <- data.frame(
+      token_std = character(0),
+      value_std = character(0),
+      n_value_std = integer(0),
+      stringsAsFactors = FALSE
+    )
+  }
 
   ## return values corresponding to each token or simply the count of unique values
   if (return_values) {
