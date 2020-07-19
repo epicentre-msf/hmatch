@@ -47,7 +47,7 @@
 #'
 #' hmatch_composite(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 #'
-#' @importFrom dplyr left_join
+#' @importFrom dplyr inner_join left_join
 #' @export hmatch_composite
 hmatch_composite <- function(raw,
                              ref,
@@ -66,30 +66,6 @@ hmatch_composite <- function(raw,
                              ref_prefix = "ref_",
                              std_fn = string_std,
                              ...) {
-
-  # # for testing only
-  # raw <- ne_raw
-  # ref <- ne_ref
-  # man <- data.frame(
-  #   adm0 = NA_character_,
-  #   adm1 = NA_character_,
-  #   adm2 = "NJ_Bergen",
-  #   hcode = "211",
-  #   stringsAsFactors = FALSE
-  # )
-  # pattern = NULL
-  # pattern_ref = pattern
-  # by = NULL
-  # dict <- NULL
-  # type <- "resolve_left"
-  # allow_gaps = TRUE
-  # code_col <- "hcode"
-  # ref_prefix = "ref_"
-  # fuzzy = FALSE
-  # fuzzy_method = "osa"
-  # fuzzy_dist = 1L
-  # std_fn = string_std
-  # ... <- NULL
 
 
   ## match args
@@ -270,6 +246,10 @@ hmatch_composite <- function(raw,
       fuzzy_dist = fuzzy_dist
     )
 
+    # note that with resolve join m_settle returns correct by_ref cols but
+    # not necessarily correct temp code col
+    m_settle <- m_settle[,c(temp_col_id, prep$by_ref)]
+    m_settle <- dplyr::left_join(m_settle, prep$ref, by = prep$by_ref)
     m_settle <- m_settle[,c(temp_col_id, temp_col_code)]
     m_settle$match_type <- rep("settle", nrow(m_settle))
   }
