@@ -90,8 +90,8 @@ with argument \code{std_fn}.}
 calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".}
 
 \item{fuzzy_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use to
-classify matches (i.e. a string distance ≤ \code{fuzzy_dist} will be considered
-matching). Defaults to \code{1L}.}
+classify matches (i.e. a string distance less than or equal to \code{fuzzy_dist}
+will be considered matching). Defaults to \code{1L}.}
 
 \item{dict}{optional dictionary for recoding values within the hierarchical
 columns of \code{raw} (see \link{dictionary_recoding})}

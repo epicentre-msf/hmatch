@@ -62,8 +62,8 @@ to be considered a match. Defaults to \code{1}.}
 calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".}
 
 \item{fuzzy_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use to
-classify matches (i.e. a string distance ≤ \code{fuzzy_dist} will be considered
-matching). Defaults to \code{1L}.}
+classify matches (i.e. a string distance less than or equal to \code{fuzzy_dist}
+will be considered matching). Defaults to \code{1L}.}
 
 \item{ref_prefix}{prefix to add to names of returned columns from \code{ref} if
 they are otherwise identical to names within \code{raw}. Defaults to "ref_".}

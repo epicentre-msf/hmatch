@@ -36,8 +36,8 @@
 #' @param fuzzy_method if `fuzzy = TRUE`, the method to use for string distance
 #'   calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".
 #' @param fuzzy_dist if `fuzzy = TRUE`, the maximum string distance to use to
-#'   classify matches (i.e. a string distance ≤ `fuzzy_dist` will be considered
-#'   matching). Defaults to `1L`.
+#'   classify matches (i.e. a string distance less than or equal to `fuzzy_dist`
+#'   will be considered matching). Defaults to `1L`.
 #' @param dict optional dictionary for recoding values within the hierarchical
 #'   columns of `raw` (see \link{dictionary_recoding})
 #' @param ref_prefix prefix to add to names of returned columns from `ref` if
