@@ -13,11 +13,12 @@ hmatch_permute(
   by,
   by_ref = by,
   type = "left",
-  dict = NULL,
-  ref_prefix = "ref_",
+  allow_gaps = TRUE,
   fuzzy = FALSE,
   fuzzy_method = "osa",
   fuzzy_dist = 1L,
+  dict = NULL,
+  ref_prefix = "ref_",
   std_fn = string_std,
   ...
 )
@@ -48,11 +49,9 @@ have different names in \code{raw} and \code{ref}.}
 "resolve_inner", or "resolve_anti"). Defaults to "left". See
 \link{join_types}.}
 
-\item{dict}{optional dictionary for recoding values within the hierarchical
-columns of \code{raw} (see \link{dictionary_recoding})}
-
-\item{ref_prefix}{prefix to add to names of returned columns from \code{ref} if
-they are otherwise identical to names within \code{raw}. Defaults to "ref_".}
+\item{allow_gaps}{logical indicating whether to allow missing values below
+the match level, where 'match level' is the highest level with a
+non-missing value within a given row of \code{raw}. Defaults to \code{TRUE}.}
 
 \item{fuzzy}{logical indicating whether to use fuzzy-matching (based on the
 \code{\link{stringdist}} package). Defaults to FALSE.}
@@ -63,6 +62,12 @@ calculation (see \link[stringdist]{stringdist-metrics}). Defaults to "osa".}
 \item{fuzzy_dist}{if \code{fuzzy = TRUE}, the maximum string distance to use to
 classify matches (i.e. a string distance ≤ \code{fuzzy_dist} will be considered
 matching). Defaults to \code{1L}.}
+
+\item{dict}{optional dictionary for recoding values within the hierarchical
+columns of \code{raw} (see \link{dictionary_recoding})}
+
+\item{ref_prefix}{prefix to add to names of returned columns from \code{ref} if
+they are otherwise identical to names within \code{raw}. Defaults to "ref_".}
 
 \item{std_fn}{function to standardize strings during matching. Defaults to
 \code{\link{string_std}}. Set to \code{NULL} to omit standardization. See

@@ -128,7 +128,7 @@ hmatch_composite <- function(raw,
   raw_join_remaining <- raw_join
 
   ## manual match
-  if (!missing(man)) {
+  if (!missing(man) && !is.null(man)) {
 
     ## join ref to man by code_col
     man_ref <- dplyr::inner_join(
@@ -282,4 +282,3 @@ hmatch_composite <- function(raw,
     by_ref = prep$by_ref
   )
 }
-
