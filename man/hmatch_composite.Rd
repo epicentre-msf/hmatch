@@ -93,9 +93,9 @@ match (i.e. highest-resolution) for each row.
 The sequence of matching strategies is:
 \enumerate{
 \item (optional) manually-specified matching with \code{\link{hmatch_manual}}
-\item complete matching with \code{\link{hmatch}} (\code{allow_gaps = FALSE})
-\item partial matching with \code{\link{hmatch}} (\code{allow_gaps = TRUE})
-\item fuzzy partial matching with \code{\link{hmatch}} (\code{allow_gaps = TRUE}, \code{fuzzy = TRUE})
+\item complete matching with \code{\link{hmatch}(..., allow_gaps = FALSE)}
+\item partial matching with \code{\link{hmatch}(..., allow_gaps = TRUE)}
+\item fuzzy partial matching with \code{\link{hmatch}(allow_gaps = TRUE, fuzzy = TRUE)}
 \item best-possible matching with \code{\link{hmatch_settle}}
 }
 
@@ -107,12 +107,5 @@ data(ne_raw)
 data(ne_ref)
 
 hmatch_composite(ne_raw, ne_ref, fuzzy = TRUE)
-
-# with dictionary-based recoding
-ne_dict <- data.frame(value = "USA",
-                      replacement = "United States",
-                      variable = "adm0")
-
-hmatch_composite(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 
 }

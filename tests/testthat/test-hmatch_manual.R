@@ -4,7 +4,7 @@ test_that("hmatch_manual works correctly", {
   ne_man <- data.frame(
     adm0 = NA_character_,
     adm1 = NA_character_,
-    adm2 = "NJ_Bergen",
+    adm2 = "Bergen, N.J.",
     hcode = "211",
     stringsAsFactors = FALSE
   )

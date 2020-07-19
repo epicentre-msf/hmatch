@@ -28,11 +28,13 @@
 #' data(ne_ref)
 #'
 #' # create df mapping sets of raw hierarchical values to codes within ref
-#' ne_man <- data.frame(adm0 = NA_character_,
-#'                      adm1 = NA_character_,
-#'                      adm2 = "NJ_Bergen",
-#'                      hcode = "211",
-#'                      stringsAsFactors = FALSE)
+#' ne_man <- data.frame(
+#'   adm0 = NA_character_,
+#'   adm1 = NA_character_,
+#'   adm2 = "Bergen, N.J.",
+#'   hcode = "211",
+#'   stringsAsFactors = FALSE
+#' )
 #'
 #' # find manual matches
 #' hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode", type = "inner")

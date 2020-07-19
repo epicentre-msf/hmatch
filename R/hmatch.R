@@ -75,13 +75,6 @@
 #'
 #' hmatch(ne_raw, ne_ref, pattern = "adm", type = "inner")
 #'
-#' # with dictionary-based recoding
-#' ne_dict <- data.frame(value = "USA",
-#'                       replacement = "United States",
-#'                       variable = "adm0")
-#'
-#' hmatch(ne_raw, ne_ref, pattern = "adm", dict = ne_dict)
-#'
 #' @export hmatch
 hmatch <- function(raw,
                    ref,

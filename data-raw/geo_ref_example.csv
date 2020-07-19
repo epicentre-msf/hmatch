@@ -1,0 +1,32 @@
+﻿level,adm0,adm1,adm2
+adm0,CAN,,
+adm0,USA,,
+adm1,CAN,Ontario,
+adm1,USA,New Jersey,
+adm1,USA,New York,
+adm1,USA,Pennsylvania,
+adm2,CAN,Ontario,Durham
+adm2,CAN,Ontario,Halton
+adm2,CAN,Ontario,Peel
+adm2,CAN,Ontario,Toronto
+adm2,CAN,Ontario,York
+adm2,USA,New Jersey,Bergen
+adm2,USA,New Jersey,Essex
+adm2,USA,New Jersey,Hudson
+adm2,USA,New Jersey,Middlesex
+adm2,USA,New Jersey,Monmouth
+adm2,USA,New York,Jefferson
+adm2,USA,New York,Bronx
+adm2,USA,New York,Kings
+adm2,USA,New York,Nassau
+adm2,USA,New York,New York
+adm2,USA,New York,Queens
+adm2,USA,New York,Suffolk
+adm2,USA,Pennsylvania,Allegheny
+adm2,USA,Pennsylvania,Bucks
+adm2,USA,Pennsylvania,Chester
+adm2,USA,Pennsylvania,Delaware
+adm2,USA,Pennsylvania,Jefferson
+adm2,USA,Pennsylvania,Lancaster
+adm2,USA,Pennsylvania,Philadelphia
+adm2,USA,Pennsylvania,York

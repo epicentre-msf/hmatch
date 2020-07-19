@@ -5,12 +5,13 @@
 \alias{ne_ref}
 \title{Reference dataset}
 \format{
-A data.frame with 16 rows and 4 variables:
+A data.frame with 31 rows and 4 variables, all of class character:
 \describe{
 \item{level}{Administrative level}
 \item{adm0}{Name of administrative 0 level (country)}
 \item{adm1}{Name of administrative 1 level (state/province)}
 \item{adm2}{Name of administrative 2 level (county/census division)}
+\item{hcode}{Hierarchical code}
 }
 }
 \usage{

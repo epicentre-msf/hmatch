@@ -1,7 +1,7 @@
 test_that("hmatch_composite works as expected", {
 
   # test join types
-  raw_types <- ne_raw[c(1, 8, 11),] # match, no-match, double-match
+  raw_types <- ne_raw[c(1, 10, 14),] # match, no-match, double-match
   raw_types$id <- 1:3
 
   m_resolve_left <- hmatch_composite(raw_types, ne_ref, type = "resolve_left")
@@ -31,6 +31,23 @@ test_that("hmatch_composite works as expected", {
   m_norows_ref <- hmatch_composite(ne_raw, ne_ref[0,])
   expect_equal(names(m_norows_ref), names(m_regular))
   expect_equal(nrow(m_norows_ref), nrow(m_regular))
+
+  ## composite hmatch (with manual)
+  ne_man <- data.frame(
+    adm0 = NA_character_,
+    adm1 = NA_character_,
+    adm2 = "Bergen, N.J.",
+    hcode = "211",
+    stringsAsFactors = FALSE
+  )
+
+  m_comp_man <- hmatch_composite(ne_raw, ne_ref, ne_man, code_col = "hcode", fuzzy = TRUE)
+  expect_true("manual" %in% m_comp_man$match_type)
+
+  ## composite hmatch (all match exactly)
+  m_comp_exact <- hmatch_composite(ne_ref, ne_ref, pattern = "^adm", fuzzy = TRUE)
+  expect_equal(nrow(m_comp_exact), nrow(ne_ref))
+  expect_true(all(m_comp_exact$match_type == "complete"))
 
   # test retains class
   m_tibble <- hmatch_composite(dplyr::as_tibble(ne_raw), ne_ref)

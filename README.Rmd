@@ -20,9 +20,15 @@ options(digits = 4, width = 160)
 [![Codecov test coverage](https://codecov.io/gh/epicentre-msf/hmatch/branch/master/graph/badge.svg)](https://codecov.io/gh/epicentre-msf/hmatch?branch=master)
 <!-- badges: end -->
 
-An R package for cleaning and matching messy hierarchical data (e.g.
-hierarchically-nested adminstrative districts).
+An R package for cleaning and matching messy hierarchically-structured data
+(e.g. country / region / district / municipality). The general goal is to match
+sets of hierarchical values in a raw dataset to corresponding values within a
+reference dataset, while accounting for potential discrepancies such as:
 
+- variation in character case, punctuation, spacing, use of accents, or spelling
+- variation in hierarchical resolution (e.g. some entries specified to municipality-level but others only to region)
+- missing values at one or more hierarchical levels
+- values entered at the wrong hierarchical level
 
 ### Installation
 
@@ -33,7 +39,44 @@ Install from GitHub with:
 remotes::install_github("epicentre-msf/hmatch")
 ```
 
-### Example datasets
+### Matching strategies
+
+##### Low-level
+
+- **`hmatch`**: match hierarchical sequences up to the highest-resolution level specified within a given row of raw data, optionally allowing for missing values below the match level, and fuzzy matches (using the [stringdist](https://github.com/markvanderloo/stringdist) package)
+
+##### Higher-level
+
+- **`hmatch_tokens`**: match tokens rather than entire strings to allow for variation in multi-term names
+- **`hmatch_permute`**: sequentially permute hierarchical columns to allow for values entered at the wrong level
+- **`hmatch_parents`**: match values at a given hierarchical level based on shared sets of 'offspring'
+- **`hmatch_settle`**: try matching at every level and settle for the highest-resolution match possible
+- **`hmatch_manual`**: match using a user-supplied dictionary
+- **`hmatch_split`**: implement any other `hmatch_` function separately at each hierarchical level, only on unique sequences
+- **`hmatch_composite`**: implement a variety of matching strategies in sequence, from most to least strict
+
+### String standardization
+
+Independent of optional fuzzy matching with
+[stringdist](https://github.com/markvanderloo/stringdist), `hmatch` functions
+use behind-the-scenes string standardization to help account for variation in
+character case, punctuation, spacing, or use of accents between the raw and
+reference data. E.g.
+
+```
+              raw_value       reference_value  match
+----------------------------------------------------
+original:     ILE DE  FRANCE  Île-de-France    FALSE
+standardized: ile_de_france   ile_de_france    TRUE
+```
+
+Users can choose default standardization (illustrated above), no
+standardization, or supply their own preferred function to standardize strings
+(e.g. `tolower`).
+
+### Usage
+
+#### Example dataset
 
 The `hmatch` package contains example datasets `ne_raw` (messy geographical
 data) and `ne_ref` (reference data derived from a shapefile), based on a small
@@ -42,121 +85,95 @@ subset of northeastern North America.
 ```{r}
 library(hmatch)
 
-data(ne_raw)
-data(ne_ref)
+head(ne_raw) # raw messy data
 
-ne_raw # messy raw data
-
-ne_ref # reference data derived from a shapefile
+head(ne_ref) # reference data derived from shapefile
 ```
 
-### Match messy hierarchically-structured data to a reference dataset
 
-#### Complete matching
+#### Example workflow
 
-Each hierarchical level must match in sequence, with no missing values below the
-match level.
+##### Basic hierarchical matching with `hmatch()`
+
+We'll start with a simple call to `hmatch` to see which rows can be matched with
+no extra magic.
 
 ```{r}
-hmatch_complete(ne_raw, ne_ref)
+hmatch(ne_raw, ne_ref, pattern = "^adm")
 ```
 
-The default join type is "left", but we can alternatively specify an "inner"
-join, which will only return the rows of `raw` for which a single positive match
-within `ref` is found.
+There are still quite a few unmatched rows, and entry 'PID14' actually matches
+two different rows within `ref`, so we'll press on. We can separate the matched
+and unmatched rows using inner- and anti-joins respectively, specifically using
+the "resolve_" join type here to only consider matches that are unique.
 
 ```{r}
-hmatch_complete(ne_raw, ne_ref, type = "inner")
+(raw_match1 <- hmatch(ne_raw, ne_ref, pattern = "^adm", type = "resolve_inner"))
+
+(raw_remain1 <- hmatch(ne_raw, ne_ref, pattern = "^adm", type = "resolve_anti"))
 ```
 
-Notice that in the first row (Suffolk County, New York), a match is made despite
-the raw and reference data using different cases (lowercase vs. title case).
-This is possible because, internally, all input strings are standardized prior
-to matching (see `?string_standardization`).
+##### Fuzzy matching
 
-#### Partial matching
-
-Allows for missing values at one or more level below the match level.
+Next we'll add in fuzzy-matching, using the default maximum string-distance of 1.
 
 ```{r}
-hmatch_partial(ne_raw, ne_ref)
+hmatch(raw_remain1, ne_ref, pattern = "^adm", fuzzy = TRUE, type = "inner")
 ```
 
-Note that in the 4th row a match isn't made because of the discrepancy between
-"USA" in `raw` and "United States" within `ref`. To overcome this we can use a
-dictionary to internally recode "USA" during matching (see
-`?dictionary_recoding` for more details).
+Only one additional *unique* match, so we'll again split and move on. Note that
+we've been using the `pattern` argument above to specify the hierarchical
+columns in `raw` and `ref`, but because the hierarchical columns have the same
+names in `raw` and `ref` (and are the only matching column names), we can drop
+the `pattern` argument for brevity.
 
 ```{r}
-ne_dict <- data.frame(value = "USA",
-                      replacement = "United States",
-                      variable = "adm0")
+(raw_match2 <- hmatch(raw_remain1, ne_ref, fuzzy = TRUE, type = "resolve_inner"))
 
-hmatch_partial(ne_raw, ne_ref, dict = ne_dict)
+(raw_remain2 <- hmatch(raw_remain1, ne_ref, fuzzy = TRUE, type = "resolve_anti"))
 ```
 
-#### Partial + fuzzy matching
+##### Tokenized matching
 
-Partial matching + fuzzy matching based on the
-[stringdist](https://github.com/markvanderloo/stringdist) package.
+Next let's try `hmatch_tokens`, which matches based on components of strings
+(i.e. tokens) rather than entire strings.
 
 ```{r}
-hmatch_partial(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE, max_dist = 2)
+(raw_match3 <- hmatch_tokens(raw_remain2, ne_ref, type = "resolve_inner"))
+
+(raw_remain3 <- hmatch_tokens(raw_remain2, ne_ref, type = "resolve_anti"))
 ```
 
-#### Manual matching
+##### Permutation matching
 
-Manually-specified matches, linking sets of hierarchical levels in the raw data
-to a corresponding code column in the reference data.
+If there are any values entered at the wrong hierarchical level, we can try
+systematically permuting the hierarchical columns before matching.
 
 ```{r}
-ne_man <- data.frame(adm0 = NA_character_,
-                     adm1 = NA_character_,
-                     adm2 = "NJ_Bergen",
-                     hcode = "211",
-                     stringsAsFactors = FALSE)
+(raw_match4 <- hmatch_permute(raw_remain3, ne_ref, type = "resolve_inner"))
 
-hmatch_manual(ne_raw, ne_ref, ne_man, code_col = "hcode")
+(raw_remain4 <- hmatch_permute(raw_remain3, ne_ref, type = "resolve_anti"))
 ```
 
-#### Best-possible matching
 
-Identify potential matches at each successive level, starting with only the
-first level, then the first and second level, etc. The best-possible match then
-reflects the highest-level that is consistent among all possible matches to the
-given row of raw data.
+##### The toughest cases
+
+For the remaining rows that we haven't yet matched, there a few options. We
+could use `hmatch_settle()` to settle for matches below the highest-resolution
+level specified within a given row of `raw`. We could also do some 'manual'
+comparison of the raw and reference datasets and create a dictionary to recode
+values within `raw` to match corresponding entries in `ref`. Here we'll do both.
 
 ```{r}
-hmatch_best(raw = ne_raw, ref = ne_ref, fuzzy = TRUE)
+ne_dict <- data.frame(
+  value = "NJ",
+  replacement = "New Jersey",
+  variable = "adm1"
+)
+
+(raw_match5 <- hmatch_settle(raw_remain4, ne_ref, dict = ne_dict,
+                             fuzzy = TRUE, type = "resolve_inner"))
+
+(raw_remain5 <- hmatch_settle(raw_remain4, ne_ref, dict = ne_dict,
+                              fuzzy = TRUE, type = "resolve_anti"))
 ```
-
-#### The all-strategies approach
-
-Implement all matching strategies in turn, from most to least strict:
-
-1. (optional) manually-specified matching with `hmatch_manual()`
-2. complete matching with `hmatch_complete()`
-3. partial matching with `hmatch_partial()`
-4. fuzzy partial matching with `hmatch_partial(..., fuzzy = TRUE)`
-5. best-possible matching with `hmatch_best()`
-
-```{r}
-hmatch(raw = ne_raw,
-       ref = ne_ref,
-       man = ne_man,
-       dict = ne_dict,
-       fuzzy = TRUE,
-       code_col = "hcode")
-```
-
-
-### Generate unique codes for each level in a reference dataset
-
-Functions `hcodes_int()` and `hcodes_str()` can be used to create integer- or
-string-based codes, respectively.
-
-```{r}
-ne_ref$hcode_str <- hcodes_str(ne_ref, pattern = "^adm")
-ne_ref
-```
-

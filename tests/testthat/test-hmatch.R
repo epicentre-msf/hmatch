@@ -1,7 +1,7 @@
 test_that("hmatch works as expected", {
 
   # test join types
-  raw_types <- ne_raw[c(1, 8, 11),] # match, no-match, double-match
+  raw_types <- ne_raw[c(1, 8, 14),] # match, no-match, double-match
   raw_types$id <- 1:3
 
   m_left <- hmatch(raw_types, ne_ref, type = "left")
@@ -52,13 +52,13 @@ test_that("hmatch works as expected", {
 
   # test dictionary-based recoding
   ne_dict <- data.frame(
-    value = "USA",
-    replacement = "United States",
-    variable = "adm0",
+    value = "NJ",
+    replacement = "New Jersey",
+    variable = "adm1",
     stringsAsFactors = FALSE
   )
 
-  dat_raw <- ne_raw[c(3, 4, 8),] # match, dict-match, no-match
+  dat_raw <- ne_raw[c(5, 12, 7),] # match, dict-match, no-match
   dat_raw$id <- 1:3
 
   m_dict1 <- hmatch(dat_raw, ne_ref, type = "inner")

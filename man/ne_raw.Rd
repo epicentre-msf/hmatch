@@ -5,9 +5,9 @@
 \alias{ne_raw}
 \title{Raw dataset}
 \format{
-A data.frame with 12 rows and 4 variables:
+A data.frame with 15 rows and 4 variables:
 \describe{
-\item{id}{Integer id}
+\item{id}{Identifier}
 \item{adm0}{Name of administrative 0 level (country)}
 \item{adm1}{Name of administrative 1 level (state/province)}
 \item{adm2}{Name of administrative 2 level (county/census division)}

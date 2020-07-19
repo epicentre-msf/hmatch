@@ -8,9 +8,9 @@
 #'
 #' The sequence of matching strategies is:
 #' 1. (optional) manually-specified matching with \code{\link{hmatch_manual}}
-#' 2. complete matching with \code{\link{hmatch}} (`allow_gaps = FALSE`)
-#' 3. partial matching with \code{\link{hmatch}} (`allow_gaps = TRUE`)
-#' 4. fuzzy partial matching with \code{\link{hmatch}} (`allow_gaps = TRUE`, `fuzzy = TRUE`)
+#' 2. complete matching with \code{\link{hmatch}(..., allow_gaps = FALSE)}
+#' 3. partial matching with \code{\link{hmatch}(..., allow_gaps = TRUE)}
+#' 4. fuzzy partial matching with \code{\link{hmatch}(allow_gaps = TRUE, fuzzy = TRUE)}
 #' 5. best-possible matching with \code{\link{hmatch_settle}}
 #'
 #' Each approach is implement only on the rows of data for which a single match
@@ -39,13 +39,6 @@
 #' data(ne_ref)
 #'
 #' hmatch_composite(ne_raw, ne_ref, fuzzy = TRUE)
-#'
-#' # with dictionary-based recoding
-#' ne_dict <- data.frame(value = "USA",
-#'                       replacement = "United States",
-#'                       variable = "adm0")
-#'
-#' hmatch_composite(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
 #'
 #' @importFrom dplyr inner_join left_join
 #' @export hmatch_composite
@@ -199,7 +192,7 @@ hmatch_composite <- function(raw,
     )
 
     m_partial <- m_partial[,c(temp_col_id, temp_col_code)]
-    m_partial$match_type <- rep("partial", nrow(m_partial))
+    m_partial$match_type <- rep("gaps", nrow(m_partial))
 
     unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_partial[[temp_col_id]]
     raw_join_remaining <- raw_join_remaining[unmatched,]
