@@ -92,21 +92,6 @@ hmatch_split <- function(raw,
                          exclude_nchar = 3,
                          exclude_values = NULL) {
 
-  # pattern = NULL
-  # pattern_ref = pattern
-  # by = NULL
-  # by_ref = by
-  # fn = fn_name = "hmatch"
-  # type = "left"
-  # allow_gaps = TRUE
-  # fuzzy = FALSE
-  # fuzzy_method = "osa"
-  # fuzzy_dist = 1L
-  # dict = NULL
-  # ref_prefix = "ref_"
-  # std_fn = string_std
-  # ... <- NULL
-
   ## validate arg fn
   fn_name <- as.character(substitute(fn))
   fn <- match.fun(fn)

@@ -52,25 +52,6 @@ hmatch_manual <- function(raw,
                           std_fn = string_std,
                           ...) {
 
-  # # for testing purposes only
-  # raw <- ne_raw
-  # ref <- ne_ref
-  # man <- data.frame(adm0 = NA_character_,
-  #                   adm1 = NA_character_,
-  #                   adm2 = "NJ_Bergen",
-  #                   hcode = "211",
-  #                   stringsAsFactors = FALSE)
-  # pattern = NULL
-  # pattern_ref = pattern
-  # by = NULL
-  # by_ref = by
-  # code_col <- "hcode"
-  # type = "left"
-  # ref_prefix = "ref_"
-  # std_fn = string_std
-  # ... <- NULL
-
-
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
   type <- match.arg(type, c("left", "inner", "anti"))

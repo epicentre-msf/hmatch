@@ -74,27 +74,6 @@ hmatch_tokens <- function(raw,
                           std_fn = string_std,
                           ...) {
 
-  # raw <- readRDS("~/desktop/drc_bench_raw.rds")[1:5000,1:4]
-  # ref <- readRDS("~/desktop/drc_bench_ref.rds")
-  # pattern = NULL
-  # pattern_ref = pattern
-  # by = NULL
-  # by_ref = by
-  # type = "inner"
-  # allow_gaps = TRUE
-  # always_tokenize = FALSE
-  # token_split = "_"
-  # exclude_freq = 5
-  # exclude_nchar = 3
-  # exclude_values = c("Nord", "Sud")
-  # ref_prefix = "ref_"
-  # fuzzy = TRUE
-  # fuzzy_method = "osa"
-  # fuzzy_dist = 1L
-  # dict <- NULL
-  # std_fn = string_std
-  # ... <- NULL
-
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)

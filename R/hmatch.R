@@ -99,26 +99,6 @@ hmatch <- function(raw,
                    std_fn = string_std,
                    ...) {
 
-
-  # # for testing purposed only
-  # raw = ne_raw
-  # ref = ne_ref
-  # raw$adm2[1] <- "Suffolk II"
-  # ref$adm2[10] <- "Suffolk 2"
-  # pattern = NULL
-  # pattern_ref = pattern
-  # by = NULL
-  # by_ref = by
-  # allow_gaps = TRUE
-  # dict <- NULL
-  # type = "inner"
-  # ref_prefix = "ref_"
-  # fuzzy = TRUE
-  # fuzzy_method = "osa"
-  # fuzzy_dist = 1L
-  # std_fn = string_std
-  # ... <- NULL
-
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
   type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
