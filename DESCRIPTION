@@ -3,7 +3,16 @@ Type: Package
 Title: Tools for Cleaning and Matching Hierarchically-Structured Data
 Version: 0.1.0
 Authors@R: c(
-    person("Patrick", "Barks", email = "patrick.barks@epicentre.msf.org", role = c("aut", "cre"))
+    person(given = "Patrick",
+           family = "Barks",
+           role = c("aut", "cre"),
+           email = "patrick.barks@epicentre.msf.org",
+           comment = c(ORCID = "0000-0002-5947-8151")),
+    person(given = "Paul",
+           family = "Campbell",
+           role = c("ctb"),
+           email = "paul.campbell@epicentre.msf.org",
+           comment = c(ORCID = "0000-0003-1018-6606"))
     )
 Description: Tools for matching raw, potentially messy hierarchical data (e.g.
     province, county, township) against a reference dataset.
