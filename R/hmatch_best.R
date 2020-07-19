@@ -1,27 +1,26 @@
-#' Best-possible hierarchical matching
+#' Sequential hierarchical matching at each hierarchical level, settling for the
+#' highest resolution match that is possible for each row
 #'
 #' @description
-#' Match a data frame with raw, potentially messy hierarchical data (e.g.
-#' province, county, township) against a reference dataset, using a rolling
-#' approach to identify the best-possible (i.e. highest-resolution) match for
-#' each row.
+#' Match sets of hierarchical values (e.g. province / county / township) in a
+#' raw, messy dataset to corresponding values within a reference dataset,
+#' sequentially over each hierarchical level. Specifically, implements
+#' \code{\link{hmatch}} at each successive hierarchical level, starting with
+#' only the first level (lowest resolution), then first and second, first second
+#' and third, etc.
 #'
-#' The rolling approach implements \code{\link{hmatch}} at each successive
-#' level, starting with only the first level, then the first and second level,
-#' etc. The 'best-possible' match reflects the highest-level that is consistent
-#' among all possible matches to the given row of raw data.
+#' After the initial matching over all levels, users can optionally use a
+#' resolve join to 'settle' for the highest match possible for each row of raw
+#' data, even if that match is below the highest-resolution level specified.
 #'
 #' @inheritParams hmatch
-#'
-#' @return a data frame obtained by matching the hierarchical columns in `raw`
-#'   and `ref`, using the join type specified by argument `type` (see
-#'   \link{join_types} for more details)
+#' @inherit hmatch return
 #'
 #' @section Resolve joins:
-#' In `hmatch_best`, if argument `type` corresponds to a resolve join, rows of
-#' `raw` with multiple matches to `ref` are resolved to the highest hierarchical
-#' level that is non-conflicting among all matches (or no match if there is a
-#' conflict at the very first level). E.g.
+#' In a resolve type join with `hmatch_settle`, rows of `raw` with multiple
+#' matches to `ref` are resolved to the highest hierarchical level that is
+#' non-conflicting among all matches (or no match if there is a conflict at the
+#' very first level). E.g.
 #'
 #' `raw`: \cr
 #' `1. | United States | <NA>         | Jefferson |` \cr
@@ -58,48 +57,28 @@
 #' data(ne_raw)
 #' data(ne_ref)
 #'
-#' hmatch_best(ne_raw, ne_ref, pattern = "adm", fuzzy = TRUE, type = "inner")
+#' # return matches at all levels
+#' hmatch_settle(ne_raw, ne_ref, pattern = "^adm", type = "inner")
 #'
-#' # with dictionary-based recoding
-#' ne_dict <- data.frame(value = "USA",
-#'                       replacement = "United States",
-#'                       variable = "adm0")
+#' # use a resolve join to settle for the best possible match for each row
+#' hmatch_settle(ne_raw, ne_ref, pattern = "^adm", type = "resolve_inner")
 #'
-#' hmatch_best(ne_raw, ne_ref, dict = ne_dict, fuzzy = TRUE)
-#'
-#' @importFrom dplyr left_join
-#' @export hmatch_best
-hmatch_best <- function(raw,
-                        ref,
-                        pattern,
-                        pattern_ref = pattern,
-                        by,
-                        by_ref = by,
-                        type = "left",
-                        allow_gaps = TRUE,
-                        fuzzy = FALSE,
-                        fuzzy_method = "osa",
-                        fuzzy_dist = 1L,
-                        dict = NULL,
-                        ref_prefix = "ref_",
-                        std_fn = string_std,
-                        ...) {
-
-
-  # # for testing purposes only
-  # raw <- ne_raw
-  # ref <- ne_ref
-  # pattern = NULL
-  # pattern_ref = pattern
-  # by = NULL
-  # by_ref = by
-  # dict = NULL
-  # type = "left"
-  # ref_prefix = "ref_"
-  # fuzzy = TRUE
-  # fuzzy_dist = 1L
-  # std_fn = string_std
-  # ... <- NULL
+#' @export hmatch_settle
+hmatch_settle <- function(raw,
+                          ref,
+                          pattern,
+                          pattern_ref = pattern,
+                          by,
+                          by_ref = by,
+                          type = "left",
+                          allow_gaps = TRUE,
+                          fuzzy = FALSE,
+                          fuzzy_method = "osa",
+                          fuzzy_dist = 1L,
+                          dict = NULL,
+                          ref_prefix = "ref_",
+                          std_fn = string_std,
+                          ...) {
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
@@ -145,7 +124,7 @@ hmatch_best <- function(raw,
   }
 
   ## run main matching routines
-  hmatch_best_(
+  hmatch_settle_(
     raw_join = raw_join,
     ref_join = ref_join,
     by_raw = prep$by_raw,
@@ -164,18 +143,18 @@ hmatch_best <- function(raw,
 
 #' @noRd
 #' @importFrom dplyr left_join
-hmatch_best_ <- function(raw_join,
-                         ref_join,
-                         by_raw,
-                         by_ref,
-                         by_raw_join,
-                         by_ref_join,
-                         type = "left",
-                         allow_gaps = TRUE,
-                         fuzzy = FALSE,
-                         fuzzy_method = "osa",
-                         fuzzy_dist = 1L,
-                         class_raw = "data.frame") {
+hmatch_settle_ <- function(raw_join,
+                           ref_join,
+                           by_raw,
+                           by_ref,
+                           by_raw_join,
+                           by_ref_join,
+                           type = "left",
+                           allow_gaps = TRUE,
+                           fuzzy = FALSE,
+                           fuzzy_method = "osa",
+                           fuzzy_dist = 1L,
+                           class_raw = "data.frame") {
 
   ## temporary columns to aid in matching
   temp_col_match <- "TEMP_COL_MATCH_SETTLE"

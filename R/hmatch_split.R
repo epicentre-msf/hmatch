@@ -26,7 +26,7 @@
 #'
 #' @param fn which function to use for matching. Current options are
 #'   \code{\link{hmatch}}, \code{\link{hmatch_permute}},
-#'   \code{\link{hmatch_tokens}}, \code{\link{hmatch_best}}, or
+#'   \code{\link{hmatch_tokens}}, \code{\link{hmatch_settle}}, or
 #'   \code{\link{hmatch_composite}}. Defaults to "hmatch".
 #'
 #'   Note that some subsequent arguments are only relevant for specific
@@ -110,7 +110,7 @@ hmatch_split <- function(raw,
   )
 
   ## implement matching routines, split by hierarchical level
-  if (fn_name %in% c("hmatch", "hmatch_best", "hmatch_permute")) {
+  if (fn_name %in% c("hmatch", "hmatch_settle", "hmatch_permute")) {
 
     out <- mapply(
       fn,

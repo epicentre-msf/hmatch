@@ -96,7 +96,7 @@ The sequence of matching strategies is:
 \item complete matching with \code{\link{hmatch}} (\code{allow_gaps = FALSE})
 \item partial matching with \code{\link{hmatch}} (\code{allow_gaps = TRUE})
 \item fuzzy partial matching with \code{\link{hmatch}} (\code{allow_gaps = TRUE}, \code{fuzzy = TRUE})
-\item best-possible matching with \code{\link{hmatch_best}}
+\item best-possible matching with \code{\link{hmatch_settle}}
 }
 
 Each approach is implement only on the rows of data for which a single match

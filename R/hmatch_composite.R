@@ -11,12 +11,12 @@
 #' 2. complete matching with \code{\link{hmatch}} (`allow_gaps = FALSE`)
 #' 3. partial matching with \code{\link{hmatch}} (`allow_gaps = TRUE`)
 #' 4. fuzzy partial matching with \code{\link{hmatch}} (`allow_gaps = TRUE`, `fuzzy = TRUE`)
-#' 5. best-possible matching with \code{\link{hmatch_best}}
+#' 5. best-possible matching with \code{\link{hmatch_settle}}
 #'
 #' Each approach is implement only on the rows of data for which a single match
 #' has not already been identified using the previous approaches.
 #'
-#' @inheritParams hmatch_best
+#' @inheritParams hmatch_settle
 #'
 #' @param man (optional) data frame of manually-specified matches, relating a
 #'   given set of hierarchical values to the code within `ref` to which those
@@ -232,7 +232,7 @@ hmatch_composite <- function(raw,
   ## settle join
   if (nrow(raw_join_remaining) > 0) {
 
-    m_settle <- hmatch_best_(
+    m_settle <- hmatch_settle_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
       by_raw = prep$by_raw,

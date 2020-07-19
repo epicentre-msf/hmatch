@@ -56,7 +56,7 @@ have different names in \code{raw} and \code{ref}.}
 
 \item{fn}{which function to use for matching. Current options are
 \code{\link{hmatch}}, \code{\link{hmatch_permute}},
-\code{\link{hmatch_tokens}}, \code{\link{hmatch_best}}, or
+\code{\link{hmatch_tokens}}, \code{\link{hmatch_settle}}, or
 \code{\link{hmatch_composite}}. Defaults to "hmatch".
 
 Note that some subsequent arguments are only relevant for specific

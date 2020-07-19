@@ -19,11 +19,11 @@ test_that("Basic functionality", {
   expect_equal(nrow(m_manual_l), nrow(ne_raw))
 
   ## rolling join
-  m_best_i <- hmatch_best(ne_raw, ne_ref, type = "inner")
+  m_best_i <- hmatch_settle(ne_raw, ne_ref, type = "inner")
   expect_is(m_best_i, "data.frame")
   expect_lte(nrow(m_best_i), nrow(ne_raw))
 
-  m_best_l <- hmatch_best(ne_raw, ne_ref, type = "left")
+  m_best_l <- hmatch_settle(ne_raw, ne_ref, type = "left")
   expect_gte(nrow(m_best_l), nrow(ne_raw))
 
   ## composite hmatch (no manual)
