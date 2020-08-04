@@ -15,6 +15,7 @@ hmatch_tokens(
   allow_gaps = TRUE,
   always_tokenize = FALSE,
   token_split = "_",
+  token_min = 1,
   exclude_freq = 3,
   exclude_nchar = 3,
   exclude_values = NULL,
@@ -69,6 +70,9 @@ tokenization is implemented \emph{after}
 \code{std_fn} (this may change in a future version), so the regex pattern should
 split \emph{standardized} strings rather than the original strings. Defaults to
 "_".}
+
+\item{token_min}{minimum number of tokens that must match for a term to be
+considered matching overall. Defaults to 1.}
 
 \item{exclude_freq}{exclude tokens from matching if they have a frequency
 greater than or equal to this value. Refers to the number of unique,
@@ -133,6 +137,6 @@ data(ne_ref)
 ne_ref$adm0[ne_ref$adm0 == "United States"] <- "United States of America"
 ne_ref$adm1[ne_ref$adm1 == "New York"] <- "New York State"
 
-hmatch_tokens(ne_raw, ne_ref, type = "inner")
+hmatch_tokens(ne_raw, ne_ref, type = "inner", token_min = 1)
 
 }

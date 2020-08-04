@@ -24,6 +24,8 @@
 #'   `std_fn` (this may change in a future version), so the regex pattern should
 #'   split *standardized* strings rather than the original strings. Defaults to
 #'   "_".
+#' @param token_min minimum number of tokens that must match for a term to be
+#'   considered matching overall. Defaults to 1.
 #' @param exclude_freq exclude tokens from matching if they have a frequency
 #'   greater than or equal to this value. Refers to the number of unique,
 #'   string-standardized values at a given hierarchical level in which a given
@@ -50,7 +52,7 @@
 #' ne_ref$adm0[ne_ref$adm0 == "United States"] <- "United States of America"
 #' ne_ref$adm1[ne_ref$adm1 == "New York"] <- "New York State"
 #'
-#' hmatch_tokens(ne_raw, ne_ref, type = "inner")
+#' hmatch_tokens(ne_raw, ne_ref, type = "inner", token_min = 1)
 #'
 #' @export hmatch_tokens
 hmatch_tokens <- function(raw,
@@ -63,6 +65,7 @@ hmatch_tokens <- function(raw,
                           allow_gaps = TRUE,
                           always_tokenize = FALSE,
                           token_split = "_",
+                          token_min = 1,
                           exclude_freq = 3,
                           exclude_nchar = 3,
                           exclude_values = NULL,
@@ -73,7 +76,6 @@ hmatch_tokens <- function(raw,
                           ref_prefix = "ref_",
                           std_fn = string_std,
                           ...) {
-
 
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
@@ -146,6 +148,7 @@ hmatch_tokens <- function(raw,
     type = type,
     always_tokenize = always_tokenize,
     token_split = token_split,
+    token_min = token_min,
     exclude_freq_raw_l = exclude_freq_raw_l,
     exclude_freq_ref_l = exclude_freq_ref_l,
     exclude_nchar = exclude_nchar,
@@ -170,6 +173,7 @@ hmatch_tokens_ <- function(raw_join,
                            type,
                            always_tokenize,
                            token_split,
+                           token_min,
                            exclude_freq_raw_l,
                            exclude_freq_ref_l,
                            exclude_nchar,
@@ -236,6 +240,7 @@ hmatch_tokens_ <- function(raw_join,
     col_ref = col_min_ref,
     always_tokenize = always_tokenize,
     token_split = token_split,
+    token_min = token_min,
     exclude_freq_raw = exclude_freq_raw_l[[1]],
     exclude_freq_ref = exclude_freq_ref_l[[1]],
     exclude_nchar = exclude_nchar,
@@ -284,6 +289,7 @@ hmatch_tokens_ <- function(raw_join,
         col_ref = col_focal_ref,
         always_tokenize = always_tokenize,
         token_split = token_split,
+        token_min = token_min,
         exclude_freq_raw = exclude_freq_raw_l[[j]],
         exclude_freq_ref = exclude_freq_ref_l[[j]],
         exclude_nchar = exclude_nchar,
@@ -350,6 +356,7 @@ filter_to_matches_tokenize <- function(x,
                                        col_ref,
                                        always_tokenize,
                                        token_split,
+                                       token_min,
                                        exclude_freq_raw,
                                        exclude_freq_ref,
                                        exclude_nchar,
@@ -394,6 +401,7 @@ filter_to_matches_tokenize <- function(x,
     col_ref = col_ref,
     col_id = temp_row_id_x,
     token_split = token_split,
+    token_min = token_min,
     exclude_freq_raw = exclude_freq_raw,
     exclude_freq_ref = exclude_freq_ref,
     exclude_nchar = exclude_nchar,
@@ -422,6 +430,7 @@ filter_to_matches_tokenize_ <- function(x,
                                         col_ref,
                                         col_id,
                                         token_split,
+                                        token_min,
                                         exclude_freq_raw,
                                         exclude_freq_ref,
                                         exclude_nchar,
@@ -468,7 +477,23 @@ filter_to_matches_tokenize_ <- function(x,
     match_token | is.na(x_token[[col_raw_token]])
   }
 
-  unique(x_token[keep_token, !names(x_token) %in% by_token, drop = FALSE])
+  out <- unique(x_token[keep_token, , drop = FALSE])
+
+  if (nrow(out) > 0) {
+    out_id <- stats::aggregate(
+      list(n = out[[col_id]]),
+      list(id = out[[col_id]]),
+      length
+    )
+
+    ids_retain <- out_id$id[out_id$n >= token_min]
+  } else {
+    ids_retain <- integer(0)
+  }
+
+  unique(out[out[[col_id]] %in% ids_retain, !names(x_token) %in% by_token, drop = FALSE])
+
+  # unique(x_token[keep_token, !names(x_token) %in% by_token, drop = FALSE])
 }
 
 
