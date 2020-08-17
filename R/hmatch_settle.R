@@ -183,7 +183,7 @@ hmatch_settle_ <- function(raw_join,
 
     # subset to focal columns of raw and ref
     raw_foc <- raw_join[,!names(raw_join) %in% cols_excl_raw, drop = FALSE]
-    ref_foc <- ref_join[,!names(raw_join) %in% cols_excl_ref, drop = FALSE]
+    ref_foc <- ref_join[,!names(ref_join) %in% cols_excl_ref, drop = FALSE]
 
     # filter ref to rows where max_level is <= the focal level
     ref_foc <- ref_foc[ref_foc[[temp_col_max_level]] <= j,]
