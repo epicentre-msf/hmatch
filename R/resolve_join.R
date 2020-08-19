@@ -2,6 +2,7 @@
 #' @noRd
 #' @importFrom dplyr bind_rows
 resolve_join <- function(x, by_ref, temp_col_id, consistent = c("min", "max", "all")) {
+
   if (nrow(x) == 0L) {
     out <- x
   } else {
@@ -33,7 +34,7 @@ resolve_join_ <- function(x, by_ref, consistent) {
     } else if (consistent == "all") {
       ## if require ALL consistent
       if (all(matches_consistent)) {
-        max_ref_levels <- max_levels(ref_sub_)
+        max_ref_levels <- max_levels(ref_sub_, by = by_ref)
         row <- which(max_ref_levels == max(max_ref_levels))[1L]
         out <- x[row, , drop = FALSE]
       } else {
