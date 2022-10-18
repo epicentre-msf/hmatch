@@ -1,8 +1,11 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^data-raw$
+^benchmark$
 ^docs$
 ^LICENSE\.md$
 ^README\.Rmd$
 ^codecov\.yml$
 ^\.github$
+^_pkgdown\.yml$
+^pkgdown$
