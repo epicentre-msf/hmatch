@@ -1,7 +1,7 @@
 Package: hmatch
 Type: Package
 Title: Tools for Cleaning and Matching Hierarchically-Structured Data
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R: c(
     person(given = "Patrick",
            family = "Barks",
