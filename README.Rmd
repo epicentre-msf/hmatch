@@ -16,7 +16,7 @@ options(digits = 4, width = 160)
 # hmatch: Tools for cleaning and matching hierarchically-structured data
 <!-- badges: start -->
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
-[![R-CMD-check](https://github.com/epicentre-msf/hmatch/workflows/R-CMD-check/badge.svg)](https://github.com/epicentre-msf/hmatch/actions)
+[![R-CMD-check](https://github.com/epicentre-msf/hmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/epicentre-msf/hmatch/actions/workflows/R-CMD-check.yaml)
 [![Codecov test coverage](https://codecov.io/gh/epicentre-msf/hmatch/branch/master/graph/badge.svg)](https://codecov.io/gh/epicentre-msf/hmatch?branch=master)
 
 <!-- badges: end -->

@@ -7,7 +7,7 @@
 
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
-[![R-CMD-check](https://github.com/epicentre-msf/hmatch/workflows/R-CMD-check/badge.svg)](https://github.com/epicentre-msf/hmatch/actions)
+[![R-CMD-check](https://github.com/epicentre-msf/hmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/epicentre-msf/hmatch/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/epicentre-msf/hmatch/branch/master/graph/badge.svg)](https://codecov.io/gh/epicentre-msf/hmatch?branch=master)
 
@@ -19,12 +19,12 @@ is to match sets of hierarchical values in a raw dataset to
 corresponding values within a reference dataset, while accounting for
 potential discrepancies such as:
 
-  - variation in character case, punctuation, spacing, use of accents,
-    or spelling
-  - variation in hierarchical resolution (e.g. some entries specified to
-    municipality-level but others only to region)
-  - missing values at one or more hierarchical levels
-  - values entered at the wrong hierarchical level
+- variation in character case, punctuation, spacing, use of accents, or
+  spelling
+- variation in hierarchical resolution (e.g. some entries specified to
+  municipality-level but others only to region)
+- missing values at one or more hierarchical levels
+- values entered at the wrong hierarchical level
 
 ### Installation
 
@@ -39,27 +39,27 @@ remotes::install_github("epicentre-msf/hmatch")
 
 ##### Low-level
 
-  - **`hmatch`**: match hierarchical sequences up to the
-    highest-resolution level specified within a given row of raw data,
-    optionally allowing for missing values below the match level, and
-    fuzzy matches (using the
-    [stringdist](https://github.com/markvanderloo/stringdist) package)
+- **`hmatch`**: match hierarchical sequences up to the
+  highest-resolution level specified within a given row of raw data,
+  optionally allowing for missing values below the match level, and
+  fuzzy matches (using the
+  [stringdist](https://github.com/markvanderloo/stringdist) package)
 
 ##### Higher-level
 
-  - **`hmatch_tokens`**: match tokens rather than entire strings to
-    allow for variation in multi-term names
-  - **`hmatch_permute`**: sequentially permute hierarchical columns to
-    allow for values entered at the wrong level
-  - **`hmatch_parents`**: match values at a given hierarchical level
-    based on shared sets of ‘offspring’
-  - **`hmatch_settle`**: try matching at every level and settle for the
-    highest-resolution match possible
-  - **`hmatch_manual`**: match using a user-supplied dictionary
-  - **`hmatch_split`**: implement any other `hmatch_` function
-    separately at each hierarchical level, only on unique sequences
-  - **`hmatch_composite`**: implement a variety of matching strategies
-    in sequence, from most to least strict
+- **`hmatch_tokens`**: match tokens rather than entire strings to allow
+  for variation in multi-term names
+- **`hmatch_permute`**: sequentially permute hierarchical columns to
+  allow for values entered at the wrong level
+- **`hmatch_parents`**: match values at a given hierarchical level based
+  on shared sets of ‘offspring’
+- **`hmatch_settle`**: try matching at every level and settle for the
+  highest-resolution match possible
+- **`hmatch_manual`**: match using a user-supplied dictionary
+- **`hmatch_split`**: implement any other `hmatch_` function separately
+  at each hierarchical level, only on unique sequences
+- **`hmatch_composite`**: implement a variety of matching strategies in
+  sequence, from most to least strict
 
 ### String standardization
 
@@ -69,12 +69,10 @@ functions use behind-the-scenes string standardization to help account
 for variation in character case, punctuation, spacing, or use of accents
 between the raw and reference data. E.g.
 
-``` 
-              raw_value       reference_value  match
-----------------------------------------------------
-original:     ILE DE  FRANCE  Île-de-France    FALSE
-standardized: ile_de_france   ile_de_france    TRUE
-```
+                  raw_value       reference_value  match
+    ----------------------------------------------------
+    original:     ILE DE  FRANCE  Île-de-France    FALSE
+    standardized: ile_de_france   ile_de_france    TRUE
 
 Users can choose default standardization (illustrated above), no
 standardization, or supply their own preferred function to standardize
