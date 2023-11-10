@@ -355,13 +355,15 @@ hmatch__ <- function(raw_join,
       matches_remaining <- dplyr::inner_join(
         matches_remaining,
         next_join_raw,
-        by = cols_prev_raw
+        by = cols_prev_raw,
+        relationship = "many-to-many"
       )
 
       matches_remaining <- dplyr::inner_join(
         matches_remaining,
         next_join_ref,
-        by = cols_prev_ref
+        by = cols_prev_ref,
+        relationship = "many-to-many"
       )
 
       ## filter to matches at current hierarchical level
@@ -381,7 +383,8 @@ hmatch__ <- function(raw_join,
   matches_join_out <- dplyr::inner_join(
     raw_join[, c(temp_col_id, temp_col_max_raw, by_raw_join)],
     matches_remaining,
-    by = by_raw_join
+    by = by_raw_join,
+    relationship = "many-to-many"
   )
 
   matches_join_out <- dplyr::inner_join(

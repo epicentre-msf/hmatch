@@ -273,13 +273,15 @@ hmatch_tokens_ <- function(raw_join,
       matches_remaining <- dplyr::inner_join(
         matches_remaining,
         next_join_raw,
-        by = cols_prev_raw
+        by = cols_prev_raw,
+        relationship = "many-to-many"
       )
 
       matches_remaining <- dplyr::inner_join(
         matches_remaining,
         next_join_ref,
-        by = cols_prev_ref
+        by = cols_prev_ref,
+        relationship = "many-to-many"
       )
 
       ## filter to matches at current hierarchical level
