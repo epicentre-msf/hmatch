@@ -75,6 +75,7 @@
 #'
 #' hmatch(ne_raw, ne_ref, pattern = "adm", type = "inner")
 #'
+#' @importFrom dplyr inner_join
 #' @export hmatch
 hmatch <- function(raw,
                    ref,
@@ -107,6 +108,16 @@ hmatch <- function(raw,
     ref_prefix = ref_prefix
   )
 
+  ## if 'raw' is a spatial data frame of class "sf"
+  raw_is_sf <- "sf" %in% class(raw)
+
+  if (raw_is_sf) {
+    raw$sf_row_id_temp <- seq_len(nrow(raw))
+
+    raw_sf <- raw
+    raw <- sf::st_drop_geometry(raw)
+  }
+
   ## add standardized columns for joining
   raw_join <- add_join_columns(
     dat = raw,
@@ -136,7 +147,7 @@ hmatch <- function(raw,
   }
 
   ## run main matching routine
-  hmatch_(
+  out <- hmatch_(
     raw_join = raw_join,
     ref_join = ref_join,
     by_raw = prep$by_raw,
@@ -149,6 +160,15 @@ hmatch <- function(raw,
     fuzzy_dist = fuzzy_dist,
     class_raw = class(raw)
   )
+
+  ## re-create spatial dataframe
+  if (raw_is_sf) {
+    out <- inner_join(raw_sf, out, by = intersect(names(raw_sf), names(out)))
+    out$sf_row_id_temp <- NULL
+  }
+
+  ## return
+  out
 }
 
 

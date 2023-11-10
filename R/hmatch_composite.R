@@ -74,6 +74,14 @@ hmatch_composite <- function(raw,
 
   raw[[temp_col_id]] <- seq_len(nrow(raw))
 
+  ## if 'raw' is a spatial data frame of class "sf"
+  raw_is_sf <- "sf" %in% class(raw)
+
+  if (raw_is_sf) {
+    raw_sf <- raw
+    raw <- sf::st_drop_geometry(raw)
+  }
+
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(
     raw = raw,
@@ -261,6 +269,7 @@ hmatch_composite <- function(raw,
   m_bind_ref <- m_bind_ref[,c(temp_col_id, names(prep$ref), "match_type")]
 
   ## merge to raw
+  if (raw_is_sf) raw <- raw_sf
   out <- dplyr::left_join(raw, m_bind_ref, by = temp_col_id)
 
   ## execute match type and remove temporary columns
