@@ -35,5 +35,23 @@ test_that("separate_hcode works as expected", {
   expect_named(x4, c("row", "pcode", paste0("pcode", 1:3)))
   expect_equal(nrow(x4), 0L)
 
+  # test with ref-based codes
+  data(ne_ref)
+
+  dat5 <- data.frame(
+    x1 = 1:5,
+    hcode = ne_ref$hcode[c(3, 29, 16, 22, 17)]
+  )
+
+  x5 <- separate_hcode(
+    x = dat5,
+    ne_ref,
+    by = paste0("adm", 0:2),
+    col = "hcode",
+    into = paste0("hcode", 0:2)
+  )
+
+  expect_named(x5, c("x1", "hcode", paste0("hcode", 0:2)))
+  expect_equal(nrow(x5), nrow(dat5))
 })
 

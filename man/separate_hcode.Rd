@@ -7,6 +7,8 @@ parts, with one column for each level}
 \usage{
 separate_hcode(
   x,
+  ref = NULL,
+  by = NULL,
   col,
   into,
   sep = "__",
@@ -16,6 +18,10 @@ separate_hcode(
 }
 \arguments{
 \item{x}{\code{data.frame} containing a column with hierarchical codes}
+
+\item{ref}{\code{data.frame} containing hierarchical columns with reference data}
+
+\item{by}{vector giving the names of the hierarchical columns in \code{ref}}
 
 \item{col}{Name of the column within \code{x} containing hierarchical codes.}
 

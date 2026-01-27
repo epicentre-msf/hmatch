@@ -14,6 +14,8 @@
 #' 3. "canada__ontario__toronto"
 #'
 #' @param x `data.frame` containing a column with hierarchical codes
+#' @param ref `data.frame` containing hierarchical columns with reference data
+#' @param by vector giving the names of the hierarchical columns in `ref`
 #' @param col Name of the column within `x` containing hierarchical codes.
 #' @param into Vector of column names to separate `col` into
 #' @param sep Separator between levels in the hierarchical codes. Defaults to
@@ -42,17 +44,116 @@
 #'   into = c("adm0_pcode", "adm1_pcode", "adm2_pcode")
 #' )
 #'
-#' @importFrom dplyr bind_cols
 #' @export separate_hcode
 separate_hcode <- function(x,
+                           ref = NULL,
+                           by = NULL,
                            col,
                            into,
                            sep = "__",
                            extra = c("warn", "drop"),
                            remove = FALSE) {
 
-  extra <- match.arg(extra)
-  x_separate <- separate_hcode_(x[[col]], sep = "__", into = into, extra = extra)
+  if (is.null(ref)) {
+
+    out <- separate_hcode_simple(
+      x = x,
+      col = col,
+      into = into,
+      sep = sep,
+      extra = extra,
+      remove = remove
+    )
+
+  } else {
+
+    out <- separate_hcode_(
+      x = x,
+      ref = ref,
+      by = by,
+      col = col,
+      into = into,
+      remove = remove
+    )
+
+  }
+
+  out
+}
+
+
+
+
+#' @importFrom dplyr left_join
+separate_hcode_ <- function(x,
+                            ref,
+                            by,
+                            col,
+                            into,
+                            remove) {
+
+
+  # select hierarchical columns
+  ref_ <- ref[, c(by, col), drop = FALSE]
+
+  # split ref into list of dfs, one for each hierarchical level
+  ref_l <- mapply(
+    extract_level_ref,
+    level = seq_along(by),
+    col_new = into,
+    MoreArgs = list(
+      ref_ = ref_,
+      by = by,
+      col = col
+    ),
+    SIMPLIFY = FALSE
+  )
+
+  # join level-specific codes to ref
+  ref_separate <- Reduce(
+    function(x, y) dplyr::left_join(x, y, by = intersect(names(x), names(y))),
+    ref_l,
+    init = ref_
+  )
+
+  # merge into x
+  out <- dplyr::left_join(x, ref_separate[,c(col, into)], by = col)
+  if (remove) out[[col]] <- NULL
+
+  # return
+  out
+}
+
+
+
+#' @noRd
+extract_level_ref <- function(level, col_new, ref_, by, col) {
+
+  relevant <- by[1:level]
+  non_relevant <- setdiff(by, relevant)
+
+  rows_relevant <- apply(ref_[, relevant, drop = FALSE], 1, function(x) all(!is.na(x))) &
+    apply(ref_[, non_relevant, drop = FALSE], 1, function(x) all(is.na(x)))
+
+  out <- ref_[rows_relevant, c(relevant, col), drop = FALSE]
+  names(out)[names(out) == col] <- col_new
+
+  out
+}
+
+
+
+#' @noRd
+#' @importFrom dplyr bind_cols
+separate_hcode_simple <- function(x,
+                                  col,
+                                  into,
+                                  sep,
+                                  extra,
+                                  remove) {
+
+  extra <- match.arg(extra, choices = c("warn", "drop"))
+  x_separate <- separate_hcode_simple_(x[[col]], sep = "__", into = into, extra = extra)
   out <- dplyr::bind_cols(x, x_separate)
   if (remove) { out <- out[,!names(out) %in% col]}
 
@@ -60,11 +161,12 @@ separate_hcode <- function(x,
 }
 
 
+
 #' @noRd
 #' @importFrom stringi stri_sub stri_locate_all
 #' @importFrom dplyr bind_rows
 #' @importFrom stats setNames
-separate_hcode_ <- function(x, sep, into, extra) {
+separate_hcode_simple_ <- function(x, sep, into, extra) {
 
   # locate sep or end of string (eos)
   l_loc <- stringi::stri_locate_all(x, regex = paste0(sep, "|$"))
