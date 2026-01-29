@@ -40,7 +40,7 @@ max_levels <- function(x, pattern, by, type = c("index", "name")) {
   } else {
     m <- !is.na(x[, by, drop = FALSE])
     m <- cbind(rep(TRUE, nrow(m)), m)
-    j <- apply(m, 1, function(x) max(which(x))) - 1L
+    j <- max.col(m, ties.method = "last") - 1L
 
     if (type == "name") {
       names_out <- c(NA_character_, by)
