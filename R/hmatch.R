@@ -280,7 +280,7 @@ hmatch_ <- function(
 
 #' Low level matching function that allows for gaps and fuzzy matching
 #' @noRd
-#' @importFrom dplyr left_join
+#' @importFrom dplyr left_join distinct
 hmatch__ <- function(
   raw_join,
   ref_join,
@@ -369,8 +369,8 @@ hmatch__ <- function(
       col_up_to_focal_ref <- by_ref_join[1:j]
 
       ## prepare dfs for joining next hierarchical level in raw and ref
-      next_join_raw <- unique(raw_[, col_up_to_focal_raw, drop = FALSE])
-      next_join_ref <- unique(ref_[, col_up_to_focal_ref, drop = FALSE])
+      next_join_raw <- distinct(raw_[, col_up_to_focal_raw, drop = FALSE])
+      next_join_ref <- distinct(ref_[, col_up_to_focal_ref, drop = FALSE])
 
       ## join next levels of raw and ref
       matches_remaining <- dplyr::inner_join(
@@ -419,7 +419,7 @@ hmatch__ <- function(
   matches_join_out <- matches_join_out[keep, , drop = FALSE]
 
   ## remove join columns and filter to unique rows
-  matches_join_out <- unique(matches_join_out[, c(temp_col_id, names_ref_prep)])
+  matches_join_out <- distinct(matches_join_out[, c(temp_col_id, names_ref_prep)])
 
   ## if resolve-type join
   if (grepl("^resolve", type)) {

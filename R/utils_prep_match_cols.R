@@ -71,7 +71,7 @@ prep_match_columns <- function(
   by_ref_join <- paste0(by_ref, join_suffix)
 
   if (!is.null(code_col)) {
-    ref[[code_col]] <- hcodes_str(ref, by = by_ref)
+    ref[[code_col]] <- seq_len(nrow(ref))
   }
 
   return(

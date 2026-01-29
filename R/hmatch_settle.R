@@ -145,7 +145,7 @@ hmatch_settle <- function(
 
 
 #' @noRd
-#' @importFrom dplyr left_join
+#' @importFrom dplyr left_join distinct
 hmatch_settle_ <- function(
   raw_join,
   ref_join,
@@ -208,7 +208,7 @@ hmatch_settle_ <- function(
 
   ## prepare match data for join
   matches_prep <- dplyr::bind_rows(matches_by_level)
-  matches_join_out <- unique(matches_prep[, c(temp_col_id, names_ref_prep), drop = FALSE])
+  matches_join_out <- distinct(matches_prep[, c(temp_col_id, names_ref_prep), drop = FALSE])
   matches_join_out[[temp_col_match]] <- rep(TRUE, nrow(matches_join_out))
 
   ## if resolve-type join

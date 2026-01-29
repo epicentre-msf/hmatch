@@ -146,11 +146,17 @@ rbind_dfs <- function(x, y) {
 
 
 #' @noRd
+#' @importFrom stats setNames
 add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
   bind_ <- dat[, by, drop = FALSE]
+
   if (!is.null(std_fn)) {
     for (j in seq_len(ncol(bind_))) {
-      bind_[[j]] <- std_fn(bind_[[j]], ...)
+      unique_vals <- unique(bind_[[j]])
+      standardized_vals <- std_fn(unique_vals, ...)
+      # create lookup and map standardized vals back to original data
+      lookup <- setNames(standardized_vals, unique_vals)
+      bind_[[j]] <- lookup[bind_[[j]]]
     }
   }
 
