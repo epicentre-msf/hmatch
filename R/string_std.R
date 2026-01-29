@@ -37,10 +37,16 @@ string_std <- function(x, convert_roman = FALSE) {
   x <- tolower(x)
   x <- gsub("^[^[:alnum:]]+|[^[:alnum:]]+$", "", x)
   x <- gsub("[^[:alnum:]]+", "_", x)
-  x <- stringi::stri_trans_general(x, id = "Latin-ASCII")
+
+  has_non_ascii <- grepl("[^\\p{ASCII}]", x, perl = TRUE)
+  if (any(has_non_ascii)) {
+    x[has_non_ascii] <- stringi::stri_trans_general(x[has_non_ascii], id = "Latin-ASCII")
+  }
+
   if (convert_roman) {
     x <- vapply(x, roman_to_arabic, "", USE.NAMES = FALSE)
   }
+
   return(x)
 }
 
