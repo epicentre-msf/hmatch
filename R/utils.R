@@ -147,6 +147,7 @@ rbind_dfs <- function(x, y) {
 
 #' @noRd
 #' @importFrom stats setNames
+#' @importFrom dplyr bind_cols
 add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
   bind_ <- dat[, by, drop = FALSE]
 
@@ -161,7 +162,7 @@ add_join_columns <- function(dat, by, join_cols, std_fn = NULL, ...) {
   }
 
   names(bind_) <- join_cols
-  cbind(dat, bind_)
+  dplyr::bind_cols(dat, bind_)
 }
 
 
