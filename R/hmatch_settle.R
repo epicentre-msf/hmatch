@@ -64,24 +64,27 @@
 #' hmatch_settle(ne_raw, ne_ref, pattern = "^adm", type = "resolve_inner")
 #'
 #' @export hmatch_settle
-hmatch_settle <- function(raw,
-                          ref,
-                          pattern,
-                          pattern_ref = pattern,
-                          by,
-                          by_ref = by,
-                          type = "left",
-                          allow_gaps = TRUE,
-                          fuzzy = FALSE,
-                          fuzzy_method = "osa",
-                          fuzzy_dist = 1L,
-                          dict = NULL,
-                          ref_prefix = "ref_",
-                          std_fn = string_std,
-                          ...) {
-
+hmatch_settle <- function(
+  raw,
+  ref,
+  pattern,
+  pattern_ref = pattern,
+  by,
+  by_ref = by,
+  type = "left",
+  allow_gaps = TRUE,
+  fuzzy = FALSE,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
+  dict = NULL,
+  ref_prefix = "ref_",
+  std_fn = string_std,
+  ...
+) {
   ## match args
-  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  if (!is.null(std_fn)) {
+    std_fn <- match.fun(std_fn)
+  }
   type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
@@ -143,19 +146,20 @@ hmatch_settle <- function(raw,
 
 #' @noRd
 #' @importFrom dplyr left_join
-hmatch_settle_ <- function(raw_join,
-                           ref_join,
-                           by_raw,
-                           by_ref,
-                           by_raw_join,
-                           by_ref_join,
-                           type = "left",
-                           allow_gaps = TRUE,
-                           fuzzy = FALSE,
-                           fuzzy_method = "osa",
-                           fuzzy_dist = 1L,
-                           class_raw = "data.frame") {
-
+hmatch_settle_ <- function(
+  raw_join,
+  ref_join,
+  by_raw,
+  by_ref,
+  by_raw_join,
+  by_ref_join,
+  type = "left",
+  allow_gaps = TRUE,
+  fuzzy = FALSE,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
+  class_raw = "data.frame"
+) {
   ## temporary columns to aid in matching
   temp_col_match <- "TEMP_COL_MATCH_SETTLE"
   temp_col_id <- "TEMP_ROW_ID_SETTLE"
@@ -174,7 +178,6 @@ hmatch_settle_ <- function(raw_join,
 
   ## find matches with hmatch() at each match level...
   for (j in rev(seq_along(by_raw))) {
-
     # columns to exclude (> focal level)
     j_excl <- setdiff(seq_along(by_raw), seq_len(j))
 
@@ -182,14 +185,14 @@ hmatch_settle_ <- function(raw_join,
     cols_excl_ref <- c(by_ref[j_excl], by_ref_join[j_excl])
 
     # subset to focal columns of raw and ref
-    raw_foc <- raw_join[,!names(raw_join) %in% cols_excl_raw, drop = FALSE]
-    ref_foc <- ref_join[,!names(ref_join) %in% cols_excl_ref, drop = FALSE]
+    raw_foc <- raw_join[, !names(raw_join) %in% cols_excl_raw, drop = FALSE]
+    ref_foc <- ref_join[, !names(ref_join) %in% cols_excl_ref, drop = FALSE]
 
     # filter ref to rows where max_level is <= the focal level
-    ref_foc <- ref_foc[ref_foc[[temp_col_max_level]] <= j,]
+    ref_foc <- ref_foc[ref_foc[[temp_col_max_level]] <= j, ]
 
     # match raw to ref at given level
-    matches_by_level[[j]] <-  hmatch_(
+    matches_by_level[[j]] <- hmatch_(
       raw_join = raw_foc,
       ref_join = ref_foc,
       by_raw_join = by_raw_join[1:j],
@@ -205,7 +208,7 @@ hmatch_settle_ <- function(raw_join,
 
   ## prepare match data for join
   matches_prep <- dplyr::bind_rows(matches_by_level)
-  matches_join_out <- unique(matches_prep[,c(temp_col_id, names_ref_prep), drop = FALSE])
+  matches_join_out <- unique(matches_prep[, c(temp_col_id, names_ref_prep), drop = FALSE])
   matches_join_out[[temp_col_match]] <- rep(TRUE, nrow(matches_join_out))
 
   ## if resolve-type join
@@ -219,7 +222,7 @@ hmatch_settle_ <- function(raw_join,
   }
 
   ## merge raw with final match data
-  raw_join_out <- raw_join[,names_raw_prep, drop = FALSE]
+  raw_join_out <- raw_join[, names_raw_prep, drop = FALSE]
   matches_out <- dplyr::left_join(raw_join_out, matches_join_out, by = temp_col_id)
 
   ## execute match type and remove temporary columns
@@ -234,4 +237,3 @@ hmatch_settle_ <- function(raw_join,
     by_ref = by_ref
   )
 }
-

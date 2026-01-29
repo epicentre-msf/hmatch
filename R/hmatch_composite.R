@@ -42,27 +42,29 @@
 #'
 #' @importFrom dplyr inner_join left_join
 #' @export hmatch_composite
-hmatch_composite <- function(raw,
-                             ref,
-                             man,
-                             pattern,
-                             pattern_ref = pattern,
-                             by,
-                             by_ref = by,
-                             code_col,
-                             type = "resolve_left",
-                             allow_gaps = TRUE,
-                             fuzzy = FALSE,
-                             fuzzy_method = "osa",
-                             fuzzy_dist = 1L,
-                             dict = NULL,
-                             ref_prefix = "ref_",
-                             std_fn = string_std,
-                             ...) {
-
-
+hmatch_composite <- function(
+  raw,
+  ref,
+  man,
+  pattern,
+  pattern_ref = pattern,
+  by,
+  by_ref = by,
+  code_col,
+  type = "resolve_left",
+  allow_gaps = TRUE,
+  fuzzy = FALSE,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
+  dict = NULL,
+  ref_prefix = "ref_",
+  std_fn = string_std,
+  ...
+) {
   ## match args
-  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  if (!is.null(std_fn)) {
+    std_fn <- match.fun(std_fn)
+  }
   type <- match.arg(type, c("resolve_left", "resolve_inner", "resolve_anti"))
 
   ## save original colnames of raw
@@ -130,7 +132,6 @@ hmatch_composite <- function(raw,
 
   ## manual match
   if (!missing(man) && !is.null(man)) {
-
     ## join ref to man by code_col
     man_ref <- dplyr::inner_join(
       prep$ref,
@@ -157,11 +158,11 @@ hmatch_composite <- function(raw,
       class_raw = class(raw)
     )
 
-    m_manual <- m_manual[,c(temp_col_id, temp_col_code)]
+    m_manual <- m_manual[, c(temp_col_id, temp_col_code)]
     m_manual$match_type <- rep("manual", nrow(m_manual))
 
     unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_manual[[temp_col_id]]
-    raw_join_remaining <- raw_join_remaining[unmatched,]
+    raw_join_remaining <- raw_join_remaining[unmatched, ]
   }
 
   ## complete non-fuzzy match
@@ -178,15 +179,14 @@ hmatch_composite <- function(raw,
     fuzzy = FALSE
   )
 
-  m_complete <- m_complete[,c(temp_col_id, temp_col_code)]
+  m_complete <- m_complete[, c(temp_col_id, temp_col_code)]
   m_complete$match_type <- rep("complete", nrow(m_complete))
 
   unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_complete[[temp_col_id]]
-  raw_join_remaining <- raw_join_remaining[unmatched,]
+  raw_join_remaining <- raw_join_remaining[unmatched, ]
 
   ## partial non-fuzzy match
   if (nrow(raw_join_remaining) > 0 & allow_gaps) {
-
     m_partial <- hmatch_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
@@ -199,16 +199,15 @@ hmatch_composite <- function(raw,
       fuzzy = FALSE
     )
 
-    m_partial <- m_partial[,c(temp_col_id, temp_col_code)]
+    m_partial <- m_partial[, c(temp_col_id, temp_col_code)]
     m_partial$match_type <- rep("gaps", nrow(m_partial))
 
     unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_partial[[temp_col_id]]
-    raw_join_remaining <- raw_join_remaining[unmatched,]
+    raw_join_remaining <- raw_join_remaining[unmatched, ]
   }
 
   ## partial fuzzy match
   if (nrow(raw_join_remaining) > 0) {
-
     m_fuzzy <- hmatch_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
@@ -223,16 +222,15 @@ hmatch_composite <- function(raw,
       fuzzy_dist = fuzzy_dist
     )
 
-    m_fuzzy <- m_fuzzy[,c(temp_col_id, temp_col_code)]
+    m_fuzzy <- m_fuzzy[, c(temp_col_id, temp_col_code)]
     m_fuzzy$match_type <- rep("fuzzy", nrow(m_fuzzy))
 
     unmatched <- !raw_join_remaining[[temp_col_id]] %in% m_fuzzy[[temp_col_id]]
-    raw_join_remaining <- raw_join_remaining[unmatched,]
+    raw_join_remaining <- raw_join_remaining[unmatched, ]
   }
 
   ## settle join
   if (nrow(raw_join_remaining) > 0) {
-
     m_settle <- hmatch_settle_(
       raw_join = raw_join_remaining,
       ref_join = ref_join,
@@ -249,9 +247,9 @@ hmatch_composite <- function(raw,
 
     # note that with resolve join m_settle returns correct by_ref cols but
     # not necessarily correct temp code col
-    m_settle <- m_settle[,c(temp_col_id, prep$by_ref)]
+    m_settle <- m_settle[, c(temp_col_id, prep$by_ref)]
     m_settle <- dplyr::left_join(m_settle, prep$ref, by = prep$by_ref)
-    m_settle <- m_settle[,c(temp_col_id, temp_col_code)]
+    m_settle <- m_settle[, c(temp_col_id, temp_col_code)]
     m_settle$match_type <- rep("settle", nrow(m_settle))
   }
 
@@ -266,10 +264,12 @@ hmatch_composite <- function(raw,
 
   ## merge to ref
   m_bind_ref <- dplyr::left_join(m_full, prep$ref, by = temp_col_code)
-  m_bind_ref <- m_bind_ref[,c(temp_col_id, names(prep$ref), "match_type")]
+  m_bind_ref <- m_bind_ref[, c(temp_col_id, names(prep$ref), "match_type")]
 
   ## merge to raw
-  if (raw_is_sf) raw <- raw_sf
+  if (raw_is_sf) {
+    raw <- raw_sf
+  }
   out <- dplyr::left_join(raw, m_bind_ref, by = temp_col_id)
 
   ## execute match type and remove temporary columns

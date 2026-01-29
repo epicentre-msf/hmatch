@@ -39,16 +39,9 @@
 NULL
 
 
-
 #' @rdname hcodes
 #' @export hcodes_str
-hcodes_str <- function(ref,
-                       pattern,
-                       by,
-                       sep = "__",
-                       std_fn = string_std) {
-
-
+hcodes_str <- function(ref, pattern, by, sep = "__", std_fn = string_std) {
   ## identify hierarchical columns
   by <- select_columns(ref, pattern, by, allow_both_null = FALSE)
 
@@ -67,14 +60,9 @@ hcodes_str <- function(ref,
 }
 
 
-
 #' @rdname hcodes
 #' @export hcodes_int
-hcodes_int <- function(ref,
-                       pattern,
-                       by,
-                       prefix = "") {
-
+hcodes_int <- function(ref, pattern, by, prefix = "") {
   ## identify hierarchical columns
   by <- select_columns(ref, pattern, by, allow_both_null = FALSE)
 
@@ -83,7 +71,6 @@ hcodes_int <- function(ref,
   ref_ <- as.data.frame(lapply(ref_, as.character))
 
   if (nrow(ref_) > 0) {
-
     ## integer ids for first column
     int_id_cols <- paste0("LEVEL_ID_", seq_along(by))
     ref_[[int_id_cols[1]]] <- integer_id(ref_[[1]])
@@ -92,18 +79,18 @@ hcodes_int <- function(ref,
     if (length(int_id_cols) > 1) {
       for (i in 2:length(by)) {
         col_focal <- int_id_cols[i]
-        cols_split <- int_id_cols[1:(i-1)]
+        cols_split <- int_id_cols[1:(i - 1)]
         col_focal_split <- split(ref_[[i]], ref_[cols_split])
         ref_[[col_focal]] <- unsplit(lapply(col_focal_split, integer_id), ref_[cols_split])
       }
     }
 
     ## select integer id columns
-    int_ids <- ref_[,int_id_cols, drop = FALSE]
+    int_ids <- ref_[, int_id_cols, drop = FALSE]
     int_ids <- as.data.frame(lapply(int_ids, as.integer))
 
     ## ensure integer ids constant-width at each level (pad with "0" if necessary)
-    for(i in seq_along(int_id_cols)) {
+    for (i in seq_along(int_id_cols)) {
       ids_col <- int_ids[[i]]
       if (length(ids_col) > 0) {
         n <- nchar(max(ids_col))
@@ -127,4 +114,3 @@ integer_id <- function(x) {
   out[is.na(out)] <- 0L
   out
 }
-

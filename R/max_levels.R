@@ -26,25 +26,18 @@
 #' max_levels(ne_raw, pattern = "^adm", type = "name")
 #'
 #' @export max_levels
-max_levels <- function(x,
-                       pattern,
-                       by,
-                       type = c("index", "name")) {
-
+max_levels <- function(x, pattern, by, type = c("index", "name")) {
   ## validate arguments
   type <- match.arg(type)
   by <- select_columns(x, pattern, by)
 
   if (nrow(x) == 0) {
-
     if (type == "name") {
       out <- character(0)
     } else {
       out <- integer(0)
     }
-
   } else {
-
     m <- !is.na(x[, by, drop = FALSE])
     m <- cbind(rep(TRUE, nrow(m)), m)
     j <- apply(m, 1, function(x) max(which(x))) - 1L

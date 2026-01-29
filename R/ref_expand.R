@@ -33,8 +33,6 @@
 #'
 #' @export ref_expand
 ref_expand <- function(ref, pattern, by, lowest_level = 1L) {
-
-
   ## match hierarchical columns
   by <- select_columns(ref, pattern, by)
 
@@ -47,7 +45,7 @@ ref_expand <- function(ref, pattern, by, lowest_level = 1L) {
     cols_focal <- by[1:i]
 
     rows_keep <- apply(
-      ref_[,cols_focal, drop = FALSE],
+      ref_[, cols_focal, drop = FALSE],
       MARGIN = 1,
       FUN = function(x) !any(is.na(x))
     )

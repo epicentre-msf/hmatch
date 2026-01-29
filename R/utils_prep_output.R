@@ -1,16 +1,15 @@
-
-
 #' @noRd
-prep_output <- function(x,
-                        type,
-                        temp_col_id,
-                        temp_col_match,
-                        cols_raw_orig,
-                        class_raw,
-                        by_raw, # only used in hmatch_settle
-                        by_ref, # only used in hmatch_settle
-                        exclude_cols_temp = TRUE) {
-
+prep_output <- function(
+  x,
+  type,
+  temp_col_id,
+  temp_col_match,
+  cols_raw_orig,
+  class_raw,
+  by_raw, # only used in hmatch_settle
+  by_ref, # only used in hmatch_settle
+  exclude_cols_temp = TRUE
+) {
   x_id <- x[[temp_col_id]]
   x_match <- x[[temp_col_match]]
 
@@ -37,16 +36,16 @@ prep_output <- function(x,
   } else if (type == "inner_complete") {
     max_adm_raw <- max_levels(x, by = by_raw)
     max_adm_ref <- max_levels(x, by = by_ref)
-    out <- x[max_adm_ref == max_adm_raw,]
+    out <- x[max_adm_ref == max_adm_raw, ]
   } else if (type == "inner_incomplete") {
     max_adm_raw <- max_levels(x, by = by_raw)
     max_adm_ref <- max_levels(x, by = by_ref)
-    out <- x[max_adm_ref < max_adm_raw,]
+    out <- x[max_adm_ref < max_adm_raw, ]
   }
 
   ## remove temporary and excluded names
   if (exclude_cols_temp) {
-    out <- out[,!names(out) %in% c(temp_col_id, temp_col_match), drop = FALSE]
+    out <- out[, !names(out) %in% c(temp_col_id, temp_col_match), drop = FALSE]
   }
 
   ## reclass and remove rownames
@@ -55,4 +54,3 @@ prep_output <- function(x,
 
   return(out)
 }
-

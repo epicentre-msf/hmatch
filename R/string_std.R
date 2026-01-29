@@ -38,7 +38,9 @@ string_std <- function(x, convert_roman = FALSE) {
   x <- gsub("^[^[:alnum:]]+|[^[:alnum:]]+$", "", x)
   x <- gsub("[^[:alnum:]]+", "_", x)
   x <- stringi::stri_trans_general(x, id = "Latin-ASCII")
-  if (convert_roman) x <- vapply(x, roman_to_arabic, "", USE.NAMES = FALSE)
+  if (convert_roman) {
+    x <- vapply(x, roman_to_arabic, "", USE.NAMES = FALSE)
+  }
   return(x)
 }
 
@@ -48,6 +50,7 @@ roman_to_arabic <- function(x) {
   if (is.na(x)) {
     out <- x
   } else {
+    # fmt: skip
     rom <- c(
       "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix",
       "x",  "xi", "xii", "xiii", "xiv", "xv", "xvi", "xvii", "xviii", "xix",
@@ -62,4 +65,3 @@ roman_to_arabic <- function(x) {
   }
   return(out)
 }
-

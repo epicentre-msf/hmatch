@@ -41,21 +41,24 @@
 #'
 #' @importFrom dplyr inner_join
 #' @export hmatch_manual
-hmatch_manual <- function(raw,
-                          ref,
-                          man,
-                          pattern,
-                          pattern_ref = pattern,
-                          by,
-                          by_ref = by,
-                          code_col,
-                          type = "left",
-                          ref_prefix = "ref_",
-                          std_fn = string_std,
-                          ...) {
-
+hmatch_manual <- function(
+  raw,
+  ref,
+  man,
+  pattern,
+  pattern_ref = pattern,
+  by,
+  by_ref = by,
+  code_col,
+  type = "left",
+  ref_prefix = "ref_",
+  std_fn = string_std,
+  ...
+) {
   ## match args
-  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
+  if (!is.null(std_fn)) {
+    std_fn <- match.fun(std_fn)
+  }
   type <- match.arg(type, c("left", "inner", "anti"))
 
   ## validate arg code_col
@@ -114,15 +117,15 @@ hmatch_manual <- function(raw,
 
 #' @noRd
 #' @importFrom dplyr left_join
-hmatch_manual_ <- function(raw_join,
-                           man_join,
-                           by_raw,
-                           by_ref,
-                           by_join,
-                           type = "left",
-                           class_raw = "data.frame") {
-
-
+hmatch_manual_ <- function(
+  raw_join,
+  man_join,
+  by_raw,
+  by_ref,
+  by_join,
+  type = "left",
+  class_raw = "data.frame"
+) {
   ## add temporary row-id column to aid in matching
   temp_col_id <- "TEMP_ROW_ID_MANUAL"
   raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
@@ -149,7 +152,7 @@ hmatch_manual_ <- function(raw_join,
   matches_out <- matches_out[, !names(matches_out) %in% by_join, drop = FALSE]
 
   ## check for rows of raw matched by multiple different entries in man
-  matches_out_check <- matches_out[!is.na(matches_out[[temp_col_match]]),]
+  matches_out_check <- matches_out[!is.na(matches_out[[temp_col_match]]), ]
 
   if (nrow(matches_out_check) > 0) {
     n_codes_per_id <- stats::aggregate(
@@ -159,8 +162,7 @@ hmatch_manual_ <- function(raw_join,
     )
 
     if (any(n_codes_per_id$n_codes > 1L)) {
-      warning("One or more rows or `raw` matched by multiple entries in `man`",
-              call. = FALSE)
+      warning("One or more rows or `raw` matched by multiple entries in `man`", call. = FALSE)
     }
   }
 
@@ -174,4 +176,3 @@ hmatch_manual_ <- function(raw_join,
     class_raw = class_raw
   )
 }
-

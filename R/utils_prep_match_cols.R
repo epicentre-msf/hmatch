@@ -1,21 +1,27 @@
-
-
 #' @noRd
-prep_match_columns <- function(raw,
-                               ref,
-                               pattern,
-                               pattern_ref,
-                               by,
-                               by_ref,
-                               ref_prefix = "ref_",
-                               join_suffix = "___JOIN_",
-                               code_col = NULL) {
-
-
-  if (missing(pattern)) pattern <- NULL
-  if (missing(pattern_ref)) pattern_ref <- NULL
-  if (missing(by)) by <- NULL
-  if (missing(by_ref)) by_ref <- NULL
+prep_match_columns <- function(
+  raw,
+  ref,
+  pattern,
+  pattern_ref,
+  by,
+  by_ref,
+  ref_prefix = "ref_",
+  join_suffix = "___JOIN_",
+  code_col = NULL
+) {
+  if (missing(pattern)) {
+    pattern <- NULL
+  }
+  if (missing(pattern_ref)) {
+    pattern_ref <- NULL
+  }
+  if (missing(by)) {
+    by <- NULL
+  }
+  if (missing(by_ref)) {
+    by_ref <- NULL
+  }
 
   validate_match_args(pattern, by)
 
@@ -30,8 +36,11 @@ prep_match_columns <- function(raw,
     by_ref <- intersect(names(ref), names(raw))
 
     if (length(by_raw) == 0L) {
-      stop("Arguments `by` and `pattern` both missing, and no common column ",
-           "names between `raw` and `ref`", call. = FALSE)
+      stop(
+        "Arguments `by` and `pattern` both missing, and no common column ",
+        "names between `raw` and `ref`",
+        call. = FALSE
+      )
     }
   }
 
@@ -65,11 +74,14 @@ prep_match_columns <- function(raw,
     ref[[code_col]] <- hcodes_str(ref, by = by_ref)
   }
 
-  return(list(ref = ref,
-              by_raw = by_raw,
-              by_ref = by_ref,
-              by_ref_orig = by_ref_orig,
-              by_raw_join = by_raw_join,
-              by_ref_join = by_ref_join))
+  return(
+    list(
+      ref = ref,
+      by_raw = by_raw,
+      by_ref = by_ref,
+      by_ref_orig = by_ref_orig,
+      by_raw_join = by_raw_join,
+      by_ref_join = by_ref_join
+    )
+  )
 }
-

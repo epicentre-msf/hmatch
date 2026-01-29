@@ -5,4 +5,7 @@ docs/
 data-raw/tests.R
 data-raw/covid*
 data-raw/drc*
+data-raw/explain/
+data-raw/omit/
+benchmark/
 docs

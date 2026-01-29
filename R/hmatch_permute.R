@@ -61,6 +61,24 @@ hmatch_permute <- function(raw,
                            ...) {
 
 
+  # raw <- readRDS("~/desktop/raw_bra.rds") ### Problem with resolve join!!!
+  # ref <- readRDS("~/desktop/ref_bra.rds")
+  # pattern = "adm"
+  # pattern_ref = pattern
+  # by = NULL
+  # by_ref = by
+  # type = "left"
+  # allow_gaps = TRUE
+  # fuzzy = TRUE
+  # fuzzy_method = "osa"
+  # fuzzy_dist = 1L
+  # dict = NULL
+  # ref_prefix = "ref_"
+  # std_fn = string_std
+  # ... <- NULL
+
+
+
   ## match args
   if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
   type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))

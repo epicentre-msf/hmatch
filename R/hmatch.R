@@ -77,25 +77,31 @@
 #'
 #' @importFrom dplyr inner_join
 #' @export hmatch
-hmatch <- function(raw,
-                   ref,
-                   pattern,
-                   pattern_ref = pattern,
-                   by,
-                   by_ref = by,
-                   type = "left",
-                   allow_gaps = TRUE,
-                   fuzzy = FALSE,
-                   fuzzy_method = "osa",
-                   fuzzy_dist = 1L,
-                   dict = NULL,
-                   ref_prefix = "ref_",
-                   std_fn = string_std,
-                   ...) {
-
+hmatch <- function(
+  raw,
+  ref,
+  pattern,
+  pattern_ref = pattern,
+  by,
+  by_ref = by,
+  type = "left",
+  allow_gaps = TRUE,
+  fuzzy = FALSE,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
+  dict = NULL,
+  ref_prefix = "ref_",
+  std_fn = string_std,
+  ...
+) {
   ## match args
-  if (!is.null(std_fn)) std_fn <- match.fun(std_fn)
-  type <- match.arg(type, c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti"))
+  if (!is.null(std_fn)) {
+    std_fn <- match.fun(std_fn)
+  }
+  type <- match.arg(
+    type,
+    c("left", "inner", "anti", "resolve_left", "resolve_inner", "resolve_anti")
+  )
 
   ## identify hierarchical columns to match, and rename ref cols if necessary
   prep <- prep_match_columns(
@@ -172,7 +178,6 @@ hmatch <- function(raw,
 }
 
 
-
 #' Wrapper for lower level matching functions hmatch__ and hmatch_complete__
 #'
 #' Used because hmatch_complete__ (doesn't allow for gaps or fuzzy matching) is
@@ -181,20 +186,20 @@ hmatch <- function(raw,
 #'
 #' @noRd
 #' @importFrom dplyr bind_rows
-hmatch_ <- function(raw_join,
-                    ref_join,
-                    by_raw = NULL,
-                    by_ref = NULL,
-                    by_raw_join,
-                    by_ref_join,
-                    type = "left",
-                    allow_gaps = TRUE,
-                    fuzzy = FALSE,
-                    fuzzy_method = "osa",
-                    fuzzy_dist = 1L,
-                    class_raw = "data.frame") {
-
-
+hmatch_ <- function(
+  raw_join,
+  ref_join,
+  by_raw = NULL,
+  by_ref = NULL,
+  by_raw_join,
+  by_ref_join,
+  type = "left",
+  allow_gaps = TRUE,
+  fuzzy = FALSE,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
+  class_raw = "data.frame"
+) {
   ## temp row id
   temp_col_id <- "TEMP_ROW_ID_PART_WRAPPER"
   raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
@@ -212,7 +217,6 @@ hmatch_ <- function(raw_join,
       type = type,
       class_raw = class_raw
     )
-
   } else if (!fuzzy & allow_gaps) {
     ## else if not fuzzy and allow gaps, use complete match for complete rows
     # and partial for rest
@@ -239,8 +243,8 @@ hmatch_ <- function(raw_join,
       by_ref = by_ref,
       by_raw_join = by_raw_join,
       by_ref_join = by_ref_join,
-      allow_gaps = allow_gaps,    # always TRUE in this block
-      fuzzy = fuzzy,              # always FALSE in this block
+      allow_gaps = allow_gaps, # always TRUE in this block
+      fuzzy = fuzzy, # always FALSE in this block
       fuzzy_method = fuzzy_method,
       fuzzy_dist = fuzzy_dist,
       type = type,
@@ -248,7 +252,6 @@ hmatch_ <- function(raw_join,
     )
 
     out <- dplyr::bind_rows(out_complete, out_partial)
-
   } else {
     ## else if fuzzy, use partial match for all rows
 
@@ -261,7 +264,7 @@ hmatch_ <- function(raw_join,
       by_ref_join = by_ref_join,
       allow_gaps = allow_gaps,
       type = type,
-      fuzzy = fuzzy,     # always TRUE in this block
+      fuzzy = fuzzy, # always TRUE in this block
       fuzzy_method = fuzzy_method,
       fuzzy_dist = fuzzy_dist,
       class_raw = class_raw
@@ -269,30 +272,29 @@ hmatch_ <- function(raw_join,
   }
 
   ## reorder rows, and remove temp column and rownames
-  out <- out[order(out[[temp_col_id]]),]
+  out <- out[order(out[[temp_col_id]]), ]
   row.names(out) <- NULL
-  out[,!names(out) %in% temp_col_id, drop = FALSE]
+  out[, !names(out) %in% temp_col_id, drop = FALSE]
 }
-
 
 
 #' Low level matching function that allows for gaps and fuzzy matching
 #' @noRd
 #' @importFrom dplyr left_join
-hmatch__ <- function(raw_join,
-                     ref_join,
-                     by_raw = NULL, # not used
-                     by_ref = NULL, # only used if type is resolve join
-                     by_raw_join,
-                     by_ref_join,
-                     allow_gaps = TRUE,
-                     type = "left",
-                     fuzzy = FALSE,
-                     fuzzy_method = "osa",
-                     fuzzy_dist = 1L,
-                     class_raw = "data.frame") {
-
-
+hmatch__ <- function(
+  raw_join,
+  ref_join,
+  by_raw = NULL, # not used
+  by_ref = NULL, # only used if type is resolve join
+  by_raw_join,
+  by_ref_join,
+  allow_gaps = TRUE,
+  type = "left",
+  fuzzy = FALSE,
+  fuzzy_method = "osa",
+  fuzzy_dist = 1L,
+  class_raw = "data.frame"
+) {
   ## add temporary row-id column to aid in matching
   temp_col_id <- "TEMP_ROW_ID_PART"
   raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
@@ -321,8 +323,8 @@ hmatch__ <- function(raw_join,
   }
 
   ## extract only the join columns
-  raw_ <- raw_join[,by_raw_join, drop = FALSE]
-  ref_ <- ref_join[,by_ref_join, drop = FALSE]
+  raw_ <- raw_join[, by_raw_join, drop = FALSE]
+  ref_ <- ref_join[, by_ref_join, drop = FALSE]
 
   ## identify the min and maximum hierarchical levels
   max_level <- length(by_raw_join)
@@ -356,7 +358,6 @@ hmatch__ <- function(raw_join,
   ## for each subsequent hierarchical level...
   if (max_level > 1) {
     for (j in 2:max_level) {
-
       ## identify relevant columns
       col_focal_raw <- by_raw_join[j]
       col_focal_ref <- by_ref_join[j]
@@ -368,8 +369,8 @@ hmatch__ <- function(raw_join,
       col_up_to_focal_ref <- by_ref_join[1:j]
 
       ## prepare dfs for joining next hierarchical level in raw and ref
-      next_join_raw <- unique(raw_[,col_up_to_focal_raw, drop = FALSE])
-      next_join_ref <- unique(ref_[,col_up_to_focal_ref, drop = FALSE])
+      next_join_raw <- unique(raw_[, col_up_to_focal_raw, drop = FALSE])
+      next_join_ref <- unique(ref_[, col_up_to_focal_ref, drop = FALSE])
 
       ## join next levels of raw and ref
       matches_remaining <- dplyr::inner_join(
@@ -418,7 +419,7 @@ hmatch__ <- function(raw_join,
   matches_join_out <- matches_join_out[keep, , drop = FALSE]
 
   ## remove join columns and filter to unique rows
-  matches_join_out <- unique(matches_join_out[,c(temp_col_id, names_ref_prep)])
+  matches_join_out <- unique(matches_join_out[, c(temp_col_id, names_ref_prep)])
 
   ## if resolve-type join
   if (grepl("^resolve", type)) {
@@ -431,8 +432,13 @@ hmatch__ <- function(raw_join,
   }
 
   ## merge raw with final match data
-  raw_join_out <- raw_join_orig[,names_raw_prep, drop = FALSE]
-  matches_out <- dplyr::left_join(raw_join_out, matches_join_out, by = temp_col_id)
+  raw_join_out <- raw_join_orig[, names_raw_prep, drop = FALSE]
+
+  matches_out <- dplyr::left_join(
+    raw_join_out,
+    matches_join_out,
+    by = temp_col_id
+  )
 
   ## execute match type and remove temporary columns
   prep_output(
@@ -446,18 +452,18 @@ hmatch__ <- function(raw_join,
 }
 
 
-
 #' @noRd
 #' @importFrom stringdist stringdist
-filter_to_matches <- function(x,
-                              col1,
-                              col2,
-                              fuzzy,
-                              fuzzy_method,
-                              fuzzy_dist,
-                              is_max_level,
-                              return_x = TRUE) {
-
+filter_to_matches <- function(
+  x,
+  col1,
+  col2,
+  fuzzy,
+  fuzzy_method,
+  fuzzy_dist,
+  is_max_level,
+  return_x = TRUE
+) {
   match <- if (fuzzy) {
     stringdist::stringdist(x[[col1]], x[[col2]], method = fuzzy_method) <= fuzzy_dist
   } else {
@@ -475,27 +481,26 @@ filter_to_matches <- function(x,
   if (return_x) {
     out <- x[keep, , drop = FALSE]
   } else {
-   out <- keep
+    out <- keep
   }
 
   out
 }
 
 
-
-
 #' Low level matching function that doesn't allow for gaps or fuzzy matching
 #' @noRd
 #' @importFrom dplyr left_join
-hmatch_complete__ <- function(raw_join,
-                              ref_join,
-                              by_raw = NULL, # not used
-                              by_ref = NULL, # only used if type is resolve join
-                              by_raw_join,
-                              by_ref_join = by_raw_join,
-                              type = "left",
-                              class_raw = "data.frame") {
-
+hmatch_complete__ <- function(
+  raw_join,
+  ref_join,
+  by_raw = NULL, # not used
+  by_ref = NULL, # only used if type is resolve join
+  by_raw_join,
+  by_ref_join = by_raw_join,
+  type = "left",
+  class_raw = "data.frame"
+) {
   ## add temporary row-id column to aid in matching
   temp_col_id <- "TEMP_ROW_ID_COMPLETE"
   raw_join[[temp_col_id]] <- seq_len(nrow(raw_join))
@@ -516,7 +521,10 @@ hmatch_complete__ <- function(raw_join,
   )
 
   ## remove join cols
-  matches_out <- matches_out[, !names(matches_out) %in% by_raw_join, drop = FALSE]
+  matches_out <- matches_out[,
+    !names(matches_out) %in% by_raw_join,
+    drop = FALSE
+  ]
 
   ## if resolve-type join
   if (grepl("^resolve", type)) {
@@ -538,4 +546,3 @@ hmatch_complete__ <- function(raw_join,
     class_raw = class_raw
   )
 }
-

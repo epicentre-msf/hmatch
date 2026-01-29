@@ -45,17 +45,17 @@
 #' )
 #'
 #' @export separate_hcode
-separate_hcode <- function(x,
-                           ref = NULL,
-                           by = NULL,
-                           col,
-                           into,
-                           sep = "__",
-                           extra = c("warn", "drop"),
-                           remove = FALSE) {
-
+separate_hcode <- function(
+  x,
+  ref = NULL,
+  by = NULL,
+  col,
+  into,
+  sep = "__",
+  extra = c("warn", "drop"),
+  remove = FALSE
+) {
   if (is.null(ref)) {
-
     out <- separate_hcode_simple(
       x = x,
       col = col,
@@ -64,9 +64,7 @@ separate_hcode <- function(x,
       extra = extra,
       remove = remove
     )
-
   } else {
-
     out <- separate_hcode_(
       x = x,
       ref = ref,
@@ -75,24 +73,14 @@ separate_hcode <- function(x,
       into = into,
       remove = remove
     )
-
   }
 
   out
 }
 
 
-
-
 #' @importFrom dplyr left_join
-separate_hcode_ <- function(x,
-                            ref,
-                            by,
-                            col,
-                            into,
-                            remove) {
-
-
+separate_hcode_ <- function(x, ref, by, col, into, remove) {
   # select hierarchical columns
   ref_ <- ref[, c(by, col), drop = FALSE]
 
@@ -117,18 +105,18 @@ separate_hcode_ <- function(x,
   )
 
   # merge into x
-  out <- dplyr::left_join(x, ref_separate[,c(col, into)], by = col)
-  if (remove) out[[col]] <- NULL
+  out <- dplyr::left_join(x, ref_separate[, c(col, into)], by = col)
+  if (remove) {
+    out[[col]] <- NULL
+  }
 
   # return
   out
 }
 
 
-
 #' @noRd
 extract_level_ref <- function(level, col_new, ref_, by, col) {
-
   relevant <- by[1:level]
   non_relevant <- setdiff(by, relevant)
 
@@ -142,24 +130,19 @@ extract_level_ref <- function(level, col_new, ref_, by, col) {
 }
 
 
-
 #' @noRd
 #' @importFrom dplyr bind_cols
-separate_hcode_simple <- function(x,
-                                  col,
-                                  into,
-                                  sep,
-                                  extra,
-                                  remove) {
-
+separate_hcode_simple <- function(x, col, into, sep, extra, remove) {
   extra <- match.arg(extra, choices = c("warn", "drop"))
   x_separate <- separate_hcode_simple_(x[[col]], sep = "__", into = into, extra = extra)
   out <- dplyr::bind_cols(x, x_separate)
-  if (remove) { out <- out[,!names(out) %in% col]}
+
+  if (remove) {
+    out <- out[, !names(out) %in% col]
+  }
 
   out
 }
-
 
 
 #' @noRd
@@ -167,16 +150,15 @@ separate_hcode_simple <- function(x,
 #' @importFrom dplyr bind_rows
 #' @importFrom stats setNames
 separate_hcode_simple_ <- function(x, sep, into, extra) {
-
   # locate sep or end of string (eos)
   l_loc <- stringi::stri_locate_all(x, regex = paste0(sep, "|$"))
 
   # list of starting position(s) for sep/eos in each element of x
-  l_sep_start <- lapply(l_loc, function(x) as.integer(x[,1]))
+  l_sep_start <- lapply(l_loc, function(x) as.integer(x[, 1]))
 
   # separate codes in x into their component levels
   out_l <- mapply(
-    function (x, sep_start) stringi::stri_sub(x, 1, sep_start - 1, use_matrix = FALSE),
+    function(x, sep_start) stringi::stri_sub(x, 1, sep_start - 1, use_matrix = FALSE),
     x = x,
     sep_start = l_sep_start,
     SIMPLIFY = FALSE,
@@ -187,7 +169,6 @@ separate_hcode_simple_ <- function(x, sep, into, extra) {
   extra_levels <- lengths(out_l) > length(into)
 
   if (any(extra_levels)) {
-
     n_extra <- sum(extra_levels)
     which_extra <- which(extra_levels)
 
@@ -204,7 +185,7 @@ separate_hcode_simple_ <- function(x, sep, into, extra) {
   # remove extra levels and set names based on arg `into`
   out_l <- lapply(
     out_l,
-    function (x, into) stats::setNames(x[seq_along(into)], into),
+    function(x, into) stats::setNames(x[seq_along(into)], into),
     into = into
   )
 
@@ -212,10 +193,9 @@ separate_hcode_simple_ <- function(x, sep, into, extra) {
   out <- dplyr::bind_rows(out_l)
 
   if (ncol(out) == 0L) {
-    out <- dplyr::bind_rows(stats::setNames(rep(NA_character_, length(into)), into))[0,]
+    out <- dplyr::bind_rows(stats::setNames(rep(NA_character_, length(into)), into))[0, ]
   }
 
   # return
   out
 }
-

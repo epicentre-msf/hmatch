@@ -1,8 +1,6 @@
-
 #' @noRd
 #' @importFrom dplyr bind_rows
 resolve_join <- function(x, by_ref, temp_col_id, consistent = c("min", "max", "all")) {
-
   if (nrow(x) == 0L) {
     out <- x
   } else {
@@ -15,16 +13,13 @@ resolve_join <- function(x, by_ref, temp_col_id, consistent = c("min", "max", "a
 }
 
 
-
 #' @noRd
 resolve_join_ <- function(x, by_ref, consistent) {
-
   if (nrow(x) < 2L) {
     out <- x
   } else {
-
     ## 2 or more matches...
-    ref_sub_ <- x[,by_ref, drop = FALSE]
+    ref_sub_ <- x[, by_ref, drop = FALSE]
     matches_consistent <- vapply(ref_sub_, unique_excl_na, FALSE)
     max_matches_consistent <- max_before_false(matches_consistent)
 
@@ -64,4 +59,3 @@ resolve_join_ <- function(x, by_ref, consistent) {
   }
   out
 }
-
