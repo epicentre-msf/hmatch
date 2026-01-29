@@ -3,6 +3,7 @@
 ^data-raw$
 ^benchmark$
 ^docs$
+^air.toml$
 ^LICENSE\.md$
 ^README\.Rmd$
 ^codecov\.yml$
