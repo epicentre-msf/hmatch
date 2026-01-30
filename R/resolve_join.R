@@ -1,14 +1,31 @@
 #' @noRd
-#' @importFrom dplyr bind_rows
+#' @importFrom dplyr bind_rows add_count
+#' @importFrom rlang .data
 resolve_join <- function(x, by_ref, temp_col_id, consistent = c("min", "max", "all")) {
   if (nrow(x) == 0L) {
     out <- x
   } else {
-    consistent <- match.arg(consistent)
-    x_split <- split(x, x[[temp_col_id]])
-    l_resolve <- lapply(x_split, resolve_join_, by_ref = by_ref, consistent = consistent)
-    out <- dplyr::bind_rows(l_resolve)
+    consistent <- match.arg(consistent, choices = c("min", "max", "all"))
+
+    # if only 1 row with temp_col_id, keep
+    # if >=2 rows with temp_col_id, apply resolve_join_
+    x <- dplyr::add_count(x, .data[[temp_col_id]], name = "N_TEMP_COL_ID")
+    x_resolve_single <- x[x$N_TEMP_COL_ID == 1L, , drop = FALSE]
+
+    if (any(x$N_TEMP_COL_ID >= 2L)) {
+      x_multi <- x[x$N_TEMP_COL_ID >= 2L, , drop = FALSE]
+      x_split <- split(x_multi, x_multi[[temp_col_id]])
+      l_resolve <- lapply(x_split, resolve_join_, by_ref = by_ref, consistent = consistent)
+      x_resolve_multi <- dplyr::bind_rows(l_resolve)
+    } else {
+      x_resolve_multi <- x[0L, , drop = FALSE]
+    }
+
+    out <- dplyr::bind_rows(x_resolve_single, x_resolve_multi)
+    out$N_TEMP_COL_ID <- NULL
   }
+
+  # return
   out
 }
 
