@@ -280,7 +280,8 @@ hmatch_ <- function(
 
 #' Low level matching function that allows for gaps and fuzzy matching
 #' @noRd
-#' @importFrom dplyr left_join distinct
+#' @importFrom dplyr inner_join left_join distinct
+#' @importFrom tidyr expand_grid
 hmatch__ <- function(
   raw_join,
   ref_join,
@@ -322,9 +323,9 @@ hmatch__ <- function(
     raw_join <- raw_join[rows_no_gaps, , drop = FALSE]
   }
 
-  ## extract only the join columns
-  raw_ <- raw_join[, by_raw_join, drop = FALSE]
-  ref_ <- ref_join[, by_ref_join, drop = FALSE]
+  ## extract only the join columns (distinct combinations)
+  raw_ <- distinct(raw_join[, by_raw_join, drop = FALSE])
+  ref_ <- distinct(ref_join[, by_ref_join, drop = FALSE])
 
   ## identify the min and maximum hierarchical levels
   max_level <- length(by_raw_join)
@@ -335,9 +336,45 @@ hmatch__ <- function(
   col_min_raw <- by_raw_join[1]
   col_min_ref <- by_ref_join[1]
 
-  ## raw/ref combinations at first hierarchical level
+  ## deal separately with rows where only the last level (e.g. adm4) is non-missing
+  # particularly prone to exploding the size of matches_remaining
+  only_max_level <- max.col(!is.na(raw_), ties.method = "first") == max_level
+  raw_only_max_level_ <- raw_[only_max_level, , drop = FALSE]
+  raw_rest_ <- raw_[!only_max_level, , drop = FALSE]
+
+  only_max_level_combinations <- tidyr::expand_grid(
+    x = unique(raw_only_max_level_[[col_max_raw]]),
+    y = unique(ref_[[col_max_ref]])
+  )
+
+  names(only_max_level_combinations) <- c(col_max_raw, col_max_ref)
+
+  matches_only_max_level <- filter_to_matches(
+    x = only_max_level_combinations,
+    col1 = col_max_raw,
+    col2 = col_max_ref,
+    fuzzy = fuzzy,
+    fuzzy_method = fuzzy_method,
+    fuzzy_dist = fuzzy_dist,
+    is_max_level = TRUE
+  )
+
+  # join in rest of raw_ and ref_ cols
+  matches_only_max_level <- left_join(
+    matches_only_max_level,
+    raw_only_max_level_,
+    by = col_max_raw
+  )
+
+  matches_only_max_level <- left_join(
+    matches_only_max_level,
+    ref_,
+    by = col_max_ref
+  )
+
+  ## for remaining rows (excl. those with only max level), start at first hierarchical level
   initial_combinations <- expand.grid(
-    x = unique(raw_[[col_min_raw]]),
+    x = unique(raw_rest_[[col_min_raw]]),
     y = unique(ref_[[col_min_ref]]),
     stringsAsFactors = FALSE
   )
@@ -369,7 +406,7 @@ hmatch__ <- function(
       col_up_to_focal_ref <- by_ref_join[1:j]
 
       ## prepare dfs for joining next hierarchical level in raw and ref
-      next_join_raw <- distinct(raw_[, col_up_to_focal_raw, drop = FALSE])
+      next_join_raw <- distinct(raw_rest_[, col_up_to_focal_raw, drop = FALSE])
       next_join_ref <- distinct(ref_[, col_up_to_focal_ref, drop = FALSE])
 
       ## join next levels of raw and ref
@@ -400,10 +437,16 @@ hmatch__ <- function(
     }
   }
 
+  ## bind matches from only-max-level rows and rest of rows
+  matches_remaining_full <- dplyr::bind_rows(
+    matches_remaining,
+    matches_only_max_level
+  )
+
   ## match bare join columns back to raw_join and ref_join
   matches_join_out <- dplyr::inner_join(
     raw_join[, c(temp_col_id, temp_col_max_raw, by_raw_join)],
-    matches_remaining,
+    matches_remaining_full,
     by = by_raw_join,
     relationship = "many-to-many"
   )
@@ -521,10 +564,7 @@ hmatch_complete__ <- function(
   )
 
   ## remove join cols
-  matches_out <- matches_out[,
-    !names(matches_out) %in% by_raw_join,
-    drop = FALSE
-  ]
+  matches_out <- matches_out[, !names(matches_out) %in% by_raw_join, drop = FALSE]
 
   ## if resolve-type join
   if (grepl("^resolve", type)) {
